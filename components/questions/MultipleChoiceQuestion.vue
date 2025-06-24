@@ -1,12 +1,12 @@
 <template>
-  <div :class="$style.multipleChoiceQuestion">
-    <div :class="$style.questionPrompt" v-html="question.prompt"></div>
+  <div :class="$style['multiple-choice-question']">
+    <div :class="$style['question-prompt']" v-html="question.prompt"></div>
 
-    <div :class="$style.answerChoices">
+    <div :class="$style['answer-choices']">
       <label
         v-for="(choice, index) in question.choices"
         :key="index"
-        :class="$style.answerChoice"
+        :class="$style['answer-choice']"
       >
         <input
           type="radio"
@@ -14,7 +14,7 @@
           :value="index + 1"
           @change="handleChoiceSelected(index + 1)"
         />
-        <span :class="$style.choiceText" v-html="choice.text"></span>
+        <span :class="$style['choice-text']" v-html="choice.text"></span>
       </label>
     </div>
   </div>

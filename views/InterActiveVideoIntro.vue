@@ -1,13 +1,13 @@
 <template>
-  <div :class="$style.interstitialLayout">
-    <div :class="$style.interstitialLayoutMain">
-      <div :class="$style.lStack">
-        <h1 :class="$style.pageTopic" v-html="topic"></h1>
-        <div :class="$style.pageTitle">
+  <div :class="$style['interstitial-layout']">
+    <div :class="$style['interstitial-layout__main']">
+      <div :class="$style['l-stack']">
+        <h1 :class="$style['page-topic']" v-html="topic"></h1>
+        <div :class="$style['page-title']">
           <h2 v-html="title"></h2>
           <h3 v-if="subTopic" v-html="subTopic"></h3>
         </div>
-        <div :class="$style.interstitialControls">
+        <div :class="$style['interstitial-controls']">
           <BasicCheckbox
             v-if="!browserIsSafari()"
             id="autoplay-media"
@@ -85,7 +85,7 @@ onMounted(() => {
 @use 'MusicV3/v3/styles/base' as base;
 
 .page-topic {
-  font-size: base.rpx(30);
+  font-size: base.rpx(48);
   font-weight: 600;
   padding: 0;
   margin: 0;
@@ -145,6 +145,9 @@ onMounted(() => {
 }
 
 .interstitial-controls {
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: base.rpx(16);
 }
 </style>

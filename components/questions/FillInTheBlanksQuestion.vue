@@ -1,17 +1,17 @@
 <template>
-  <div :class="$style.fillBlanks">
-    <div :class="$style.prompt" v-html="question.prompt"></div>
-    <div :class="$style.inputs">
+  <div :class="$style['fill-blanks']">
+    <div :class="$style['prompt']" v-html="question.prompt"></div>
+    <div :class="$style['inputs']">
       <input
         v-for="(blank, idx) in question.blanks"
         :key="idx"
-        :class="$style.blankInput"
+        :class="$style['blank-input']"
         v-model="answers[idx]"
         :placeholder="blank.placeholder"
         @input="onInput(idx, $event)"
       />
     </div>
-    <button :class="$style.submitBtn" @click="submit">Submit</button>
+    <button :class="$style['submit-btn']" @click="submit">Submit</button>
   </div>
 </template>
 

@@ -1,6 +1,6 @@
 <template>
-  <div :class="$style.quickCheck" v-show="quickCheckStore.isVisible">
-    <div :class="$style.quickCheckContent">
+  <div :class="$style['quick-check']" v-show="quickCheckStore.isVisible">
+    <div :class="$style['quick-check-content']">
       <h3>Quick Check</h3>
       <div v-if="quickCheckStore.currentQuickCheck">
         <p>
@@ -40,7 +40,7 @@
         </div>
 
         <div v-else>
-          <button @click="handleComplete" :class="$style.quickCheckCompleteBtn">
+          <button @click="handleComplete" :class="$style['quick-check-complete-btn']">
             Complete
           </button>
         </div>

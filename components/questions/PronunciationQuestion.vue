@@ -1,24 +1,24 @@
 <template>
-  <div :class="$style.pronunciationQuestion">
-    <div :class="$style.questionPrompt" v-html="question.prompt"></div>
+  <div :class="$style['pronunciation-question']">
+    <div :class="$style['question-prompt']" v-html="question.prompt"></div>
 
-    <div :class="$style.pronunciationControls">
-      <button @click="playAudio" :class="$style.playBtn">Play Audio</button>
+    <div :class="$style['pronunciation-controls']">
+      <button @click="playAudio" :class="$style['play-btn']">Play Audio</button>
 
       <button
         v-if="pronunciationToggle && pronunciationToggle.checked"
         @click="startRecording"
-        :class="[$style.recordBtn, { [$style.recording]: isRecording }]"
+        :class="[$style['record-btn'], { [$style['recording']]: isRecording }]"
       >
         {{ isRecording ? 'Stop Recording' : 'Start Recording' }}
       </button>
     </div>
 
-    <div v-if="isRecording" :class="$style.recordingIndicator">
+    <div v-if="isRecording" :class="$style['recording-indicator']">
       Recording... Speak now!
     </div>
 
-    <button @click="handleComplete" :class="$style.completeBtn">Complete</button>
+    <button @click="handleComplete" :class="$style['complete-btn']">Complete</button>
   </div>
 </template>
 

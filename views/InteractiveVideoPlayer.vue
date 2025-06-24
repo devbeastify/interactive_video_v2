@@ -1,17 +1,17 @@
 <template>
-  <div :class="$style.interactiveVideoPlayer">
-    <div :class="$style.cInteractiveVideo">
-      <div :class="$style.cInteractiveVideoVideo">
+  <div :class="$style['interactive-video-player']">
+    <div :class="$style['c-interactive-video']">
+      <div :class="$style['c-interactive-video-video']">
         <div class="js-tutorial-container" ref="videoContainer"></div>
       </div>
     </div>
 
-    <div :class="$style.videoControls" v-if="showControls">
-      <button @click="togglePlayPause" :class="$style.controlBtn">
+    <div :class="$style['video-controls']" v-if="showControls">
+      <button @click="togglePlayPause" :class="$style['control-btn']">
         {{ isPlaying ? 'Pause' : 'Play' }}
       </button>
-      <button @click="restart" :class="$style.controlBtn">Restart</button>
-      <button @click="goToIntro" :class="$style.controlBtn">Back to Intro</button>
+      <button @click="restart" :class="$style['control-btn']">Restart</button>
+      <button @click="goToIntro" :class="$style['control-btn']">Back to Intro</button>
     </div>
 
     <QuickCheck />
