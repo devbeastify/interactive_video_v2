@@ -78,6 +78,8 @@ export const useQuickCheckStore = defineStore('quickCheck', {
           cancelable: true,
         });
         form.dispatchEvent(submitEvent);
+      } else {
+        console.warn('No .js-activity-main-form found. Skipping form submit event.');
       }
 
       document.dispatchEvent(new CustomEvent('finishCheckpoint'));

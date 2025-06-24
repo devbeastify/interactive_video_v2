@@ -97,9 +97,12 @@ const togglePlayPause = () => {
 const restart = () => {
   if (!videoPlayer.value) return;
 
-  videoPlayer.value.currentTime(0);
-  videoPlayer.value.play();
-  isPlaying.value = true;
+  // Use the underlying videojs_player if available
+  if (videoPlayer.value.videojs_player && typeof videoPlayer.value.videojs_player.currentTime === 'function') {
+    videoPlayer.value.videojs_player.currentTime(0);
+    videoPlayer.value.videojs_player.play();
+    isPlaying.value = true;
+  }
 };
 
 /**

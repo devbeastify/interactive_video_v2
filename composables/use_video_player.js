@@ -151,21 +151,23 @@ export function useVideoPlayer(store, quickCheckStore, videoContainer) {
    * Set up video event listeners
    */
   const setupVideoEvents = () => {
-    if (!videoPlayer.value) return;
+    if (!videoPlayer.value || !videoPlayer.value.videojs_player) return;
 
-    videoPlayer.value.on('ended', () => {
+    const player = videoPlayer.value.videojs_player;
+
+    player.on('ended', () => {
       isPlaying.value = false;
     });
 
-    videoPlayer.value.on('play', () => {
+    player.on('play', () => {
       isPlaying.value = true;
     });
 
-    videoPlayer.value.on('pause', () => {
+    player.on('pause', () => {
       isPlaying.value = false;
     });
 
-    videoPlayer.value.on('loadedmetadata', () => {
+    player.on('loadedmetadata', () => {
       if (store.actionSettings.useAutoPlay && !isPlaying.value) {
         handleAutoPlay();
       }
