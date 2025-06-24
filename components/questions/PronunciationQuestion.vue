@@ -11,7 +11,7 @@
         class="record-btn"
         :class="{ recording: isRecording }"
       >
-        {{ isRecording ? "Stop Recording" : "Start Recording" }}
+        {{ isRecording ? 'Stop Recording' : 'Start Recording' }}
       </button>
     </div>
 
@@ -24,7 +24,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref } from 'vue';
 
 const props = defineProps({
   question: {
@@ -37,26 +37,26 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["pronunciation-complete"]);
+const emit = defineEmits(['pronunciation-complete']);
 
 const isRecording = ref(false);
 
 const playAudio = () => {
-  console.log("Playing audio for pronunciation question");
+  console.log('Playing audio for pronunciation question');
 };
 
 const startRecording = () => {
   isRecording.value = !isRecording.value;
 
   if (isRecording.value) {
-    console.log("Starting pronunciation recording");
+    console.log('Starting pronunciation recording');
   } else {
-    console.log("Stopping pronunciation recording");
+    console.log('Stopping pronunciation recording');
   }
 };
 
 const handleComplete = () => {
-  emit("pronunciation-complete", {
+  emit('pronunciation-complete', {
     questionId: props.question.id,
     recorded: isRecording.value,
   });
@@ -64,6 +64,7 @@ const handleComplete = () => {
 </script>
 
 <style lang="scss" scoped>
+@use 'MusicV3/v3/styles/base' as base;
 .pronunciation-question {
   margin: 1rem 0;
 }
@@ -84,9 +85,9 @@ const handleComplete = () => {
 .complete-btn {
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 4px;
+  border-radius: base.rpx(4);
   cursor: pointer;
-  font-size: 16px;
+  font-size: base.rpx(16);
   font-weight: 600;
 }
 

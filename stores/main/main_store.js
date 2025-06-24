@@ -1,7 +1,7 @@
 // @ts-check
 
-import { defineStore } from "pinia";
-import { browserIsSafari } from "../../lib/safari_browser_check";
+import { defineStore } from 'pinia';
+import { browserIsSafari } from '../../lib/safari_browser_check';
 
 /**
  * @typedef ActionSettings
@@ -40,16 +40,16 @@ import { browserIsSafari } from "../../lib/safari_browser_check";
  * @property {ActivityInfo} activityInfo
  */
 
-export const mainStore = defineStore("interactive_video_v2", {
+export const mainStore = defineStore('interactive_video_v2', {
   state: () => ({
     actionSettings: {
       useAutoPlay: false,
     },
     isInitialized: false,
     activityInfo: {
-      topic: "",
-      sub_topic: "",
-      title: "",
+      topic: '',
+      sub_topic: '',
+      title: '',
       reference: [],
       quick_checks: [],
     },
@@ -68,10 +68,10 @@ export const mainStore = defineStore("interactive_video_v2", {
     },
 
     initializeAutoPlaySetting() {
-      const storedAutoPlay = localStorage.getItem("interactive_video_autoplay");
+      const storedAutoPlay = localStorage.getItem('interactive_video_autoplay');
 
       if (storedAutoPlay !== null) {
-        this.actionSettings.useAutoPlay = storedAutoPlay === "true";
+        this.actionSettings.useAutoPlay = storedAutoPlay === 'true';
       } else {
         this.actionSettings.useAutoPlay = !browserIsSafari();
       }
@@ -80,7 +80,7 @@ export const mainStore = defineStore("interactive_video_v2", {
     updateAutoPlaySetting(useAutoPlay) {
       this.actionSettings.useAutoPlay = useAutoPlay;
       localStorage.setItem(
-        "interactive_video_autoplay",
+        'interactive_video_autoplay',
         useAutoPlay.toString()
       );
     },
@@ -92,7 +92,7 @@ export const mainStore = defineStore("interactive_video_v2", {
  * @return {Promise<Element | null>}
  */
 function getActivityInfo() {
-  return Promise.resolve(document.querySelector(".js-program-tutorial"));
+  return Promise.resolve(document.querySelector('.js-program-tutorial'));
 }
 
 /**

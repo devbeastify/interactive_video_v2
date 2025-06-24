@@ -1,6 +1,6 @@
 // @ts-check
 
-import { defineStore } from "pinia";
+import { defineStore } from 'pinia';
 
 /**
  * @typedef QuickCheck
@@ -20,7 +20,7 @@ import { defineStore } from "pinia";
  * @property {Array<QuickCheck>} quickChecks
  */
 
-export const useQuickCheckStore = defineStore("quickCheck", {
+export const useQuickCheckStore = defineStore('quickCheck', {
   state: () => ({
     currentOffset: null,
     content: null,
@@ -113,16 +113,16 @@ export const useQuickCheckStore = defineStore("quickCheck", {
     completeQuickCheck() {
       this.isComplete = true;
 
-      const form = document.querySelector(".js-activity-main-form");
+      const form = document.querySelector('.js-activity-main-form');
       if (form) {
-        const submitEvent = new Event("submit", {
+        const submitEvent = new Event('submit', {
           bubbles: true,
           cancelable: true,
         });
         form.dispatchEvent(submitEvent);
       }
 
-      document.dispatchEvent(new CustomEvent("finishCheckpoint"));
+      document.dispatchEvent(new CustomEvent('finishCheckpoint'));
 
       this.hideQuickCheck();
       this.reset();

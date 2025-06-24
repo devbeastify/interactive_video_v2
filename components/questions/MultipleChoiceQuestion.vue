@@ -28,10 +28,10 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["answer-selected"]);
+const emit = defineEmits(['answer-selected']);
 
 const handleChoiceSelected = (choiceIndex) => {
-  emit("answer-selected", {
+  emit('answer-selected', {
     questionId: props.question.id,
     choiceIndex: choiceIndex,
   });
@@ -39,6 +39,7 @@ const handleChoiceSelected = (choiceIndex) => {
 </script>
 
 <style lang="scss" scoped>
+@use 'MusicV3/v3/styles/base' as base;
 .multiple-choice-question {
   margin: 1rem 0;
 }
@@ -59,8 +60,8 @@ const handleChoiceSelected = (choiceIndex) => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  border: base.rpx(1) solid #ddd;
+  border-radius: base.rpx(4);
   cursor: pointer;
 
   &:hover {

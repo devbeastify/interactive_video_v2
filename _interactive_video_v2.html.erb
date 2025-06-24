@@ -64,7 +64,7 @@
         <input
           type="hidden"
           class="js-foreign-subtitles-lang"
-          value="<%= MaestroActivityEngine::Languages.language_code('es') %>" />
+          value="<%= MaestroActivityEngine::Languages.language_code(content_object.language) %>" />
         <div class="c-interactive-video">
           <div class="c-interactive-video__video">
               <div class="js-tutorial-container"></div>

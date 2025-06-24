@@ -30,18 +30,18 @@
 </template>
 
 <script setup>
-import { onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { mainStore } from "../stores/main/main_store";
-import { browserIsSafari } from "../lib/safari_browser_check";
+import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import { mainStore } from '../stores/main/main_store';
+import { browserIsSafari } from '../lib/safari_browser_check';
 // @ts-expect-error - Music doesn't have types, tsconfig needs new path aliases
-import BasicCheckbox from "MusicV3/components/basic_checkbox/v2.0/BasicCheckbox.vue";
-import BeginAction from "../components/BeginAction.vue";
-import { useMedia } from "../composables/use_media";
-import AnimatedLoadingIcon from "../components/AnimatedLoadingIcon.vue";
+import BasicCheckbox from 'MusicV3/components/basic_checkbox/v2.0/BasicCheckbox.vue';
+import BeginAction from '../components/BeginAction.vue';
+import { useMedia } from '../composables/use_media';
+import AnimatedLoadingIcon from '../components/AnimatedLoadingIcon.vue';
 
 const router = useRouter();
-const emit = defineEmits(["resetindex"]);
+const emit = defineEmits(['resetindex']);
 
 const store = mainStore();
 const topic = store.activityInfo.topic;
@@ -66,20 +66,20 @@ const updateSettings = function (evt) {
 const startActivity = async (e) => {
   try {
     await whitelistMedia(e);
-    router.push("/player");
+    router.push('/player');
   } catch (error) {
-    console.error("Failed to start activity:", error);
+    console.error('Failed to start activity:', error);
   }
 };
 
 onMounted(() => {
   loadMedia();
-  emit("resetindex");
+  emit('resetindex');
 });
 </script>
 
 <style lang="scss" scoped>
-@use "MusicV3/v3/styles/base" as base;
+@use 'MusicV3/v3/styles/base' as base;
 
 .page-topic {
   font-size: base.rpx(30);
@@ -90,14 +90,14 @@ onMounted(() => {
 
 .interstitial-layout {
   display: grid;
-  grid-template-areas: "main";
+  grid-template-areas: 'main';
   grid-template-columns: 1fr;
   place-items: center;
   gap: 1rem;
   margin: 2rem;
   @include base.viewport-min(sm) {
     gap: 1rem;
-    grid-template-areas: "main";
+    grid-template-areas: 'main';
     grid-template-columns: 1fr;
     margin: 0;
   }

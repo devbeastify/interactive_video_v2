@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref } from 'vue';
 
 const props = defineProps({
   question: {
@@ -27,12 +27,12 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["answer-submitted"]);
+const emit = defineEmits(['answer-submitted']);
 
 const answers = ref([]);
 
 const handleSubmit = () => {
-  emit("answer-submitted", {
+  emit('answer-submitted', {
     questionId: props.question.id,
     answers: answers.value,
   });
@@ -40,6 +40,7 @@ const handleSubmit = () => {
 </script>
 
 <style lang="scss" scoped>
+@use 'MusicV3/v3/styles/base' as base;
 .fill-in-blanks-question {
   margin: 1rem 0;
 }
@@ -58,9 +59,9 @@ const handleSubmit = () => {
 
 .blank-input {
   padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
+  border: base.rpx(1) solid #ddd;
+  border-radius: base.rpx(4);
+  font-size: base.rpx(16);
 }
 
 .submit-btn {
@@ -68,9 +69,9 @@ const handleSubmit = () => {
   background-color: var(--global-button-background-primary, #252525);
   color: var(--global-button-text-primary, #fff);
   border: none;
-  border-radius: 4px;
+  border-radius: base.rpx(4);
   cursor: pointer;
-  font-size: 16px;
+  font-size: base.rpx(16);
   font-weight: 600;
 }
 </style>

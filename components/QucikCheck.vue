@@ -6,7 +6,7 @@
         <p>
           {{
             quickCheckStore.currentQuickCheck.prompt ||
-            "Complete this activity to continue."
+            'Complete this activity to continue.'
           }}
         </p>
 
@@ -52,25 +52,25 @@
 </template>
 
 <script setup>
-import { useQuickCheckStore } from "../stores/main/quick_check_store";
-import MultipleChoiceQuestion from "./questions/MultipleChoiceQuestion.vue";
-import FillInTheBlanksQuestion from "./questions/FillInTheBlanksQuestion.vue";
-import PronunciationQuestion from "./questions/PronunciationQuestion.vue";
+import { useQuickCheckStore } from '../stores/main/quick_check_store';
+import MultipleChoiceQuestion from './questions/MultipleChoiceQuestion.vue';
+import FillInTheBlanksQuestion from './questions/FillInTheBlanksQuestion.vue';
+import PronunciationQuestion from './questions/PronunciationQuestion.vue';
 
 const quickCheckStore = useQuickCheckStore();
 
 const handleAnswerSelected = (answer) => {
-  console.log("Answer selected:", answer);
+  console.log('Answer selected:', answer);
   handleComplete();
 };
 
 const handleAnswerSubmitted = (answers) => {
-  console.log("Answers submitted:", answers);
+  console.log('Answers submitted:', answers);
   handleComplete();
 };
 
 const handlePronunciationComplete = (result) => {
-  console.log("Pronunciation complete:", result);
+  console.log('Pronunciation complete:', result);
   handleComplete();
 };
 
@@ -80,6 +80,7 @@ const handleComplete = () => {
 </script>
 
 <style lang="scss" scoped>
+@use 'MusicV3/v3/styles/base' as base;
 .quick-check {
   position: fixed;
   top: 0;
@@ -96,8 +97,8 @@ const handleComplete = () => {
 .quick-check__content {
   background: white;
   padding: 2rem;
-  border-radius: 8px;
-  max-width: 500px;
+  border-radius: base.rpx(8);
+  max-width: base.rpx(500);
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
@@ -108,9 +109,9 @@ const handleComplete = () => {
   background-color: var(--global-button-background-primary, #252525);
   color: var(--global-button-text-primary, #fff);
   border: none;
-  border-radius: 4px;
+  border-radius: base.rpx(4);
   cursor: pointer;
-  font-size: 16px;
+  font-size: base.rpx(16);
   font-weight: 600;
   transition: background-color 0.3s ease;
 

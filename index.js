@@ -1,13 +1,13 @@
-import { createApp } from "vue";
-import { createRouter, createWebHashHistory } from "vue-router";
-import { createPinia } from "pinia";
+import { createApp } from 'vue';
+import { createRouter, createWebHashHistory } from 'vue-router';
+import { createPinia } from 'pinia';
 
 // @ts-expect-error - Vue file
-import InteractiveVideoApp from "./views/InteractiveVideoApp.vue";
+import InteractiveVideoApp from './views/InteractiveVideoApp.vue';
 // @ts-expect-error - Vue file
-import InteractiveVideoIntro from "./views/InteractiveVideoIntro.vue";
+import InteractiveVideoIntro from './views/InteractiveVideoIntro.vue';
 // @ts-expect-error - Vue file
-import InteractiveVideoPlayer from "./views/InteractiveVideoPlayer.vue";
+import InteractiveVideoPlayer from './views/InteractiveVideoPlayer.vue';
 
 /**
  * @typedef {import('vue-router').Router} Router
@@ -26,8 +26,8 @@ import InteractiveVideoPlayer from "./views/InteractiveVideoPlayer.vue";
  */
 const routes = [
   {
-    path: "/intro",
-    name: "interactive_video_intro",
+    path: '/intro',
+    name: 'interactive_video_intro',
     component: InteractiveVideoIntro,
     props: true,
     meta: {
@@ -35,19 +35,19 @@ const routes = [
     },
   },
   {
-    path: "/player",
-    name: "interactive_video_player",
+    path: '/player',
+    name: 'interactive_video_player',
     component: InteractiveVideoPlayer,
     props: true,
   },
   {
-    path: "/",
-    redirect: "/intro",
+    path: '/',
+    redirect: '/intro',
   },
   {
-    path: "/:pathMatch(.*)",
-    name: "bad-path",
-    redirect: "/intro",
+    path: '/:pathMatch(.*)',
+    name: 'bad-path',
+    redirect: '/intro',
   },
 ];
 
@@ -61,14 +61,14 @@ function getRouter() {
     routes,
     scrollBehavior(to, from, savedPosition) {
       if (from?.name) {
-        return { el: ".intranav", top: 20 };
+        return { el: '.intranav', top: 20 };
       }
     },
   });
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const el = document.getElementById("interactive_video_v2");
+document.addEventListener('DOMContentLoaded', () => {
+  const el = document.getElementById('interactive_video_v2');
   if (el) {
     const app = createApp(InteractiveVideoApp);
     app.use(getRouter());

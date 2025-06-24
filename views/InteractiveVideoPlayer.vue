@@ -8,7 +8,7 @@
 
     <div class="video-controls" v-if="showControls">
       <button @click="togglePlayPause" class="control-btn">
-        {{ isPlaying ? "Pause" : "Play" }}
+        {{ isPlaying ? 'Pause' : 'Play' }}
       </button>
       <button @click="restart" class="control-btn">Restart</button>
     </div>
@@ -18,11 +18,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from "vue";
-import { useRouter } from "vue-router";
-import { mainStore } from "../stores/main/main_store";
-import { useQuickCheckStore } from "../stores/main/quick_check_store";
-import QuickCheck from "../components/QuickCheck.vue";
+import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { mainStore } from '../stores/main/main_store';
+import { useQuickCheckStore } from '../stores/main/quick_check_store';
+import QuickCheck from '../components/QuickCheck.vue';
 
 const router = useRouter();
 const store = mainStore();
@@ -101,7 +101,7 @@ const handleAutoPlay = () => {
               isPlaying.value = true;
             })
             .catch((error) => {
-              console.warn("Auto-play failed:", error);
+              console.warn('Auto-play failed:', error);
               isPlaying.value = false;
             });
         } else {
@@ -167,7 +167,7 @@ const handleCheckpointReached = (offset) => {
 
   quickCheckStore.setCurrentOffset(offset);
 
-  const pronunciationToggle = document.querySelector(".js-speech-rec-toggle");
+  const pronunciationToggle = document.querySelector('.js-speech-rec-toggle');
   if (pronunciationToggle) {
     quickCheckStore.setPronunciationToggle(pronunciationToggle);
   }
@@ -182,28 +182,28 @@ const createCaptionObject = (videoData) => {
   const arrayCaption = [];
 
   const enableClosedCaptions = document.getElementById(
-    "enableClosedCaptions"
+    'enableClosedCaptions'
   )?.value;
-  const allowForeign = document.getElementById("allowForeign")?.value;
-  const allowEnglish = document.getElementById("allowEnglish")?.value;
+  const allowForeign = document.getElementById('allowForeign')?.value;
+  const allowEnglish = document.getElementById('allowEnglish')?.value;
 
-  if (enableClosedCaptions === "true") {
-    if (videoData.english_subtitles_path && allowEnglish === "true") {
+  if (enableClosedCaptions === 'true') {
+    if (videoData.english_subtitles_path && allowEnglish === 'true') {
       arrayCaption.push({
         src: videoData.english_subtitles_path,
-        kind: "captions",
-        srclang: "en",
-        label: "English",
+        kind: 'captions',
+        srclang: 'en',
+        label: 'English',
       });
     }
 
-    if (videoData.foreign_subtitles_path && allowForeign === "true") {
+    if (videoData.foreign_subtitles_path && allowForeign === 'true') {
       arrayCaption.push({
         src: videoData.foreign_subtitles_path,
-        kind: "captions",
+        kind: 'captions',
         srclang:
-          document.querySelector(".js-foreign-subtitles-lang")?.value || "es",
-        label: videoData.foreign_language || "Spanish",
+          document.querySelector('.js-foreign-subtitles-lang')?.value || 'es',
+        label: videoData.foreign_language || 'Spanish',
       });
     }
   }
@@ -217,19 +217,19 @@ const createCaptionObject = (videoData) => {
 const setupVideoEvents = () => {
   if (!videoPlayer.value) return;
 
-  videoPlayer.value.on("ended", () => {
+  videoPlayer.value.on('ended', () => {
     isPlaying.value = false;
   });
 
-  videoPlayer.value.on("play", () => {
+  videoPlayer.value.on('play', () => {
     isPlaying.value = true;
   });
 
-  videoPlayer.value.on("pause", () => {
+  videoPlayer.value.on('pause', () => {
     isPlaying.value = false;
   });
 
-  videoPlayer.value.on("loadedmetadata", () => {
+  videoPlayer.value.on('loadedmetadata', () => {
     if (store.actionSettings.useAutoPlay && !isPlaying.value) {
       handleAutoPlay();
     }
@@ -240,14 +240,14 @@ const setupVideoEvents = () => {
  * Set up global event listeners
  */
 const setupEventListeners = () => {
-  document.addEventListener("finishCheckpoint", handleFinishCheckpoint);
+  document.addEventListener('finishCheckpoint', handleFinishCheckpoint);
 };
 
 /**
  * Clean up event listeners
  */
 const cleanupEventListeners = () => {
-  document.removeEventListener("finishCheckpoint", handleFinishCheckpoint);
+  document.removeEventListener('finishCheckpoint', handleFinishCheckpoint);
 };
 
 /**
@@ -286,9 +286,10 @@ const restart = () => {
 </script>
 
 <style lang="scss" scoped>
+@use 'MusicV3/v3/styles/base' as base;
 .interactive-video-player {
   width: 100%;
-  max-width: 1200px;
+  max-width: base.rpx(1200);
   margin: 0 auto;
   padding: 1rem;
 }
@@ -305,7 +306,7 @@ const restart = () => {
 
 .js-tutorial-container {
   width: 100%;
-  min-height: 400px;
+  min-height: base.rpx(400);
   background: #000;
 }
 
@@ -321,9 +322,9 @@ const restart = () => {
   background-color: var(--global-button-background-primary, #252525);
   color: var(--global-button-text-primary, #fff);
   border: none;
-  border-radius: 4px;
+  border-radius: base.rpx(4);
   cursor: pointer;
-  font-size: 14px;
+  font-size: base.rpx(14);
   font-weight: 600;
   transition: background-color 0.3s ease;
 
