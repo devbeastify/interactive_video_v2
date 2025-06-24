@@ -102,11 +102,11 @@ export function useVideoPlayer(store, quickCheckStore, videoContainer) {
       isPlaying.value = false;
     }
 
-    quickCheckStore.setCurrentOffset(offset);
+    quickCheckStore.updateQuickCheckState({ currentOffset: offset });
 
     const pronunciationToggle = document.querySelector('.js-speech-rec-toggle');
     if (pronunciationToggle) {
-      quickCheckStore.setPronunciationToggle(pronunciationToggle);
+      quickCheckStore.updateQuickCheckState({ pronunciationToggle });
     }
 
     quickCheckStore.showQuickCheck();

@@ -49,7 +49,7 @@ onMounted(() => {
   setupEventListeners();
 
   if (store.activityInfo.quick_checks) {
-    quickCheckStore.setQuickChecks(store.activityInfo.quick_checks);
+    quickCheckStore.updateQuickCheckState({ quickChecks: store.activityInfo.quick_checks });
   }
 });
 

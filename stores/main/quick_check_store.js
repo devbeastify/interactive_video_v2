@@ -98,5 +98,11 @@ export const useQuickCheckStore = defineStore('quickCheck', {
         isVisible: false,
       });
     },
+    /**
+     * Update multiple quick check state properties at once
+     */
+    updateQuickCheckState(payload) {
+      this.$patch(payload);
+    },
   },
 });
