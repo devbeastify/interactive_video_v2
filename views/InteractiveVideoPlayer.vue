@@ -11,6 +11,7 @@
         {{ isPlaying ? 'Pause' : 'Play' }}
       </button>
       <button @click="restart" class="control-btn">Restart</button>
+      <button @click="goToIntro" class="control-btn">Back to Intro</button>
     </div>
 
     <QuickCheck />
@@ -19,12 +20,10 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { useRouter } from 'vue-router';
 import { mainStore } from '../stores/main/main_store';
 import { useQuickCheckStore } from '../stores/main/quick_check_store';
-import QuickCheck from '../components/QuickCheck.vue';
+import QuickCheck from '../components/QucikCheck.vue';
 
-const router = useRouter();
 const store = mainStore();
 const quickCheckStore = useQuickCheckStore();
 
@@ -201,9 +200,8 @@ const createCaptionObject = (videoData) => {
       arrayCaption.push({
         src: videoData.foreign_subtitles_path,
         kind: 'captions',
-        srclang:
-          document.querySelector('.js-foreign-subtitles-lang')?.value || 'es',
-        label: videoData.foreign_language || 'Spanish',
+        srclang: videoData.foreign_language,
+        label: 'Foreign',
       });
     }
   }
@@ -282,6 +280,13 @@ const restart = () => {
   videoPlayer.value.currentTime(0);
   videoPlayer.value.play();
   isPlaying.value = true;
+};
+
+/**
+ * Go back to the intro screen using the sequencer
+ */
+const goToIntro = () => {
+  store.sequencer.goToScreen('intro');
 };
 </script>
 

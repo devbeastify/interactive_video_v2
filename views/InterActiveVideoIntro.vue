@@ -31,7 +31,6 @@
 
 <script setup>
 import { onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { mainStore } from '../stores/main/main_store';
 import { browserIsSafari } from '../lib/safari_browser_check';
 // @ts-expect-error - Music doesn't have types, tsconfig needs new path aliases
@@ -40,8 +39,7 @@ import BeginAction from '../components/BeginAction.vue';
 import { useMedia } from '../composables/use_media';
 import AnimatedLoadingIcon from '../components/AnimatedLoadingIcon.vue';
 
-const router = useRouter();
-const emit = defineEmits(['resetindex']);
+const emit = defineEmits(['start']);
 
 const store = mainStore();
 const topic = store.activityInfo.topic;
@@ -60,13 +58,13 @@ const updateSettings = function (evt) {
 };
 
 /**
- * Starts the activity by navigating to the video player.
+ * Starts the activity by moving to the player screen.
  * @param {Event} e
  */
 const startActivity = async (e) => {
   try {
     await whitelistMedia(e);
-    router.push('/player');
+    emit('start');
   } catch (error) {
     console.error('Failed to start activity:', error);
   }
@@ -74,7 +72,7 @@ const startActivity = async (e) => {
 
 onMounted(() => {
   loadMedia();
-  emit('resetindex');
+  // emit('resetindex'); // Only needed if you have a reset logic
 });
 </script>
 

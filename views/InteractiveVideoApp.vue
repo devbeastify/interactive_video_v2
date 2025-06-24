@@ -1,19 +1,23 @@
 <template>
-  <router-view v-slot="{ Component }">
-    <component :is="Component" @resetindex="resetIndex" />
-  </router-view>
+  <InterActiveVideoIntro
+    v-if="store.sequencer.currentScreen?.name === 'intro'"
+    @start="goToPlayer"
+  />
+  <InteractiveVideoPlayer
+    v-else-if="store.sequencer.currentScreen?.name === 'player'"
+  />
 </template>
 
 <script setup>
 import { useMainStore } from '../composables/use_main_store';
-import { useQuickCheckStore } from '../stores/main/quick_check_store';
+import InterActiveVideoIntro from './InterActiveVideoIntro.vue';
+import InteractiveVideoPlayer from './InteractiveVideoPlayer.vue';
 
 const store = useMainStore();
-const quickCheckStore = useQuickCheckStore();
+
+function goToPlayer() {
+  store.sequencer.goToScreen('player');
+}
 
 store.init();
-
-const resetIndex = () => {
-  quickCheckStore.reset();
-};
 </script>

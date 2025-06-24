@@ -2,6 +2,8 @@
 
 import { defineStore } from 'pinia';
 import { browserIsSafari } from '../../lib/safari_browser_check';
+import { Sequencer } from '../../lib/sequencer';
+import { buildScreensForActivity } from '../../lib/screens';
 
 /**
  * @typedef ActionSettings
@@ -53,6 +55,7 @@ export const mainStore = defineStore('interactive_video_v2', {
       reference: [],
       quick_checks: [],
     },
+    sequencer: new Sequencer(),
   }),
   actions: {
     init() {
@@ -60,6 +63,9 @@ export const mainStore = defineStore('interactive_video_v2', {
         .then((activityInfo) => parseActivityInfo(activityInfo))
         .then((activityInfo) => {
           this.activityInfo = activityInfo;
+          const screens = buildScreensForActivity(activityInfo);
+          this.sequencer.addScreen(screens);
+          this.sequencer.goToScreen('intro');
         })
         .catch((error) => console.error(error));
 
