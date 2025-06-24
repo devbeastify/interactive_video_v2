@@ -1,17 +1,17 @@
 <template>
-  <div class="interactive-video-player">
-    <div class="c-interactive-video">
-      <div class="c-interactive-video__video">
+  <div :class="$style.interactiveVideoPlayer">
+    <div :class="$style.cInteractiveVideo">
+      <div :class="$style.cInteractiveVideoVideo">
         <div class="js-tutorial-container" ref="videoContainer"></div>
       </div>
     </div>
 
-    <div class="video-controls" v-if="showControls">
-      <button @click="togglePlayPause" class="control-btn">
+    <div :class="$style.videoControls" v-if="showControls">
+      <button @click="togglePlayPause" :class="$style.controlBtn">
         {{ isPlaying ? 'Pause' : 'Play' }}
       </button>
-      <button @click="restart" class="control-btn">Restart</button>
-      <button @click="goToIntro" class="control-btn">Back to Intro</button>
+      <button @click="restart" :class="$style.controlBtn">Restart</button>
+      <button @click="goToIntro" :class="$style.controlBtn">Back to Intro</button>
     </div>
 
     <QuickCheck />
@@ -22,7 +22,7 @@
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { mainStore } from '../stores/main/main_store';
 import { useQuickCheckStore } from '../stores/main/quick_check_store';
-import QuickCheck from '../components/QucikCheck.vue';
+import QuickCheck from '../components/QuickCheck.vue';
 
 const store = mainStore();
 const quickCheckStore = useQuickCheckStore();
@@ -32,6 +32,9 @@ const videoPlayer = ref(null);
 const isPlaying = ref(false);
 const showControls = ref(true);
 
+/**
+ * Lifecycle hook: Initialize video player and event listeners on mount
+ */
 onMounted(() => {
   initializeVideoPlayer();
   setupEventListeners();
@@ -41,6 +44,9 @@ onMounted(() => {
   }
 });
 
+/**
+ * Lifecycle hook: Clean up video player and event listeners on unmount
+ */
 onUnmounted(() => {
   if (videoPlayer.value) {
     videoPlayer.value.hide_video();
@@ -290,13 +296,14 @@ const goToIntro = () => {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss" module>
 @use 'MusicV3/v3/styles/base' as base;
+
 .interactive-video-player {
   width: 100%;
   max-width: base.rpx(1200);
   margin: 0 auto;
-  padding: 1rem;
+  padding: base.rpx(16);
 }
 
 .c-interactive-video {
@@ -304,7 +311,7 @@ const goToIntro = () => {
   width: 100%;
 }
 
-.c-interactive-video__video {
+.c-interactive-video-video {
   position: relative;
   width: 100%;
 }
@@ -317,23 +324,23 @@ const goToIntro = () => {
 
 .video-controls {
   display: flex;
-  gap: 1rem;
+  gap: base.rpx(16);
   justify-content: center;
-  margin-top: 1rem;
+  margin-top: base.rpx(16);
 }
 
 .control-btn {
-  padding: 0.5rem 1rem;
-  background-color: var(--global-button-background-primary, #252525);
-  color: var(--global-button-text-primary, #fff);
+  padding: base.rpx(8) base.rpx(24);
   border: none;
   border-radius: base.rpx(4);
-  cursor: pointer;
-  font-size: base.rpx(14);
+  font-size: base.rpx(16);
   font-weight: 600;
+  cursor: pointer;
+  background-color: var(--global-button-background-primary, #252525);
+  color: var(--global-button-text-primary, #fff);
   transition: background-color 0.3s ease;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: var(--global-button-background-primary-hover, #1f7069);
   }
 

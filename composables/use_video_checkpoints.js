@@ -1,5 +1,6 @@
 import { ref } from 'vue';
 
+// Composable to manage interactive video checkpoints
 export function useVideoCheckpoints() {
   const checkpoints = ref([]);
   const currentCheckpoint = ref(null);

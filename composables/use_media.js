@@ -1,8 +1,12 @@
 import { ref } from 'vue';
 
+// Composable to manage media loading and whitelisting
 export function useMedia(videoFiles) {
   const mediaState = ref('idle');
 
+  /**
+   * Load all video files and update media state accordingly
+   */
   const loadMedia = async () => {
     if (!videoFiles.length) {
       mediaState.value = 'loaded';
@@ -30,6 +34,9 @@ export function useMedia(videoFiles) {
     }
   };
 
+  /**
+   * Attempt to play and pause all video files to whitelist them for autoplay
+   */
   const whitelistMedia = async () => {
     if (!videoFiles.length) {
       return Promise.resolve();

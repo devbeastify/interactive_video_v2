@@ -1,3 +1,4 @@
+import './styles/_utilities.scss';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 // @ts-expect-error - Vue file

@@ -9,6 +9,11 @@
 </template>
 
 <script setup>
+/**
+ * Props for the BeginAction button.
+ * @property {string} mediaState - The current state of the media ("loaded" enables the button).
+ * @property {Function} startButtonClickHandler - The function to call when the button is clicked.
+ */
 defineProps({
   mediaState: {
     type: String,

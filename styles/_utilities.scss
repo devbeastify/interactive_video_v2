@@ -1,0 +1,21 @@
+@use 'MusicV3/v3/styles/base' as base;
+
+.u-mar-top-32 {
+  min-width: base.rpx(200);
+  background-color: var(--global-button-background-primary, #252525);
+  color: var(--global-button-text-primary, #fff);
+  border: none;
+  border-radius: base.rpx(24);
+  padding: base.rpx(16) base.rpx(24);
+  font-size: base.rpx(16);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+.u-mar-top-32:hover:not(:disabled) {
+  background-color: var(--global-button-background-primary-hover, #1f7069);
+}
+.u-mar-top-32:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

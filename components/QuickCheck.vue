@@ -1,6 +1,6 @@
 <template>
-  <div class="quick-check" v-show="quickCheckStore.isVisible">
-    <div class="quick-check__content">
+  <div :class="$style.quickCheck" v-show="quickCheckStore.isVisible">
+    <div :class="$style.quickCheckContent">
       <h3>Quick Check</h3>
       <div v-if="quickCheckStore.currentQuickCheck">
         <p>
@@ -21,9 +21,7 @@
         </div>
 
         <div
-          v-else-if="
-            quickCheckStore.currentQuickCheck.type === 'fill_in_the_blanks'
-          "
+          v-else-if="quickCheckStore.currentQuickCheck.type === 'fill_in_the_blanks'"
         >
           <FillInTheBlanksQuestion
             :question="quickCheckStore.currentQuickCheck"
@@ -42,7 +40,7 @@
         </div>
 
         <div v-else>
-          <button @click="handleComplete" class="quick-check__complete-btn">
+          <button @click="handleComplete" :class="$style.quickCheckCompleteBtn">
             Complete
           </button>
         </div>
@@ -59,28 +57,41 @@ import PronunciationQuestion from './questions/PronunciationQuestion.vue';
 
 const quickCheckStore = useQuickCheckStore();
 
+/**
+ * Handles the event when a multiple choice answer is selected.
+ * @param {Object} answer - The selected answer object.
+ */
 const handleAnswerSelected = (answer) => {
-  console.log('Answer selected:', answer);
   handleComplete();
 };
 
+/**
+ * Handles the event when fill-in-the-blanks answers are submitted.
+ * @param {Array} answers - The submitted answers.
+ */
 const handleAnswerSubmitted = (answers) => {
-  console.log('Answers submitted:', answers);
   handleComplete();
 };
 
+/**
+ * Handles the event when a pronunciation question is completed.
+ * @param {Object} result - The result of the pronunciation check.
+ */
 const handlePronunciationComplete = (result) => {
-  console.log('Pronunciation complete:', result);
   handleComplete();
 };
 
+/**
+ * Marks the current quick check as complete.
+ */
 const handleComplete = () => {
   quickCheckStore.completeQuickCheck();
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss" module>
 @use 'MusicV3/v3/styles/base' as base;
+
 .quick-check {
   position: fixed;
   top: 0;
@@ -94,9 +105,9 @@ const handleComplete = () => {
   z-index: 1000;
 }
 
-.quick-check__content {
+.quick-check-content {
   background: white;
-  padding: 2rem;
+  padding: base.rpx(32);
   border-radius: base.rpx(8);
   max-width: base.rpx(500);
   width: 90%;
@@ -104,8 +115,8 @@ const handleComplete = () => {
   overflow-y: auto;
 }
 
-.quick-check__complete-btn {
-  padding: 0.75rem 1.5rem;
+.quick-check-complete-btn {
+  padding: base.rpx(12) base.rpx(32);
   background-color: var(--global-button-background-primary, #252525);
   color: var(--global-button-text-primary, #fff);
   border: none;

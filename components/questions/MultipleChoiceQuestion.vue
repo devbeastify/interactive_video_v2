@@ -1,12 +1,12 @@
 <template>
-  <div class="multiple-choice-question">
-    <div class="question-prompt" v-html="question.prompt"></div>
+  <div :class="$style.multipleChoiceQuestion">
+    <div :class="$style.questionPrompt" v-html="question.prompt"></div>
 
-    <div class="answer-choices">
+    <div :class="$style.answerChoices">
       <label
         v-for="(choice, index) in question.choices"
         :key="index"
-        class="answer-choice"
+        :class="$style.answerChoice"
       >
         <input
           type="radio"
@@ -14,13 +14,17 @@
           :value="index + 1"
           @change="handleChoiceSelected(index + 1)"
         />
-        <span class="choice-text" v-html="choice.text"></span>
+        <span :class="$style.choiceText" v-html="choice.text"></span>
       </label>
     </div>
   </div>
 </template>
 
 <script setup>
+/**
+ * Props for the multiple choice question.
+ * @property {Object} question - The question object, must have `prompt` and `choices`.
+ */
 const props = defineProps({
   question: {
     type: Object,
@@ -28,8 +32,15 @@ const props = defineProps({
   },
 });
 
+/**
+ * Emits the selected answer to the parent component.
+ */
 const emit = defineEmits(['answer-selected']);
 
+/**
+ * Handles when a user selects a choice.
+ * @param {number} choiceIndex - The index of the selected choice (1-based).
+ */
 const handleChoiceSelected = (choiceIndex) => {
   emit('answer-selected', {
     questionId: props.question.id,
@@ -38,28 +49,29 @@ const handleChoiceSelected = (choiceIndex) => {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss" module>
 @use 'MusicV3/v3/styles/base' as base;
+
 .multiple-choice-question {
-  margin: 1rem 0;
+  margin: base.rpx(16) 0;
 }
 
 .question-prompt {
-  margin-bottom: 1rem;
+  margin-bottom: base.rpx(16);
   font-weight: 600;
 }
 
 .answer-choices {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: base.rpx(8);
 }
 
 .answer-choice {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
+  gap: base.rpx(8);
+  padding: base.rpx(8);
   border: base.rpx(1) solid #ddd;
   border-radius: base.rpx(4);
   cursor: pointer;

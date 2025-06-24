@@ -1,13 +1,13 @@
 <template>
-  <div aria-automic="true" class="interstitial-layout">
-    <div class="interstitial-layout__main">
-      <div class="l-stack">
-        <h1 class="page-topic" v-html="topic"></h1>
-        <div class="page-title">
+  <div :class="$style.interstitialLayout">
+    <div :class="$style.interstitialLayoutMain">
+      <div :class="$style.lStack">
+        <h1 :class="$style.pageTopic" v-html="topic"></h1>
+        <div :class="$style.pageTitle">
           <h2 v-html="title"></h2>
           <h3 v-if="subTopic" v-html="subTopic"></h3>
         </div>
-        <div class="interstitial-controls">
+        <div :class="$style.interstitialControls">
           <BasicCheckbox
             v-if="!browserIsSafari()"
             id="autoplay-media"
@@ -19,7 +19,7 @@
           </BasicCheckbox>
           <AnimatedLoadingIcon v-if="mediaState === 'loading'" />
           <BeginAction
-            class="begin-action"
+            class="u-mar-top-32"
             :mediaState="mediaState"
             :startButtonClickHandler="startActivity"
           />
@@ -52,6 +52,9 @@ const videoSources = store.activityInfo.reference.map(
 
 const { mediaState, loadMedia, whitelistMedia } = useMedia(videoSources);
 
+/**
+ * Update the autoplay setting in the store when the checkbox changes
+ */
 const updateSettings = function (evt) {
   const useAutoPlay = evt.target.checked;
   store.updateAutoPlaySetting(useAutoPlay);
@@ -70,13 +73,16 @@ const startActivity = async (e) => {
   }
 };
 
+/**
+ * Lifecycle hook to load media when the component is mounted
+ */
 onMounted(() => {
   loadMedia();
   // emit('resetindex'); // Only needed if you have a reset logic
 });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss" module>
 @use 'MusicV3/v3/styles/base' as base;
 
 .page-topic {
@@ -91,16 +97,16 @@ onMounted(() => {
   grid-template-areas: 'main';
   grid-template-columns: 1fr;
   place-items: center;
-  gap: 1rem;
-  margin: 2rem;
+  gap: base.rpx(16);
+  margin: base.rpx(32);
   @include base.viewport-min(sm) {
-    gap: 1rem;
+    gap: base.rpx(16);
     grid-template-areas: 'main';
     grid-template-columns: 1fr;
     margin: 0;
   }
   @include base.viewport-min(md) {
-    gap: 2rem;
+    gap: base.rpx(32);
     grid-template-columns: 1fr;
   }
 }
@@ -113,7 +119,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
+  gap: base.rpx(24);
 }
 
 .page-title {
@@ -139,25 +145,7 @@ onMounted(() => {
   color: var(--global-color-text-primary, #fff) !important;
 }
 
-:deep(.u-mar-top-32) {
-  min-width: base.rpx(200);
-  background-color: var(--global-button-background-primary, #252525);
-  color: var(--global-button-text-primary, #fff);
-  border: none;
-  border-radius: base.rpx(24);
-  padding: base.rpx(16) base.rpx(24);
-  font-size: base.rpx(16);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-:deep(.u-mar-top-32:hover:not(:disabled)) {
-  background-color: var(--global-button-background-primary-hover, #1f7069);
-}
-
-:deep(.u-mar-top-32:disabled) {
-  opacity: 0.7;
-  cursor: not-allowed;
+.interstitial-controls {
+  width: 100%;
 }
 </style>

@@ -1,31 +1,35 @@
 <template>
-  <div class="pronunciation-question">
-    <div class="question-prompt" v-html="question.prompt"></div>
+  <div :class="$style.pronunciationQuestion">
+    <div :class="$style.questionPrompt" v-html="question.prompt"></div>
 
-    <div class="pronunciation-controls">
-      <button @click="playAudio" class="play-btn">Play Audio</button>
+    <div :class="$style.pronunciationControls">
+      <button @click="playAudio" :class="$style.playBtn">Play Audio</button>
 
       <button
-        v-if="pronunciation - toggle && pronunciation - toggle.checked"
+        v-if="pronunciationToggle && pronunciationToggle.checked"
         @click="startRecording"
-        class="record-btn"
-        :class="{ recording: isRecording }"
+        :class="[$style.recordBtn, { [$style.recording]: isRecording }]"
       >
         {{ isRecording ? 'Stop Recording' : 'Start Recording' }}
       </button>
     </div>
 
-    <div v-if="isRecording" class="recording-indicator">
+    <div v-if="isRecording" :class="$style.recordingIndicator">
       Recording... Speak now!
     </div>
 
-    <button @click="handleComplete" class="complete-btn">Complete</button>
+    <button @click="handleComplete" :class="$style.completeBtn">Complete</button>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
 
+/**
+ * Props for the pronunciation question.
+ * @property {Object} question - The question object, must have `prompt`.
+ * @property {Object|null} pronunciationToggle - Optional toggle object for enabling recording.
+ */
 const props = defineProps({
   question: {
     type: Object,
@@ -37,14 +41,26 @@ const props = defineProps({
   },
 });
 
+/**
+ * Emits the pronunciation completion event to the parent component.
+ */
 const emit = defineEmits(['pronunciation-complete']);
 
+/**
+ * Tracks whether the user is currently recording.
+ */
 const isRecording = ref(false);
 
+/**
+ * Handles playing the audio for the pronunciation question.
+ */
 const playAudio = () => {
   console.log('Playing audio for pronunciation question');
 };
 
+/**
+ * Starts or stops the recording for the pronunciation question.
+ */
 const startRecording = () => {
   isRecording.value = !isRecording.value;
 
@@ -55,6 +71,9 @@ const startRecording = () => {
   }
 };
 
+/**
+ * Emits the completion event with the recording state.
+ */
 const handleComplete = () => {
   emit('pronunciation-complete', {
     questionId: props.question.id,
@@ -63,57 +82,63 @@ const handleComplete = () => {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss" module>
 @use 'MusicV3/v3/styles/base' as base;
+
 .pronunciation-question {
-  margin: 1rem 0;
+  margin: base.rpx(16) 0;
 }
 
 .question-prompt {
-  margin-bottom: 1rem;
+  margin-bottom: base.rpx(16);
   font-weight: 600;
 }
 
 .pronunciation-controls {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: base.rpx(16);
+  margin-bottom: base.rpx(16);
 }
 
 .play-btn,
 .record-btn,
 .complete-btn {
-  padding: 0.75rem 1.5rem;
+  padding: base.rpx(8) base.rpx(24);
   border: none;
   border-radius: base.rpx(4);
-  cursor: pointer;
   font-size: base.rpx(16);
   font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 }
 
 .play-btn {
-  background-color: #4caf50;
-  color: white;
+  background-color: #0079c1;
+  color: #fff;
 }
 
 .record-btn {
-  background-color: #f44336;
-  color: white;
+  background-color: #252525;
+  color: #fff;
+}
 
-  &.recording {
-    background-color: #ff9800;
-  }
+.record-btn.recording {
+  background-color: #e74c3c;
 }
 
 .complete-btn {
   background-color: var(--global-button-background-primary, #252525);
   color: var(--global-button-text-primary, #fff);
+  margin-top: base.rpx(16);
+}
+
+.complete-btn:hover {
+  background-color: var(--global-button-background-primary-hover, #1f7069);
 }
 
 .recording-indicator {
-  text-align: center;
-  color: #f44336;
+  margin-bottom: base.rpx(16);
+  color: #e74c3c;
   font-weight: 600;
-  margin: 1rem 0;
 }
 </style>
