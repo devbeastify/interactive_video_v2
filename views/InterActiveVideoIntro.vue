@@ -78,7 +78,6 @@ const startActivity = async (e) => {
  */
 onMounted(() => {
   loadMedia();
-  // emit('resetindex'); // Only needed if you have a reset logic
 });
 </script>
 

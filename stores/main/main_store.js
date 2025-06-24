@@ -4,6 +4,7 @@ import { defineStore } from 'pinia';
 import { browserIsSafari } from '../../lib/safari_browser_check';
 import { Sequencer } from '../../lib/sequencer';
 import { buildScreensForActivity } from '../../lib/screens';
+import { getActivityInfo, parseActivityInfo } from './activity_info';
 
 /**
  * @typedef ActionSettings
@@ -92,21 +93,3 @@ export const mainStore = defineStore('interactive_video_v2', {
     },
   },
 });
-
-/**
- * Gets the global that should appear within the activity.
- * @return {Promise<Element | null>}
- */
-function getActivityInfo() {
-  return Promise.resolve(document.querySelector('.js-program-tutorial'));
-}
-
-/**
- * Parses the global that should appear within the activity.
- * @param {Element} activityInfo
- * @return {Promise<ActivityInfo>}
- */
-function parseActivityInfo(activityInfo) {
-  const data = JSON.parse(activityInfo.innerHTML);
-  return data[0];
-}

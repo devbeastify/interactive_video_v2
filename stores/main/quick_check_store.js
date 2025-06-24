@@ -52,48 +52,6 @@ export const useQuickCheckStore = defineStore('quickCheck', {
 
   actions: {
     /**
-     * Set current offset
-     */
-    setCurrentOffset(offset) {
-      this.currentOffset = offset;
-    },
-
-    /**
-     * Set content
-     */
-    setContent(content) {
-      this.content = content;
-    },
-
-    /**
-     * Set completion status
-     */
-    setComplete(isComplete) {
-      this.isComplete = isComplete;
-    },
-
-    /**
-     * Set pronunciation toggle
-     */
-    setPronunciationToggle(toggle) {
-      this.pronunciationToggle = toggle;
-    },
-
-    /**
-     * Set visibility
-     */
-    setVisible(visible) {
-      this.isVisible = visible;
-    },
-
-    /**
-     * Set quick checks data
-     */
-    setQuickChecks(quickChecks) {
-      this.quickChecks = quickChecks;
-    },
-
-    /**
      * Show quick check
      */
     showQuickCheck() {
@@ -132,11 +90,13 @@ export const useQuickCheckStore = defineStore('quickCheck', {
      * Reset all quick check state
      */
     reset() {
-      this.currentOffset = null;
-      this.content = null;
-      this.isComplete = false;
-      this.pronunciationToggle = null;
-      this.isVisible = false;
+      this.$patch({
+        currentOffset: null,
+        content: null,
+        isComplete: false,
+        pronunciationToggle: null,
+        isVisible: false,
+      });
     },
   },
 });
