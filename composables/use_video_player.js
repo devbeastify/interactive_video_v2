@@ -184,7 +184,6 @@ export function useVideoPlayer(store, quickCheckStore, videoContainer) {
     }
   };
 
-  // --- Public API ---
   return {
     videoPlayer,
     isPlaying,

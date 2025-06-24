@@ -84,8 +84,8 @@ onMounted(() => {
 <style lang="scss" module>
 @use 'MusicV3/v3/styles/base' as base;
 
-.page-topic {
-  font-size: base.rpx(48);
+:global(.ns-music-v1) .page-topic {
+  font-size: base.rpx(32);
   font-weight: 600;
   padding: 0;
   margin: 0;
