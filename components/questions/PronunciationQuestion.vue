@@ -1,15 +1,16 @@
 <template>
   <div :class="$style['pronunciation-question']">
-    <div :class="$style['question-prompt']" v-html="question.prompt"></div>
+    <div :class="$style['question-prompt']" v-html="question.prompt" />
 
     <div :class="$style['pronunciation-controls']">
-      <button @click="playAudio" :class="$style['play-btn']">Play Audio</button>
+      <button :class="$style['play-btn']" @click="playAudio">
+        Play Audio
+      </button>
 
       <button
         v-if="pronunciationToggle && pronunciationToggle.checked"
-        @click="startRecording"
         :class="[$style['record-btn'], { [$style['recording']]: isRecording }]"
-      >
+        @click="startRecording">
         {{ isRecording ? 'Stop Recording' : 'Start Recording' }}
       </button>
     </div>
@@ -18,68 +19,70 @@
       Recording... Speak now!
     </div>
 
-    <button @click="handleComplete" :class="$style['complete-btn']">Complete</button>
+    <button :class="$style['complete-btn']" @click="handleComplete">
+      Complete
+    </button>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+  import { ref } from 'vue';
 
-/**
- * Props for the pronunciation question.
- * @property {Object} question - The question object, must have `prompt`.
- * @property {Object|null} pronunciationToggle - Optional toggle object for enabling recording.
- */
-const props = defineProps({
-  question: {
-    type: Object,
-    required: true,
-  },
-  pronunciationToggle: {
-    type: Object,
-    default: null,
-  },
-});
-
-/**
- * Emits the pronunciation completion event to the parent component.
- */
-const emit = defineEmits(['pronunciation-complete']);
-
-/**
- * Tracks whether the user is currently recording.
- */
-const isRecording = ref(false);
-
-/**
- * Handles playing the audio for the pronunciation question.
- */
-const playAudio = () => {
-  console.log('Playing audio for pronunciation question');
-};
-
-/**
- * Starts or stops the recording for the pronunciation question.
- */
-const startRecording = () => {
-  isRecording.value = !isRecording.value;
-
-  if (isRecording.value) {
-    console.log('Starting pronunciation recording');
-  } else {
-    console.log('Stopping pronunciation recording');
-  }
-};
-
-/**
- * Emits the completion event with the recording state.
- */
-const handleComplete = () => {
-  emit('pronunciation-complete', {
-    questionId: props.question.id,
-    recorded: isRecording.value,
+  /**
+   * Props for the pronunciation question.
+   * @property {Object} question - The question object, must have `prompt`.
+   * @property {Object|null} pronunciationToggle - Optional toggle object for enabling recording.
+   */
+  const props = defineProps({
+    question: {
+      type: Object,
+      required: true,
+    },
+    pronunciationToggle: {
+      type: Object,
+      default: null,
+    },
   });
-};
+
+  /**
+   * Emits the pronunciation completion event to the parent component.
+   */
+  const emit = defineEmits(['pronunciation-complete']);
+
+  /**
+   * Tracks whether the user is currently recording.
+   */
+  const isRecording = ref(false);
+
+  /**
+   * Handles playing the audio for the pronunciation question.
+   */
+  const playAudio = () => {
+    console.log('Playing audio for pronunciation question');
+  };
+
+  /**
+   * Starts or stops the recording for the pronunciation question.
+   */
+  const startRecording = () => {
+    isRecording.value = !isRecording.value;
+
+    if (isRecording.value) {
+      console.log('Starting pronunciation recording');
+    } else {
+      console.log('Stopping pronunciation recording');
+    }
+  };
+
+  /**
+   * Emits the completion event with the recording state.
+   */
+  const handleComplete = () => {
+    emit('pronunciation-complete', {
+      questionId: props.question.id,
+      recorded: isRecording.value,
+    });
+  };
 </script>
 
 <style lang="scss" module>

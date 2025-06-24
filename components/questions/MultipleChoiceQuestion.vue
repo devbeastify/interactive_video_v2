@@ -1,20 +1,18 @@
 <template>
   <div :class="$style['multiple-choice-question']">
-    <div :class="$style['question-prompt']" v-html="question.prompt"></div>
+    <div :class="$style['question-prompt']" v-html="question.prompt" />
 
     <div :class="$style['answer-choices']">
       <label
         v-for="(choice, index) in question.choices"
         :key="index"
-        :class="$style['answer-choice']"
-      >
+        :class="$style['answer-choice']">
         <input
           type="radio"
           :name="`question-${question.id}`"
           :value="index + 1"
-          @change="handleChoiceSelected(index + 1)"
-        />
-        <span :class="$style['choice-text']" v-html="choice.text"></span>
+          @change="handleChoiceSelected(index + 1)">
+        <span :class="$style['choice-text']" v-html="choice.text" />
       </label>
     </div>
   </div>
@@ -25,28 +23,28 @@
  * Props for the multiple choice question.
  * @property {Object} question - The question object, must have `prompt` and `choices`.
  */
-const props = defineProps({
-  question: {
-    type: Object,
-    required: true,
-  },
-});
-
-/**
- * Emits the selected answer to the parent component.
- */
-const emit = defineEmits(['answer-selected']);
-
-/**
- * Handles when a user selects a choice.
- * @param {number} choiceIndex - The index of the selected choice (1-based).
- */
-const handleChoiceSelected = (choiceIndex) => {
-  emit('answer-selected', {
-    questionId: props.question.id,
-    choiceIndex: choiceIndex,
+  const props = defineProps({
+    question: {
+      type: Object,
+      required: true,
+    },
   });
-};
+
+  /**
+   * Emits the selected answer to the parent component.
+   */
+  const emit = defineEmits(['answer-selected']);
+
+  /**
+   * Handles when a user selects a choice.
+   * @param {number} choiceIndex - The index of the selected choice (1-based).
+   */
+  const handleChoiceSelected = (choiceIndex) => {
+    emit('answer-selected', {
+      questionId: props.question.id,
+      choiceIndex: choiceIndex,
+    });
+  };
 </script>
 
 <style lang="scss" module>

@@ -2,16 +2,20 @@
   <div :class="$style['interactive-video-player']">
     <div :class="$style['c-interactive-video']">
       <div :class="$style['c-interactive-video-video']">
-        <div class="js-tutorial-container" ref="videoContainer"></div>
+        <div ref="videoContainer" class="js-tutorial-container" />
       </div>
     </div>
 
-    <div :class="$style['video-controls']" v-if="showControls">
-      <button @click="togglePlayPause" :class="$style['control-btn']">
+    <div v-if="showControls" :class="$style['video-controls']">
+      <button :class="$style['control-btn']" @click="togglePlayPause">
         {{ isPlaying ? 'Pause' : 'Play' }}
       </button>
-      <button @click="restart" :class="$style['control-btn']">Restart</button>
-      <button @click="goToIntro" :class="$style['control-btn']">Back to Intro</button>
+      <button :class="$style['control-btn']" @click="restart">
+        Restart
+      </button>
+      <button :class="$style['control-btn']" @click="goToIntro">
+        Back to Intro
+      </button>
     </div>
 
     <QuickCheck />
@@ -19,122 +23,122 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue';
-import { mainStore } from '../stores/main/main_store';
-import { useQuickCheckStore } from '../stores/main/quick_check_store';
-import { useVideoPlayer } from '../composables/use_video_player';
-import QuickCheck from '../components/QuickCheck.vue';
+  import { ref, onMounted, onUnmounted, watch } from 'vue';
+  import { mainStore } from '../stores/main/main_store';
+  import { useQuickCheckStore } from '../stores/main/quick_check_store';
+  import { useVideoPlayer } from '../composables/use_video_player';
+  import QuickCheck from '../components/QuickCheck.vue';
 
-const store = mainStore();
-const quickCheckStore = useQuickCheckStore();
+  const store = mainStore();
+  const quickCheckStore = useQuickCheckStore();
 
-const videoContainer = ref(null);
-const showControls = ref(true);
+  const videoContainer = ref(null);
+  const showControls = ref(true);
 
-const {
-  videoPlayer,
-  isPlaying,
-  initializeVideoPlayer,
-  cleanupVideoPlayer,
-  handleAutoPlay,
-  setupCheckpoints,
-  setupVideoEvents,
-} = useVideoPlayer(store, quickCheckStore, videoContainer);
+  const {
+    videoPlayer,
+    isPlaying,
+    initializeVideoPlayer,
+    cleanupVideoPlayer,
+    handleAutoPlay,
+    setupCheckpoints,
+    setupVideoEvents,
+  } = useVideoPlayer(store, quickCheckStore, videoContainer);
 
-/**
- * Lifecycle hook: Initialize video player and event listeners on mount
- */
-onMounted(() => {
-  initializeVideoPlayer();
-  setupEventListeners();
+  /**
+   * Lifecycle hook: Initialize video player and event listeners on mount
+   */
+  onMounted(() => {
+    initializeVideoPlayer();
+    setupEventListeners();
 
-  if (store.activityInfo.quick_checks) {
-    quickCheckStore.updateQuickCheckState({ quickChecks: store.activityInfo.quick_checks });
-  }
-});
+    if (store.activityInfo.quick_checks) {
+      quickCheckStore.updateQuickCheckState({ quickChecks: store.activityInfo.quick_checks });
+    }
+  });
 
-/**
- * Lifecycle hook: Clean up video player and event listeners on unmount
- */
-onUnmounted(() => {
-  cleanupVideoPlayer();
-  cleanupEventListeners();
-});
+  /**
+   * Lifecycle hook: Clean up video player and event listeners on unmount
+   */
+  onUnmounted(() => {
+    cleanupVideoPlayer();
+    cleanupEventListeners();
+  });
 
-/**
- * Watch for changes in auto-play setting
- */
-watch(
-  () => store.actionSettings.useAutoPlay,
-  (newValue) => {
-    if (videoPlayer.value) {
-      if (newValue && !isPlaying.value) {
-        handleAutoPlay();
-      } else if (!newValue && isPlaying.value) {
-        videoPlayer.value.pause();
-        isPlaying.value = false;
+  /**
+   * Watch for changes in auto-play setting
+   */
+  watch(
+    () => store.actionSettings.useAutoPlay,
+    (newValue) => {
+      if (videoPlayer.value) {
+        if (newValue && !isPlaying.value) {
+          handleAutoPlay();
+        } else if (!newValue && isPlaying.value) {
+          videoPlayer.value.pause();
+          isPlaying.value = false;
+        }
       }
     }
-  }
-);
+  );
 
-/**
- * Toggle play/pause
- */
-const togglePlayPause = () => {
-  if (!videoPlayer.value) return;
+  /**
+   * Toggle play/pause
+   */
+  const togglePlayPause = () => {
+    if (!videoPlayer.value) return;
 
-  if (isPlaying.value) {
-    videoPlayer.value.pause();
-  } else {
-    videoPlayer.value.play();
-  }
-};
+    if (isPlaying.value) {
+      videoPlayer.value.pause();
+    } else {
+      videoPlayer.value.play();
+    }
+  };
 
-/**
- * Restart video
- */
-const restart = () => {
-  if (!videoPlayer.value) return;
+  /**
+   * Restart video
+   */
+  const restart = () => {
+    if (!videoPlayer.value) return;
 
-  // Use the underlying videojs_player if available
-  if (videoPlayer.value.videojs_player && typeof videoPlayer.value.videojs_player.currentTime === 'function') {
-    videoPlayer.value.videojs_player.currentTime(0);
-    videoPlayer.value.videojs_player.play();
-    isPlaying.value = true;
-  }
-};
+    // Use the underlying videojs_player if available
+    if (videoPlayer.value.videojs_player && typeof videoPlayer.value.videojs_player.currentTime === 'function') {
+      videoPlayer.value.videojs_player.currentTime(0);
+      videoPlayer.value.videojs_player.play();
+      isPlaying.value = true;
+    }
+  };
 
-/**
- * Go back to the intro screen using the sequencer
- */
-const goToIntro = () => {
-  store.sequencer.goToScreen('intro');
-};
+  /**
+   * Go back to the intro screen using the sequencer
+   */
+  const goToIntro = () => {
+    store.sequencer.goToScreen('intro');
+  };
 
-/**
- * Set up global event listeners
- */
-const setupEventListeners = () => {
-  document.addEventListener('finishCheckpoint', handleFinishCheckpoint);
-};
+  /**
+   * Set up global event listeners
+   */
+  const setupEventListeners = () => {
+    document.addEventListener('finishCheckpoint', handleFinishCheckpoint);
+  };
 
-/**
- * Clean up event listeners
- */
-const cleanupEventListeners = () => {
-  document.removeEventListener('finishCheckpoint', handleFinishCheckpoint);
-};
+  /**
+   * Clean up event listeners
+   */
+  const cleanupEventListeners = () => {
+    document.removeEventListener('finishCheckpoint', handleFinishCheckpoint);
+  };
 
-/**
- * Handle finish checkpoint event
- */
-const handleFinishCheckpoint = () => {
-  if (videoPlayer.value && store.actionSettings.useAutoPlay) {
-    videoPlayer.value.play();
-    isPlaying.value = true;
-  }
-};
+  /**
+   * Handle finish checkpoint event
+   */
+  const handleFinishCheckpoint = () => {
+    if (videoPlayer.value && store.actionSettings.useAutoPlay) {
+      videoPlayer.value.play();
+      isPlaying.value = true;
+    }
+  };
 </script>
 
 <style lang="scss" module>

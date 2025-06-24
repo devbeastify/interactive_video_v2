@@ -2,10 +2,10 @@
   <div :class="$style['interstitial-layout']">
     <div :class="$style['interstitial-layout__main']">
       <div :class="$style['l-stack']">
-        <h1 :class="$style['page-topic']" v-html="topic"></h1>
+        <h1 :class="$style['page-topic']" v-html="topic" />
         <div :class="$style['page-title']">
-          <h2 v-html="title"></h2>
-          <h3 v-if="subTopic" v-html="subTopic"></h3>
+          <h2 v-html="title" />
+          <h3 v-if="subTopic" v-html="subTopic" />
         </div>
         <div :class="$style['interstitial-controls']">
           <BasicCheckbox
@@ -13,16 +13,14 @@
             id="autoplay-media"
             :modelValue="store.actionSettings.useAutoPlay"
             size="lg"
-            @change="updateSettings"
-          >
+            @change="updateSettings">
             Auto Play Video
           </BasicCheckbox>
           <AnimatedLoadingIcon v-if="mediaState === 'loading'" />
           <BeginAction
             class="u-mar-top-32"
             :mediaState="mediaState"
-            :startButtonClickHandler="startActivity"
-          />
+            :startButtonClickHandler="startActivity" />
         </div>
       </div>
     </div>
@@ -30,55 +28,55 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
-import { mainStore } from '../stores/main/main_store';
-import { browserIsSafari } from '../lib/safari_browser_check';
-// @ts-expect-error - Music doesn't have types, tsconfig needs new path aliases
-import BasicCheckbox from 'MusicV3/components/basic_checkbox/v2.0/BasicCheckbox.vue';
-import BeginAction from '../components/BeginAction.vue';
-import { useMedia } from '../composables/use_media';
-import AnimatedLoadingIcon from '../components/AnimatedLoadingIcon.vue';
+  import { onMounted } from 'vue';
+  import { mainStore } from '../stores/main/main_store';
+  import { browserIsSafari } from '../lib/safari_browser_check';
+  // @ts-expect-error - Music doesn't have types, tsconfig needs new path aliases
+  import BasicCheckbox from 'MusicV3/components/basic_checkbox/v2.0/BasicCheckbox.vue';
+  import BeginAction from '../components/BeginAction.vue';
+  import { useMedia } from '../composables/use_media';
+  import AnimatedLoadingIcon from '../components/AnimatedLoadingIcon.vue';
 
-const emit = defineEmits(['start']);
+  const emit = defineEmits(['start']);
 
-const store = mainStore();
-const topic = store.activityInfo.topic;
-const subTopic = store.activityInfo.sub_topic;
-const title = store.activityInfo.title;
+  const store = mainStore();
+  const topic = store.activityInfo.topic;
+  const subTopic = store.activityInfo.sub_topic;
+  const title = store.activityInfo.title;
 
-const videoSources = store.activityInfo.reference.map(
-  (reference) => reference.video_path
-);
+  const videoSources = store.activityInfo.reference.map(
+    (reference) => reference.video_path
+  );
 
-const { mediaState, loadMedia, whitelistMedia } = useMedia(videoSources);
+  const { mediaState, loadMedia, whitelistMedia } = useMedia(videoSources);
 
-/**
- * Update the autoplay setting in the store when the checkbox changes
- */
-const updateSettings = function (evt) {
-  const useAutoPlay = evt.target.checked;
-  store.updateAutoPlaySetting(useAutoPlay);
-};
+  /**
+   * Update the autoplay setting in the store when the checkbox changes
+   */
+  const updateSettings = function (evt) {
+    const useAutoPlay = evt.target.checked;
+    store.updateAutoPlaySetting(useAutoPlay);
+  };
 
-/**
- * Starts the activity by moving to the player screen.
- * @param {Event} e
- */
-const startActivity = async (e) => {
-  try {
-    await whitelistMedia(e);
-    emit('start');
-  } catch (error) {
-    console.error('Failed to start activity:', error);
-  }
-};
+  /**
+   * Starts the activity by moving to the player screen.
+   * @param {Event} e
+   */
+  const startActivity = async (e) => {
+    try {
+      await whitelistMedia(e);
+      emit('start');
+    } catch (error) {
+      console.error('Failed to start activity:', error);
+    }
+  };
 
-/**
- * Lifecycle hook to load media when the component is mounted
- */
-onMounted(() => {
-  loadMedia();
-});
+  /**
+   * Lifecycle hook to load media when the component is mounted
+   */
+  onMounted(() => {
+    loadMedia();
+  });
 </script>
 
 <style lang="scss" module>

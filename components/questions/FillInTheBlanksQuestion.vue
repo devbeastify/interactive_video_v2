@@ -1,70 +1,71 @@
 <template>
   <div :class="$style['fill-blanks']">
-    <div :class="$style['prompt']" v-html="question.prompt"></div>
+    <div :class="$style['prompt']" v-html="question.prompt" />
     <div :class="$style['inputs']">
       <input
         v-for="(blank, idx) in question.blanks"
         :key="idx"
-        :class="$style['blank-input']"
         v-model="answers[idx]"
+        :class="$style['blank-input']"
         :placeholder="blank.placeholder"
-        @input="onInput(idx, $event)"
-      />
+        @input="onInput(idx, $event)">
     </div>
-    <button :class="$style['submit-btn']" @click="submit">Submit</button>
+    <button :class="$style['submit-btn']" @click="submit">
+      Submit
+    </button>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+  import { ref, watch, onMounted } from 'vue';
 
-const props = defineProps({
-  question: {
-    type: Object,
-    required: true,
-  },
-});
+  const props = defineProps({
+    question: {
+      type: Object,
+      required: true,
+    },
+  });
 
-const emit = defineEmits(['answer-submitted']);
+  const emit = defineEmits(['answer-submitted']);
 
-/**
- * Holds the user's answers for each blank.
- * Initialized to empty strings for each blank.
- */
-const answers = ref([]);
+  /**
+   * Holds the user's answers for each blank.
+   * Initialized to empty strings for each blank.
+   */
+  const answers = ref([]);
 
-/**
- * Initialize answers array when component mounts.
- */
-onMounted(() => {
-  answers.value = props.question.blanks.map(() => '');
-});
+  /**
+   * Initialize answers array when component mounts.
+   */
+  onMounted(() => {
+    answers.value = props.question.blanks.map(() => '');
+  });
 
-/**
- * Watch for changes to the question prop and reset answers accordingly.
- */
-watch(
-  () => props.question,
-  (newQ) => {
-    answers.value = newQ.blanks.map(() => '');
+  /**
+   * Watch for changes to the question prop and reset answers accordingly.
+   */
+  watch(
+    () => props.question,
+    (newQ) => {
+      answers.value = newQ.blanks.map(() => '');
+    }
+  );
+
+  /**
+   * Updates the answer for a specific blank when the user types.
+   * @param {number} idx - The index of the blank being edited.
+   * @param {Event} event - The input event.
+   */
+  function onInput(idx, event) {
+    answers.value[idx] = event.target.value;
   }
-);
 
-/**
- * Updates the answer for a specific blank when the user types.
- * @param {number} idx - The index of the blank being edited.
- * @param {Event} event - The input event.
- */
-function onInput(idx, event) {
-  answers.value[idx] = event.target.value;
-}
-
-/**
- * Emits the user's answers to the parent component.
- */
-function submit() {
-  emit('answer-submitted', answers.value);
-}
+  /**
+   * Emits the user's answers to the parent component.
+   */
+  function submit() {
+    emit('answer-submitted', answers.value);
+  }
 </script>
 
 <style lang="scss" module>

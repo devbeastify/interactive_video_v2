@@ -1,46 +1,40 @@
 <template>
-  <div :class="$style['quick-check']" v-show="quickCheckStore.isVisible">
+  <div v-show="quickCheckStore.isVisible" :class="$style['quick-check']">
     <div :class="$style['quick-check-content']">
       <h3>Quick Check</h3>
       <div v-if="quickCheckStore.currentQuickCheck">
         <p>
           {{
             quickCheckStore.currentQuickCheck.prompt ||
-            'Complete this activity to continue.'
+              'Complete this activity to continue.'
           }}
         </p>
 
         <!-- Render different question types based on quick check type -->
         <div
-          v-if="quickCheckStore.currentQuickCheck.type === 'multiple_choice'"
-        >
+          v-if="quickCheckStore.currentQuickCheck.type === 'multiple_choice'">
           <MultipleChoiceQuestion
             :question="quickCheckStore.currentQuickCheck"
-            @answer-selected="handleAnswerSelected"
-          />
+            @answer-selected="handleAnswerSelected" />
         </div>
 
         <div
-          v-else-if="quickCheckStore.currentQuickCheck.type === 'fill_in_the_blanks'"
-        >
+          v-else-if="quickCheckStore.currentQuickCheck.type === 'fill_in_the_blanks'">
           <FillInTheBlanksQuestion
             :question="quickCheckStore.currentQuickCheck"
-            @answer-submitted="handleAnswerSubmitted"
-          />
+            @answer-submitted="handleAnswerSubmitted" />
         </div>
 
         <div
-          v-else-if="quickCheckStore.currentQuickCheck.type === 'pronunciation'"
-        >
+          v-else-if="quickCheckStore.currentQuickCheck.type === 'pronunciation'">
           <PronunciationQuestion
             :question="quickCheckStore.currentQuickCheck"
-            :pronunciation-toggle="quickCheckStore.pronunciationToggle"
-            @pronunciation-complete="handlePronunciationComplete"
-          />
+            :pronunciationToggle="quickCheckStore.pronunciationToggle"
+            @pronunciation-complete="handlePronunciationComplete" />
         </div>
 
         <div v-else>
-          <button @click="handleComplete" :class="$style['quick-check-complete-btn']">
+          <button :class="$style['quick-check-complete-btn']" @click="handleComplete">
             Complete
           </button>
         </div>
@@ -50,43 +44,43 @@
 </template>
 
 <script setup>
-import { useQuickCheckStore } from '../stores/main/quick_check_store';
-import MultipleChoiceQuestion from './questions/MultipleChoiceQuestion.vue';
-import FillInTheBlanksQuestion from './questions/FillInTheBlanksQuestion.vue';
-import PronunciationQuestion from './questions/PronunciationQuestion.vue';
+  import { useQuickCheckStore } from '../stores/main/quick_check_store';
+  import MultipleChoiceQuestion from './questions/MultipleChoiceQuestion.vue';
+  import FillInTheBlanksQuestion from './questions/FillInTheBlanksQuestion.vue';
+  import PronunciationQuestion from './questions/PronunciationQuestion.vue';
 
-const quickCheckStore = useQuickCheckStore();
+  const quickCheckStore = useQuickCheckStore();
 
-/**
- * Handles the event when a multiple choice answer is selected.
- * @param {Object} answer - The selected answer object.
- */
-const handleAnswerSelected = (answer) => {
-  handleComplete();
-};
+  /**
+   * Handles the event when a multiple choice answer is selected.
+   * @param {Object} answer - The selected answer object.
+   */
+  const handleAnswerSelected = (answer) => {
+    handleComplete();
+  };
 
-/**
- * Handles the event when fill-in-the-blanks answers are submitted.
- * @param {Array} answers - The submitted answers.
- */
-const handleAnswerSubmitted = (answers) => {
-  handleComplete();
-};
+  /**
+   * Handles the event when fill-in-the-blanks answers are submitted.
+   * @param {Array} answers - The submitted answers.
+   */
+  const handleAnswerSubmitted = (answers) => {
+    handleComplete();
+  };
 
-/**
- * Handles the event when a pronunciation question is completed.
- * @param {Object} result - The result of the pronunciation check.
- */
-const handlePronunciationComplete = (result) => {
-  handleComplete();
-};
+  /**
+   * Handles the event when a pronunciation question is completed.
+   * @param {Object} result - The result of the pronunciation check.
+   */
+  const handlePronunciationComplete = (result) => {
+    handleComplete();
+  };
 
-/**
- * Marks the current quick check as complete.
- */
-const handleComplete = () => {
-  quickCheckStore.completeQuickCheck();
-};
+  /**
+   * Marks the current quick check as complete.
+   */
+  const handleComplete = () => {
+    quickCheckStore.completeQuickCheck();
+  };
 </script>
 
 <style lang="scss" module>
