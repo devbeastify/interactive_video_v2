@@ -59,6 +59,9 @@ export const mainStore = defineStore('interactive_video_v2', {
     sequencer: new Sequencer(),
   }),
   actions: {
+    /**
+     * Initialize the store with activity information and build screens
+     */
     init() {
       getActivityInfo()
         .then((activityInfo) => parseActivityInfo(activityInfo))
@@ -74,6 +77,9 @@ export const mainStore = defineStore('interactive_video_v2', {
       this.isInitialized = true;
     },
 
+    /**
+     * Initialize the autoplay setting based on browser type and stored preference
+     */
     initializeAutoPlaySetting() {
       const storedAutoPlay = localStorage.getItem('interactive_video_autoplay');
 
@@ -84,12 +90,25 @@ export const mainStore = defineStore('interactive_video_v2', {
       }
     },
 
+    /**
+     * Update the autoplay setting and persist to localStorage
+     * @param {boolean} useAutoPlay - Whether to enable autoplay
+     */
     updateAutoPlaySetting(useAutoPlay) {
       this.actionSettings.useAutoPlay = useAutoPlay;
       localStorage.setItem(
         'interactive_video_autoplay',
         useAutoPlay.toString()
       );
+    },
+
+    /**
+     * Reset the autoplay setting to true (enabled) and persist to localStorage
+     * Called when InteractiveVideoIntro component is mounted
+     */
+    resetIndex() {
+      this.actionSettings.useAutoPlay = true;
+      localStorage.setItem('interactive_video_autoplay', 'true');
     },
   },
 });

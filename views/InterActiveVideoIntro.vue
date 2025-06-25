@@ -75,6 +75,7 @@
    * Lifecycle hook to load media when the component is mounted
    */
   onMounted(() => {
+    store.resetIndex();
     loadMedia();
   });
 </script>
