@@ -36,10 +36,11 @@ export const useQuickCheckStore = defineStore('quickCheck', {
      */
     currentQuickCheck: (state) => {
       if (!state.currentOffset || !state.quickChecks) {
-        return null;
+        return undefined;
       }
 
-      return state.quickChecks.find((qc) => qc.offset === state.currentOffset);
+      const found = state.quickChecks.find((qc) => qc.offset === state.currentOffset);
+      return found || undefined;
     },
 
     /**
@@ -79,7 +80,9 @@ export const useQuickCheckStore = defineStore('quickCheck', {
         });
         form.dispatchEvent(submitEvent);
       } else {
-        console.warn('No .js-activity-main-form found. Skipping form submit event.');
+        console.warn(
+          'No .js-activity-main-form found. Skipping form submit event.'
+        );
       }
 
       document.dispatchEvent(new CustomEvent('finishCheckpoint'));

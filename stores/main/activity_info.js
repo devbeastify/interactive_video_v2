@@ -11,7 +11,14 @@ export function getActivityInfo() {
  * @param {Element} activityInfo
  * @return {Promise<ActivityInfo>}
  */
-export function parseActivityInfo(activityInfo) {
-  const data = JSON.parse(activityInfo.innerHTML);
-  return data[0];
+export async function parseActivityInfo(activityInfo) {
+  try {
+    if (!activityInfo.innerHTML.trim()) {
+      throw new Error('Empty innerHTML');
+    }
+    const data = JSON.parse(activityInfo.innerHTML);
+    return data[0];
+  } catch (error) {
+    throw new Error(`Failed to parse activity info: ${error.message}`);
+  }
 }

@@ -44,8 +44,9 @@ export function useVideoCheckpoints() {
   const resumeVideo = (videoPlayer) => {
     if (videoPlayer) {
       videoPlayer.play();
-      currentCheckpoint.value = null;
     }
+    // Always clear currentCheckpoint regardless of videoPlayer
+    currentCheckpoint.value = null;
   };
 
   return {
