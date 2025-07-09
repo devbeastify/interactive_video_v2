@@ -23,18 +23,31 @@
 </template>
 
 <script setup>
+// @ts-check
+
   import { ref, onMounted, onUnmounted, watch } from 'vue';
   import { mainStore } from '../stores/main/main_store';
   import { useQuickCheckStore } from '../stores/main/quick_check_store';
   import { useVideoPlayer } from '../composables/use_video_player';
   import QuickCheck from '../components/QuickCheck.vue';
 
+  /**
+   * @typedef {import('../composables/use_video_player').VideoPlayer} VideoPlayer
+   * @typedef {import('../composables/use_video_player').VideoPlayerAPI} VideoPlayerAPI
+   */
+
   const store = mainStore();
   const quickCheckStore = useQuickCheckStore();
 
+  /** @type {import('vue').Ref<HTMLElement|null>} */
   const videoContainer = ref(null);
+  /** @type {import('vue').Ref<boolean>} */
   const showControls = ref(true);
 
+  /**
+   * Video player API from the useVideoPlayer composable
+   * @type {VideoPlayerAPI}
+   */
   const {
     videoPlayer,
     isPlaying,
@@ -43,10 +56,13 @@
     handleAutoPlay,
     setupCheckpoints,
     setupVideoEvents,
-  } = useVideoPlayer(store, quickCheckStore, videoContainer);
+    handleCheckpointReached,
+  } = useVideoPlayer(videoContainer);
 
   /**
    * Lifecycle hook: Initialize video player and event listeners on mount
+   * Sets up the video player, event listeners, and quick check state
+   * @return {void}
    */
   onMounted(() => {
     initializeVideoPlayer();
@@ -59,6 +75,8 @@
 
   /**
    * Lifecycle hook: Clean up video player and event listeners on unmount
+   * Ensures proper cleanup of resources to prevent memory leaks
+   * @return {void}
    */
   onUnmounted(() => {
     cleanupVideoPlayer();
@@ -66,7 +84,9 @@
   });
 
   /**
-   * Watch for changes in auto-play setting
+   * Watch for changes in auto-play setting and handle accordingly
+   * Automatically plays or pauses video based on the auto-play setting
+   * @return {void}
    */
   watch(
     () => store.actionSettings.useAutoPlay,
@@ -83,7 +103,9 @@
   );
 
   /**
-   * Toggle play/pause
+   * Toggle between play and pause states
+   * Handles the play/pause button click functionality
+   * @return {void}
    */
   const togglePlayPause = () => {
     if (!videoPlayer.value) return;
@@ -96,42 +118,71 @@
   };
 
   /**
-   * Restart video
+   * Restart video playback from the beginning
+   * Uses the underlying videojs_player if available for more precise control
+   * @return {void}
    */
   const restart = () => {
     if (!videoPlayer.value) return;
 
-    // Use the underlying videojs_player if available
-    if (videoPlayer.value.videojs_player && typeof videoPlayer.value.videojs_player.currentTime === 'function') {
-      videoPlayer.value.videojs_player.currentTime(0);
-      videoPlayer.value.videojs_player.play();
-      isPlaying.value = true;
+    if (hasVideoJsPlayer()) {
+      restartWithVideoJsPlayer();
     }
   };
 
   /**
-   * Go back to the intro screen using the sequencer
+   * Check if the video player has an underlying videojs_player available
+   * @return {boolean} True if videojs_player is available and functional
+   */
+  const hasVideoJsPlayer = () => {
+    return videoPlayer.value?.videojs_player &&
+      typeof videoPlayer.value.videojs_player.currentTime === 'function';
+  };
+
+  /**
+   * Restart video using the videojs_player's currentTime method
+   * Provides more precise control over video playback position
+   * @return {void}
+   */
+  const restartWithVideoJsPlayer = () => {
+    if (!videoPlayer.value?.videojs_player) return;
+
+    videoPlayer.value.videojs_player.currentTime(0);
+    videoPlayer.value.videojs_player.play();
+    isPlaying.value = true;
+  };
+
+  /**
+   * Navigate back to the intro screen using the sequencer
+   * Allows users to return to the beginning of the interactive experience
+   * @return {void}
    */
   const goToIntro = () => {
     store.sequencer.goToScreen('intro');
   };
 
   /**
-   * Set up global event listeners
+   * Set up global event listeners for video player interactions
+   * Listens for custom events like checkpoint completion
+   * @return {void}
    */
   const setupEventListeners = () => {
     document.addEventListener('finishCheckpoint', handleFinishCheckpoint);
   };
 
   /**
-   * Clean up event listeners
+   * Clean up global event listeners to prevent memory leaks
+   * Removes all event listeners added by this component
+   * @return {void}
    */
   const cleanupEventListeners = () => {
     document.removeEventListener('finishCheckpoint', handleFinishCheckpoint);
   };
 
   /**
-   * Handle finish checkpoint event
+   * Handle finish checkpoint event from QuickCheck component
+   * Resumes video playback if auto-play is enabled after checkpoint completion
+   * @return {void}
    */
   const handleFinishCheckpoint = () => {
     if (videoPlayer.value && store.actionSettings.useAutoPlay) {

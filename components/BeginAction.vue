@@ -1,6 +1,7 @@
 <template>
+  <!-- @ts-ignore -->
   <button
-    class="u-mar-top-32"
+    class="interactive-video-primary-button"
     :disabled="mediaState !== 'loaded'"
     @click="startButtonClickHandler">
     Start
@@ -10,8 +11,10 @@
 <script setup>
 /**
  * Props for the BeginAction button.
- * @property {string} mediaState - The current state of the media ("loaded" enables the button).
- * @property {Function} startButtonClickHandler - The function to call when the button is clicked.
+ * @property {string} mediaState - The current state of the media
+ *   ("loaded" enables the button).
+ * @property {(event: MouseEvent) => void} startButtonClickHandler - The function
+ *   to call when the button is clicked.
  */
   defineProps({
     mediaState: {

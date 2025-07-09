@@ -8,6 +8,7 @@ import { defineStore } from 'pinia';
  * @property {number} gap
  * @property {string} type
  * @property {Object} quick_check_content
+ * @property {string} prompt
  */
 
 /**
@@ -27,12 +28,15 @@ export const useQuickCheckStore = defineStore('quickCheck', {
     isComplete: false,
     pronunciationToggle: null,
     isVisible: false,
+    /** @type {Array<QuickCheck>} */
     quickChecks: [],
   }),
 
   getters: {
     /**
      * Get the current quick check based on offset
+     * @param {QuickCheckState} state - The current state
+     * @return {QuickCheck|undefined} The current quick check or undefined if not found
      */
     currentQuickCheck: (state) => {
       if (!state.currentOffset || !state.quickChecks) {
@@ -45,9 +49,11 @@ export const useQuickCheckStore = defineStore('quickCheck', {
 
     /**
      * Check if there are any quick checks available
+     * @param {QuickCheckState} state - The current state
+     * @return {boolean} True if there are quick checks available
      */
     hasQuickChecks: (state) => {
-      return state.quickChecks && state.quickChecks.length > 0;
+      return Boolean(state.quickChecks && state.quickChecks.length > 0);
     },
   },
 
@@ -105,6 +111,7 @@ export const useQuickCheckStore = defineStore('quickCheck', {
     },
     /**
      * Update multiple quick check state properties at once
+     * @param {any} payload - The state properties to update
      */
     updateQuickCheckState(payload) {
       this.$patch(payload);

@@ -18,7 +18,7 @@
           </BasicCheckbox>
           <AnimatedLoadingIcon v-if="mediaState === 'loading'" />
           <BeginAction
-            class="u-mar-top-32"
+            class="interactive-video-primary-button"
             :mediaState="mediaState"
             :startButtonClickHandler="startActivity" />
         </div>
@@ -28,6 +28,8 @@
 </template>
 
 <script setup>
+// @ts-check
+
   import { onMounted } from 'vue';
   import { mainStore } from '../stores/main/main_store';
   import { browserIsSafari } from '../lib/safari_browser_check';
@@ -45,16 +47,24 @@
   const title = store.activityInfo.title;
 
   const videoSources = store.activityInfo.reference.map(
+    /** @param {{ video_path: string }} reference */
     (reference) => reference.video_path
   );
 
-  const { mediaState, loadMedia, whitelistMedia } = useMedia(videoSources);
+  const { mediaState, loadMedia, whitelistMedia } = /** @type {{
+    mediaState: import('vue').Ref<string>;
+    loadMedia: () => Promise<void>;
+    whitelistMedia: (e: Event) => Promise<void>;
+  }} */ (useMedia(videoSources));
 
   /**
    * Update the autoplay setting in the store when the checkbox changes
+   * @param {Event} evt - The change event from the checkbox
+   * @return {void}
    */
-  const updateSettings = function (evt) {
-    const useAutoPlay = evt.target.checked;
+  const updateSettings = function(evt) {
+    const target = /** @type {HTMLInputElement} */ (evt.target);
+    const useAutoPlay = target.checked;
     store.updateAutoPlaySetting(useAutoPlay);
   };
 

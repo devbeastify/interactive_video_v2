@@ -1,6 +1,12 @@
+// @ts-check
+
 import { ref } from 'vue';
 
-// Composable to manage media loading and whitelisting
+/**
+ * Composable to manage media loading and whitelisting for interactive video
+ * @param {string[]} videoFiles - Array of video file URLs to manage
+ * @return {Object} Object containing mediaState, loadMedia, and whitelistMedia
+ */
 export function useMedia(videoFiles) {
   const mediaState = ref('idle');
 
@@ -18,13 +24,13 @@ export function useMedia(videoFiles) {
       await Promise.all(
         videoFiles.map(
           (videoFile) =>
-            new Promise((resolve, reject) => {
+            /** @type {Promise<void>} */ (new Promise((resolve, reject) => {
               const video = document.createElement('video');
               video.src = videoFile;
               video.preload = 'auto';
-              video.addEventListener('canplaythrough', resolve, { once: true });
+              video.addEventListener('canplaythrough', () => resolve(), { once: true });
               video.addEventListener('error', reject, { once: true });
-            })
+            }))
         )
       );
       mediaState.value = 'loaded';
@@ -46,7 +52,7 @@ export function useMedia(videoFiles) {
       await Promise.all(
         videoFiles.map(
           (videoFile) =>
-            new Promise((resolve, reject) => {
+            /** @type {Promise<void>} */ (new Promise((resolve, reject) => {
               const video = document.createElement('video');
               video.src = videoFile;
               const playPromise = video.play();
@@ -60,7 +66,7 @@ export function useMedia(videoFiles) {
               } else {
                 resolve();
               }
-            })
+            }))
         )
       );
       return Promise.resolve();

@@ -31,3 +31,11 @@
     </g>
   </svg>
 </template>
+
+<script>
+// @ts-check
+
+  export default {
+    name: 'AnimatedLoadingIcon',
+  };
+</script>

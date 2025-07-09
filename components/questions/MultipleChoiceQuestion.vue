@@ -19,6 +19,8 @@
 </template>
 
 <script setup>
+// @ts-check
+
 /**
  * Props for the multiple choice question.
  * @property {Object} question - The question object, must have `prompt` and `choices`.

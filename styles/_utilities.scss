@@ -1,6 +1,6 @@
 @use 'MusicV3/v3/styles/base' as base;
 
-.u-mar-top-32 {
+.interactive-video-primary-button {
   min-width: base.rpx(200);
   background-color: var(--global-button-background-primary, #252525);
   color: var(--global-button-text-primary, #fff);
@@ -12,10 +12,12 @@
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
-.u-mar-top-32:hover:not(:disabled) {
+
+.interactive-video-primary-button:hover:not(:disabled) {
   background-color: var(--global-button-background-primary-hover, #1f7069);
 }
-.u-mar-top-32:disabled {
+
+.interactive-video-primary-button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }

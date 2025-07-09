@@ -29,7 +29,7 @@
           v-else-if="quickCheckStore.currentQuickCheck.type === 'pronunciation'">
           <PronunciationQuestion
             :question="quickCheckStore.currentQuickCheck"
-            :pronunciationToggle="quickCheckStore.pronunciationToggle"
+            :pronunciationToggle="quickCheckStore.pronunciationToggle || undefined"
             @pronunciation-complete="handlePronunciationComplete" />
         </div>
 
@@ -44,6 +44,8 @@
 </template>
 
 <script setup>
+// @ts-check
+
   import { useQuickCheckStore } from '../stores/main/quick_check_store';
   import MultipleChoiceQuestion from './questions/MultipleChoiceQuestion.vue';
   import FillInTheBlanksQuestion from './questions/FillInTheBlanksQuestion.vue';
@@ -61,7 +63,7 @@
 
   /**
    * Handles the event when fill-in-the-blanks answers are submitted.
-   * @param {Array} answers - The submitted answers.
+   * @param {Array<string>} answers - The submitted answers.
    */
   const handleAnswerSubmitted = (answers) => {
     handleComplete();

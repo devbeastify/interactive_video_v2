@@ -7,6 +7,8 @@
 </template>
 
 <script setup>
+// @ts-check
+
   import { useMainStore } from '../composables/use_main_store';
   import InteractiveVideoIntro from './InteractiveVideoIntro.vue';
   import InteractiveVideoPlayer from './InteractiveVideoPlayer.vue';

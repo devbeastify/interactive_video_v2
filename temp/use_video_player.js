@@ -113,68 +113,74 @@ export function useVideoPlayer(videoContainer) {
         /** @type {VideoData} */
         const videoData = mainStore().activityInfo.reference[0];
 
-        // @ts-expect-error - VHL.Video.File constructor returns a different type
-        videoPlayer.value = new VHL.Video.File();
+        try {
+          // @ts-expect-error - VHL.Video.File constructor returns a different type
+          videoPlayer.value = new VHL.Video.File();
 
-        /** @type {VideoOptions} */
-        const options = {
-          videoContainer: videoContainer.value,
-          sourceURL: videoData.video_path,
-          fluid: true,
-          videoTracks: createCaptionObject(videoData),
-        };
+          /** @type {VideoOptions} */
+          const options = {
+            videoContainer: videoContainer.value,
+            sourceURL: videoData.video_path,
+            fluid: true,
+            videoTracks: createCaptionObject(videoData),
+          };
 
-        if (videoPlayer.value) {
-          videoPlayer.value.init(options);
-          videoPlayer.value.show_controls = true;
-          videoPlayer.value.initialize_video();
-          videoPlayer.value.show_video();
+          if (videoPlayer.value) {
+            videoPlayer.value.init(options);
+            videoPlayer.value.show_controls = true;
+            videoPlayer.value.initialize_video();
+            
+            // Add error handling for show_video
+            try {
+              videoPlayer.value.show_video();
+            } catch (error) {
+              console.warn('Failed to show video:', error);
+            }
+          }
+
+          if (useQuickCheckStore().hasQuickChecks) {
+            setupCheckpoints();
+          }
+
+          setupVideoEvents();
+
+          handleAutoPlay();
+        } catch (error) {
+          console.error('Failed to initialize video player:', error);
         }
-
-        if (useQuickCheckStore().hasQuickChecks) {
-          setupCheckpoints();
-        }
-
-        setupVideoEvents();
-
-        handleAutoPlay();
       }
     }, 100);
   };
 
   /**
-   * Handle auto-play based on store setting
+   * Handle auto-play based on browser support
    * @return {void}
    */
   const handleAutoPlay = () => {
     if (!videoPlayer.value) return;
 
-    if (mainStore().actionSettings.useAutoPlay) {
-      const checkVideoReady = () => {
-        if (videoPlayer.value && videoPlayer.value.videojs_player) {
-          /** @type {VideoJSPlayer} */
-          const player = videoPlayer.value.videojs_player;
+    const checkVideoReady = () => {
+      if (videoPlayer.value && videoPlayer.value.videojs_player) {
+        /** @type {VideoJSPlayer} */
+        const player = videoPlayer.value.videojs_player;
 
-          if (player.readyState() >= 1) {
-            player
-              .play()
-              .then(() => {
-                isPlaying.value = true;
-              })
-              .catch(/** @param {Error} error */ (error) => {
-                console.warn('Auto-play failed:', error);
-                isPlaying.value = false;
-              });
-          } else {
-            setTimeout(checkVideoReady, 100);
-          }
+        if (player.readyState() >= 1) {
+          player
+            .play()
+            .then(() => {
+              isPlaying.value = true;
+            })
+            .catch(/** @param {Error} error */ (error) => {
+              console.warn('Auto-play failed:', error);
+              isPlaying.value = false;
+            });
+        } else {
+          setTimeout(checkVideoReady, 100);
         }
-      };
+      }
+    };
 
-      setTimeout(checkVideoReady, 500);
-    } else {
-      isPlaying.value = false;
-    }
+    setTimeout(checkVideoReady, 500);
   };
 
   /**
@@ -290,12 +296,6 @@ export function useVideoPlayer(videoContainer) {
 
     player.on('pause', () => {
       isPlaying.value = false;
-    });
-
-    player.on('loadedmetadata', () => {
-      if (mainStore().actionSettings.useAutoPlay && !isPlaying.value) {
-        handleAutoPlay();
-      }
     });
   };
 

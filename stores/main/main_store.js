@@ -32,8 +32,8 @@ import { getActivityInfo, parseActivityInfo } from './activity_info';
  * @property {string} topic
  * @property {string} sub_topic
  * @property {string} title
- * @property {Array<VideoReference>} reference
- * @property {Array<QuickCheck>} quick_checks
+ * @property {Array<any>} reference
+ * @property {Array<any>} quick_checks
  */
 
 /**
@@ -49,6 +49,7 @@ export const mainStore = defineStore('interactive_video_v2', {
       useAutoPlay: false,
     },
     isInitialized: false,
+    /** @type {ActivityInfo} */
     activityInfo: {
       topic: '',
       sub_topic: '',
@@ -64,7 +65,12 @@ export const mainStore = defineStore('interactive_video_v2', {
      */
     init() {
       getActivityInfo()
-        .then((activityInfo) => parseActivityInfo(activityInfo))
+        .then((activityInfo) => {
+          if (!activityInfo) {
+            throw new Error('Activity info element not found');
+          }
+          return parseActivityInfo(activityInfo);
+        })
         .then((activityInfo) => {
           this.activityInfo = activityInfo;
           const screens = buildScreensForActivity(activityInfo);

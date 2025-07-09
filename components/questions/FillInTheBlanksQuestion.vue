@@ -17,6 +17,8 @@
 </template>
 
 <script setup>
+// @ts-check
+
   import { ref, watch, onMounted } from 'vue';
 
   const props = defineProps({
@@ -31,6 +33,7 @@
   /**
    * Holds the user's answers for each blank.
    * Initialized to empty strings for each blank.
+   * @type {import('vue').Ref<string[]>}
    */
   const answers = ref([]);
 
@@ -57,7 +60,8 @@
    * @param {Event} event - The input event.
    */
   function onInput(idx, event) {
-    answers.value[idx] = event.target.value;
+    const target = /** @type {HTMLInputElement} */ (event.target);
+    answers.value[idx] = target.value;
   }
 
   /**
