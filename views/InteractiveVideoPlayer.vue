@@ -6,6 +6,14 @@
       </div>
     </div>
 
+    <!-- Direction Line -->
+    <DirectionLine
+      v-if="store.currentStepInfo"
+      ref="directionLineRef"
+      :direction-line="store.currentStepInfo.directionLine"
+      :step-index="store.currentStep"
+      @audio-ended="handleDirectionLineAudioEnded" />
+
     <div v-if="showControls" :class="$style['video-controls']">
       <button :class="$style['control-btn']" @click="togglePlayPause">
         {{ isPlaying ? 'Pause' : 'Play' }}
@@ -30,6 +38,7 @@
   import { useQuickCheckStore } from '../stores/main/quick_check_store';
   import { useVideoPlayer } from '../composables/use_video_player';
   import QuickCheck from '../components/QuickCheck.vue';
+  import DirectionLine from '../components/DirectionLine.vue';
 
   /**
    * @typedef {import('../composables/use_video_player').VideoPlayer} VideoPlayer
@@ -41,6 +50,8 @@
 
   /** @type {import('vue').Ref<HTMLElement|null>} */
   const videoContainer = ref(null);
+  /** @type {import('vue').Ref<any|null>} */
+  const directionLineRef = ref(null);
   /** @type {import('vue').Ref<boolean>} */
   const showControls = ref(true);
 
@@ -70,6 +81,15 @@
 
     if (store.activityInfo.quick_checks) {
       quickCheckStore.updateQuickCheckState({ quickChecks: store.activityInfo.quick_checks });
+    }
+
+    // Auto-play direction line audio if enabled
+    if (store.actionSettings.useAutoPlay && store.currentStepInfo) {
+      setTimeout(() => {
+        if (directionLineRef.value) {
+          directionLineRef.value.autoPlayAudio();
+        }
+      }, 1000);
     }
   });
 
@@ -103,6 +123,40 @@
   );
 
   /**
+   * Watch for step changes and handle direction line audio
+   */
+  watch(
+    () => store.currentStep,
+    (newStep) => {
+      if (store.actionSettings.useAutoPlay && store.currentStepInfo) {
+        setTimeout(() => {
+          if (directionLineRef.value) {
+            directionLineRef.value.autoPlayAudio();
+          }
+        }, 500);
+      }
+    }
+  );
+
+  /**
+   * Handle direction line audio ended event
+   * @return {void}
+   */
+  const handleDirectionLineAudioEnded = () => {
+    // Resume video playback if auto-play is enabled
+    if (store.actionSettings.useAutoPlay && videoPlayer.value) {
+      videoPlayer.value.play()
+        .then(() => {
+          isPlaying.value = true;
+        })
+        .catch(/** @param {Error} error */ (error) => {
+          console.error('Error resuming video after direction line audio:', error);
+          isPlaying.value = false;
+        });
+    }
+  };
+
+  /**
    * Toggle between play and pause states
    * Handles the play/pause button click functionality
    * @return {void}
@@ -112,8 +166,16 @@
 
     if (isPlaying.value) {
       videoPlayer.value.pause();
+      isPlaying.value = false;
     } else {
-      videoPlayer.value.play();
+      videoPlayer.value.play()
+        .then(() => {
+          isPlaying.value = true;
+        })
+        .catch(/** @param {Error} error */ (error) => {
+          console.error('Error playing video:', error);
+          isPlaying.value = false;
+        });
     }
   };
 
@@ -135,8 +197,8 @@
    * @return {boolean} True if videojs_player is available and functional
    */
   const hasVideoJsPlayer = () => {
-    return videoPlayer.value?.videojs_player &&
-      typeof videoPlayer.value.videojs_player.currentTime === 'function';
+    return !!(videoPlayer.value?.videojs_player &&
+      typeof videoPlayer.value.videojs_player.currentTime === 'function');
   };
 
   /**
@@ -148,8 +210,14 @@
     if (!videoPlayer.value?.videojs_player) return;
 
     videoPlayer.value.videojs_player.currentTime(0);
-    videoPlayer.value.videojs_player.play();
-    isPlaying.value = true;
+    videoPlayer.value.videojs_player.play()
+      .then(() => {
+        isPlaying.value = true;
+      })
+      .catch(/** @param {Error} error */ (error) => {
+        console.error('Error restarting video:', error);
+        isPlaying.value = false;
+      });
   };
 
   /**
