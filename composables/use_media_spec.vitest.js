@@ -4,49 +4,46 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useMedia } from './use_media';
 
 /**
- * @typedef {Object} MediaTestSetup
- * @property {Function} originalCreateElement
- * @property {Function} mockVideoElement
+ * Sets up a mock for document.createElement to return a valid mock media element
+ * for 'video' and 'audio'.
+ * @param {Object} [options]
+ * @param {boolean} [options.shouldResolve=true] - Whether the media should resolve successfully
+ * @param {boolean} [options.shouldReject=false] - Whether the media should reject
+ * @returns {{
+ *   originalCreateElement: typeof document.createElement,
+ *   mockMediaElement: ReturnType<typeof vi.fn>
+ * }}
  */
-
-/**
- * Sets up mock video element for testing
- * @param {boolean} shouldResolve - Whether the video should resolve successfully
- * @param {boolean} shouldReject - Whether the video should reject
- * @return {MediaTestSetup}
- */
-function setupMockVideoElement(shouldResolve = true, shouldReject = false) {
+function setupMockMediaElement({ shouldResolve = true, shouldReject = false } = {}) {
   const originalCreateElement = document.createElement;
 
-  const mockVideoElement = vi.fn().mockImplementation((tag) => {
-    if (tag === 'video') {
-      const video = originalCreateElement.call(document, tag);
-      video.addEventListener = vi.fn().mockImplementation((event, callback) => {
-        if (event === 'canplaythrough' && shouldResolve) {
-          setTimeout(() => callback(), 10);
-        }
-      });
-      video.play = shouldReject ?
-        vi.fn().mockRejectedValue(new Error('Play failed')) :
-        vi.fn().mockResolvedValue(undefined);
-      video.pause = vi.fn();
-      video.src = '';
-      return video;
+  const mockMediaElement = vi.fn().mockImplementation((elementTag) => {
+    if (elementTag === 'video' || elementTag === 'audio') {
+      const media = {
+        addEventListener: vi.fn().mockImplementation((event, callback) => {
+          if (event === 'canplaythrough' && shouldResolve) {
+            setTimeout(() => callback(), 10);
+          }
+          if (event === 'error' && shouldReject) {
+            setTimeout(() => callback(new Error('Load failed')), 10);
+          }
+        }),
+        removeEventListener: vi.fn(),
+        play: shouldReject ?
+          vi.fn().mockRejectedValue(new Error('Play failed')) :
+          vi.fn().mockResolvedValue(undefined),
+        pause: vi.fn(),
+        src: '',
+        preload: 'auto',
+        readyState: shouldResolve ? 4 : 0,
+      };
+      return media;
     }
-    return originalCreateElement.call(document, tag);
+    return originalCreateElement.call(document, elementTag);
   });
 
-  document.createElement = mockVideoElement;
-
-  return { originalCreateElement, mockVideoElement };
-}
-
-/**
- * Restores original document.createElement
- * @param {Function} originalCreateElement
- */
-function restoreCreateElement(originalCreateElement) {
-  document.createElement = originalCreateElement;
+  document.createElement = mockMediaElement;
+  return { originalCreateElement, mockMediaElement };
 }
 
 describe('#useMedia', () => {
@@ -87,96 +84,106 @@ describe('#useMedia', () => {
   });
 
   describe('loadMedia', () => {
-    it('should set mediaState to "loaded" when no video files are provided', async () => {
+    it('should set mediaState to "loaded" when no media files are provided', async () => {
       const { mediaState, loadMedia } = useMedia([]);
       await loadMedia();
       expect(mediaState.value).toBe('loaded');
     });
 
-    it('should set mediaState to "loading" when video files are provided', async () => {
+    it('should set mediaState to "loaded" when all video files load successfully', async () => {
       const { mediaState, loadMedia } = useMedia(['video1.mp4', 'video2.mp4']);
-
-      const { originalCreateElement } = setupMockVideoElement(true);
-
+      const { originalCreateElement } = setupMockMediaElement({ shouldResolve: true });
       await loadMedia();
       expect(mediaState.value).toBe('loaded');
-
-      restoreCreateElement(originalCreateElement);
+      document.createElement = originalCreateElement;
     });
 
-    it('should set mediaState to "error" when video loading fails', async () => {
-      const { originalCreateElement } = setupMockVideoElement(false);
-      document.createElement = vi.fn().mockImplementation(() => {
-        throw new Error('Video creation failed');
-      });
+    it('should set mediaState to "loaded" when all audio files load successfully', async () => {
+      const { mediaState, loadMedia } = useMedia(['audio1.mp3', 'audio2.wav']);
+      const { originalCreateElement } = setupMockMediaElement({ shouldResolve: true });
+      await loadMedia();
+      expect(mediaState.value).toBe('loaded');
+      document.createElement = originalCreateElement;
+    });
 
-      const { mediaState, loadMedia } = useMedia(['video1.mp4']);
+    it('should set mediaState to "error" when any media file fails to load', async () => {
+      const { mediaState, loadMedia } = useMedia(['video1.mp4', 'audio1.mp3']);
+
+      let callCount = 0;
+      const originalCreateElement = document.createElement;
+      document.createElement = vi.fn().mockImplementation((tag) => {
+        const media = originalCreateElement.call(document, tag);
+        media.addEventListener = vi.fn().mockImplementation((event, callback) => {
+          if (event === 'canplaythrough' && callCount === 0) {
+            setTimeout(() => callback(), 10);
+          }
+          if (event === 'error' && callCount === 1) {
+            setTimeout(() => callback(new Error('Load failed')), 10);
+          }
+        });
+        media.play = vi.fn().mockResolvedValue(undefined);
+        media.pause = vi.fn();
+        media.src = '';
+        media.readyState = callCount === 0 ? 4 : 0;
+        callCount++;
+        return media;
+      });
       await loadMedia();
       expect(mediaState.value).toBe('error');
-
-      restoreCreateElement(originalCreateElement);
+      document.createElement = originalCreateElement;
     });
   });
 
   describe('whitelistMedia', () => {
-    it('should resolve immediately when no video files are provided', async () => {
+    it('should resolve immediately when no media files are provided', async () => {
       const { whitelistMedia } = useMedia([]);
       await expect(whitelistMedia()).resolves.toBeUndefined();
     });
 
-    it('should attempt to play and pause videos for whitelisting', async () => {
-      const { whitelistMedia } = useMedia(['video1.mp4', 'video2.mp4']);
-
-      const { originalCreateElement } = setupMockVideoElement(true);
-
+    it('should attempt to play and pause videos and audios for whitelisting', async () => {
+      const { whitelistMedia } = useMedia(['video1.mp4', 'audio1.mp3']);
+      const { originalCreateElement, mockMediaElement } = setupMockMediaElement({
+        shouldResolve: true,
+      });
       await whitelistMedia();
-
-      expect(document.createElement).toHaveBeenCalledWith('video');
-
-      restoreCreateElement(originalCreateElement);
+      expect(mockMediaElement).toHaveBeenCalledWith('video');
+      expect(mockMediaElement).toHaveBeenCalledWith('audio');
+      document.createElement = originalCreateElement;
     });
 
-    it('should handle play promises that resolve', async () => {
-      const { whitelistMedia } = useMedia(['video1.mp4']);
-
-      const { originalCreateElement } = setupMockVideoElement(true);
-
+    it('should handle play promises that resolve for both video and audio', async () => {
+      const { whitelistMedia } = useMedia(['video1.mp4', 'audio1.mp3']);
+      const { originalCreateElement } = setupMockMediaElement({ shouldResolve: true });
       await whitelistMedia();
-
       expect(true).toBe(true);
-
-      restoreCreateElement(originalCreateElement);
+      document.createElement = originalCreateElement;
     });
 
-    it('should handle play promises that reject', async () => {
-      const { originalCreateElement } = setupMockVideoElement(false, true);
-
+    it('should not reject if play promise is rejected (should resolve)', async () => {
       const { whitelistMedia } = useMedia(['video1.mp4']);
-
-      await expect(whitelistMedia()).rejects.toThrow('Play failed');
-
-      restoreCreateElement(originalCreateElement);
+      const { originalCreateElement } = setupMockMediaElement({
+        shouldResolve: true, shouldReject: true,
+      });
+      await expect(whitelistMedia()).resolves.toBeUndefined();
+      document.createElement = originalCreateElement;
     });
 
     it('should handle browsers that do not return play promises', async () => {
-      const { originalCreateElement } = setupMockVideoElement(true);
+      const { originalCreateElement } = setupMockMediaElement({ shouldResolve: true });
       document.createElement = vi.fn().mockImplementation((tag) => {
-        if (tag === 'video') {
-          const video = originalCreateElement.call(document, tag);
-          video.play = vi.fn().mockReturnValue(undefined);
-          video.pause = vi.fn();
-          video.src = '';
-          return video;
+        if (tag === 'video' || tag === 'audio') {
+          const media = originalCreateElement.call(document, tag);
+          media.play = vi.fn().mockReturnValue(undefined);
+          media.pause = vi.fn();
+          media.src = '';
+          return media;
         }
         return originalCreateElement.call(document, tag);
       });
-
-      const { whitelistMedia } = useMedia(['video1.mp4']);
+      const { whitelistMedia } = useMedia(['video1.mp4', 'audio1.mp3']);
       await whitelistMedia();
-
       expect(true).toBe(true);
-
-      restoreCreateElement(originalCreateElement);
+      document.createElement = originalCreateElement;
     });
   });
 });

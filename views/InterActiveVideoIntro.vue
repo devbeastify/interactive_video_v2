@@ -9,7 +9,7 @@
         </div>
         <div :class="$style['interstitial-controls']">
           <BasicCheckbox
-            v-if="!browserIsSafari()"
+            v-if="false"
             id="autoplay-media"
             :modelValue="store.actionSettings.useAutoPlay"
             size="lg"
@@ -39,26 +39,60 @@
   import { useMedia } from '../composables/use_media';
   import AnimatedLoadingIcon from '../components/AnimatedLoadingIcon.vue';
 
+  /**
+   * Emits the 'start' event when the activity should begin.
+   * @type {(event: 'start') => void}
+   */
   const emit = defineEmits(['start']);
 
+  /**
+   * The main Pinia store instance for activity and settings.
+   * @type {ReturnType<typeof mainStore>}
+   */
   const store = mainStore();
-  const topic = store.activityInfo.topic;
-  const subTopic = store.activityInfo.sub_topic;
-  const title = store.activityInfo.title;
-
-  const videoSources = store.activityInfo.reference.map(
-    /** @param {{ video_path: string }} reference */
-    (reference) => reference.video_path
-  );
-
-  const { mediaState, loadMedia, whitelistMedia } = /** @type {{
-    mediaState: import('vue').Ref<string>;
-    loadMedia: () => Promise<void>;
-    whitelistMedia: (e: Event) => Promise<void>;
-  }} */ (useMedia(videoSources));
 
   /**
-   * Update the autoplay setting in the store when the checkbox changes
+   * The topic of the current activity.
+   * @type {string}
+   */
+  const topic = store.activityInfo.topic;
+
+  /**
+   * The sub-topic of the current activity.
+   * @type {string}
+   */
+  const subTopic = store.activityInfo.sub_topic;
+
+  /**
+   * The title of the current activity.
+   * @type {string}
+   */
+  const title = store.activityInfo.title;
+
+  /**
+   * All media sources (video and audio) for the activity.
+   * @type {string[]}
+   */
+  const allMediaSources = store.activityInfo.reference.flatMap(
+    /**
+     * @param {{ video_path?: string, audio_path?: string }} reference
+     * @returns {string[]}
+     */
+    (reference) => [reference.video_path, reference.audio_path]
+  ).filter(Boolean);
+
+  /**
+   * Media composable state and actions for the intro screen.
+   * @type {{
+   *   mediaState: import('vue').Ref<string>,
+   *   loadMedia: () => Promise<void>,
+   *   whitelistMedia: (e: Event) => Promise<void>
+   * }}
+   */
+  const { mediaState, loadMedia, whitelistMedia } = useMedia(allMediaSources);
+
+  /**
+   * Update the autoplay setting in the store when the checkbox changes.
    * @param {Event} evt - The change event from the checkbox
    * @return {void}
    */
@@ -71,6 +105,7 @@
   /**
    * Starts the activity by moving to the player screen.
    * @param {Event} e
+   * @return {Promise<void>}
    */
   const startActivity = async (e) => {
     try {
@@ -82,7 +117,8 @@
   };
 
   /**
-   * Lifecycle hook to load media when the component is mounted
+   * Lifecycle hook to load media when the component is mounted.
+   * @returns {void}
    */
   onMounted(() => {
     store.resetIndex();
