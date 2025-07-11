@@ -4,6 +4,8 @@
     @start="goToPlayer" />
   <InteractiveVideoPlayer
     v-else-if="store.sequencer.currentScreen?.name === 'player'" />
+  <DiagnosticScreen
+    v-else-if="store.sequencer.currentScreen?.name === 'diagnostic'" />
 </template>
 
 <script setup>
@@ -12,6 +14,7 @@
   import { useMainStore } from '../composables/use_main_store';
   import InteractiveVideoIntro from './InteractiveVideoIntro.vue';
   import InteractiveVideoPlayer from './InteractiveVideoPlayer.vue';
+  import DiagnosticScreen from './DiagnosticScreen.vue';
 
   const store = useMainStore();
 

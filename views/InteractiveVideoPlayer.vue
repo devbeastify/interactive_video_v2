@@ -1,11 +1,5 @@
 <template>
   <div :class="$style['interactive-video-player']">
-    <div :class="$style['c-interactive-video']">
-      <div :class="$style['c-interactive-video-video']">
-        <div ref="videoContainer" class="js-tutorial-container" />
-      </div>
-    </div>
-
     <!-- Direction Line for current step -->
     <DirectionLineComponent
       v-if="currentDirectionLine"
@@ -14,6 +8,12 @@
       @play="handleDirectionLinePlay"
       @pause="handleDirectionLinePause"
       @audio-ended="handleDirectionLineAudioEnded" />
+
+    <div :class="$style['c-interactive-video']">
+      <div :class="$style['c-interactive-video-video']">
+        <div ref="videoContainer" class="js-tutorial-container" />
+      </div>
+    </div>
 
     <div v-if="showControls" :class="$style['video-controls']">
       <button :class="$style['control-btn']" @click="togglePlayPause">
@@ -137,7 +137,7 @@
   const initializeDirectionLine = () => {
     // Get current step data from sequencer or activity info
     const currentScreen = store.sequencer.currentScreen;
-    if (currentScreen && currentScreen.type !== 'intro') {
+    if (currentScreen && currentScreen.type === 'player') {
       currentStepData.value = {
         id: currentScreen.id || `step_${currentStepIndex.value}`,
         type: currentScreen.type || 'interactive_step',

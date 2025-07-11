@@ -171,11 +171,7 @@ export class DirectionLine {
       return 'Complete the interactive activity.';
     case 'diagnostic':
       return 'Answer the questions to test your understanding.';
-    case 'video_intro':
-      return 'Watch the video and follow along.';
-    case 'video_step':
-      return 'Watch the video and follow along.';
-    case 'interactive_step':
+    case 'player':
       return 'Complete the interactive activity.';
     default:
       console.warn(

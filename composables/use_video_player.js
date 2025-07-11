@@ -282,6 +282,7 @@ export function useVideoPlayer(videoContainer) {
 
     player.on('ended', () => {
       isPlaying.value = false;
+      mainStore().sequencer.goToScreen('diagnostic');
     });
 
     player.on('play', () => {
