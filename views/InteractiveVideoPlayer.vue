@@ -83,25 +83,11 @@
    * Current step information for direction line
    */
   const currentStepIndex = ref(0);
-  /** @type {import('vue').Ref<StepData|null>} */
-  const currentStepData = ref(null);
 
   /**
-   * Computed property for current direction line
+   * Computed property for current direction line from store
    */
-  const currentDirectionLine = computed(() => {
-    if (!currentStepData.value) return null;
-
-    const stepInfo = currentStepData.value;
-    return new DirectionLine({
-      stepId: stepInfo.id || `step_${currentStepIndex.value}`,
-      name: stepInfo.type || 'interactive_step',
-      text: stepInfo.directionLine || '',
-      isNew: stepInfo.isNew !== false,
-      languageCode: stepInfo.languageCode || 'en',
-      stepType: stepInfo.type || 'interactive_step',
-    });
-  });
+  const currentDirectionLine = computed(() => store.currentDirectionLine);
 
   /**
    * Lifecycle hook: Initialize video player and event listeners on mount
@@ -135,23 +121,8 @@
    * Initialize direction line for the current step
    */
   const initializeDirectionLine = () => {
-    // Get current step data from sequencer or activity info
-    const currentScreen = store.sequencer.currentScreen;
-    if (currentScreen && currentScreen.type === 'player') {
-      currentStepData.value = {
-        id: currentScreen.id || `step_${currentStepIndex.value}`,
-        type: currentScreen.type || 'interactive_step',
-        directionLine: currentScreen.directionLine || '',
-        isNew: currentScreen.isNew !== false,
-        languageCode: 'en',
-      };
-
-      // Set direction line in store
-      if (currentDirectionLine.value) {
-        store.setCurrentDirectionLine(currentDirectionLine.value);
-        store.startDirectionLineAudio();
-      }
-    }
+    // Use centralized DL logic from store
+    store.initializeDirectionLineForStep('player');
   };
 
   /**

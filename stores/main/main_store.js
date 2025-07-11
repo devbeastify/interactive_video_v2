@@ -29,12 +29,24 @@ import { DirectionLine } from './direction_line';
  */
 
 /**
+ * @typedef DiagnosticData
+ * @property {string} dl - Direction line text
+ * @property {string} failure_message
+ * @property {Array<Object>} items
+ * @property {string} language
+ * @property {string} number_of_questions
+ * @property {string} threshold
+ */
+
+/**
  * @typedef ActivityInfo
  * @property {string} topic
  * @property {string} sub_topic
  * @property {string} title
+ * @property {string} dl - Main direction line
  * @property {Array<any>} reference
  * @property {Array<any>} quick_checks
+ * @property {DiagnosticData} diagnostic
  */
 
 /**
@@ -58,8 +70,17 @@ export const mainStore = defineStore('interactive_video_v2', {
       topic: '',
       sub_topic: '',
       title: '',
+      dl: '',
       reference: [],
       quick_checks: [],
+      diagnostic: {
+        dl: '',
+        failure_message: '',
+        items: [],
+        language: '',
+        number_of_questions: '',
+        threshold: '',
+      },
     },
     sequencer: new Sequencer(),
     /** @type {DirectionLine|null} */
@@ -68,6 +89,39 @@ export const mainStore = defineStore('interactive_video_v2', {
     /** @type {number|null} */
     directionLineTimer: null,
   }),
+
+  getters: {
+    /**
+     * Get direction line text for a specific step type
+     * @param {MainStoreState} state - The store state
+     * @return {function(string): string} Function that takes stepType and returns direction line text
+     */
+    getDirectionLineForStep: (state) => (stepType) => {
+      switch (stepType) {
+        case 'intro':
+          return state.activityInfo.dl || '';
+        case 'player':
+          return state.activityInfo.dl || '';
+        case 'diagnostic':
+          return state.activityInfo.diagnostic?.dl || '';
+        default:
+          return state.activityInfo.dl || '';
+      }
+    },
+
+    /**
+     * Check if direction lines are available for any step
+     * @param {MainStoreState} state - The store state
+     * @return {boolean} True if direction lines are available
+     */
+    hasDirectionLines: (state) => {
+      return Boolean(
+        state.activityInfo.dl ||
+        state.activityInfo.diagnostic?.dl
+      );
+    },
+  },
+
   actions: {
     /**
      * Initialize the store with activity information and build screens
@@ -82,6 +136,7 @@ export const mainStore = defineStore('interactive_video_v2', {
         })
         .then((activityInfo) => {
           this.activityInfo = activityInfo;
+          console.log('activityInfo', activityInfo);
           const screens = buildScreensForActivity(activityInfo);
           this.sequencer.addScreen(screens);
           this.sequencer.goToScreen('intro');
@@ -301,6 +356,42 @@ export const mainStore = defineStore('interactive_video_v2', {
     cleanupDirectionLine() {
       this.stopDirectionLineAudio();
       this.clearCurrentDirectionLine();
+    },
+
+    /**
+     * Initialize direction line for a specific step type
+     * @param {string} stepType - The step type to initialize direction line for
+     */
+    initializeDirectionLineForStep(stepType) {
+      const directionLineText = this.getDirectionLineForStep(stepType);
+      
+      if (directionLineText) {
+        const directionLine = new DirectionLine({
+          stepId: stepType,
+          text: directionLineText,
+          languageCode: this._getLanguageCodeForStep(stepType),
+          stepType: stepType,
+          isNew: true,
+        });
+        
+        this.setCurrentDirectionLine(directionLine);
+        this.startDirectionLineAudio();
+      }
+    },
+
+    /**
+     * Get language code for a specific step type
+     * @private
+     * @param {string} stepType - The step type
+     * @return {string} Language code
+     */
+    _getLanguageCodeForStep(stepType) {
+      switch (stepType) {
+        case 'diagnostic':
+          return this.activityInfo.diagnostic?.language || 'en';
+        default:
+          return 'en';
+      }
     },
   },
 });
