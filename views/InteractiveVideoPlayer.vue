@@ -6,12 +6,13 @@
       </div>
     </div>
 
-    <!-- Direction Line -->
-    <DirectionLine
-      v-if="store.currentStepInfo"
-      ref="directionLineRef"
-      :direction-line="store.currentStepInfo.directionLine"
-      :step-index="store.currentStep"
+    <!-- Direction Line for current step -->
+    <DirectionLineComponent
+      v-if="currentDirectionLine"
+      :direction-line="currentDirectionLine"
+      :step-index="currentStepIndex"
+      @play="handleDirectionLinePlay"
+      @pause="handleDirectionLinePause"
       @audio-ended="handleDirectionLineAudioEnded" />
 
     <div v-if="showControls" :class="$style['video-controls']">
@@ -33,16 +34,26 @@
 <script setup>
 // @ts-check
 
-  import { ref, onMounted, onUnmounted, watch } from 'vue';
+  import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
   import { mainStore } from '../stores/main/main_store';
   import { useQuickCheckStore } from '../stores/main/quick_check_store';
   import { useVideoPlayer } from '../composables/use_video_player';
+  import { DirectionLine } from '../stores/main/direction_line';
   import QuickCheck from '../components/QuickCheck.vue';
-  import DirectionLine from '../components/DirectionLine.vue';
+  import DirectionLineComponent from '../components/DirectionLine.vue';
 
   /**
    * @typedef {import('../composables/use_video_player').VideoPlayer} VideoPlayer
    * @typedef {import('../composables/use_video_player').VideoPlayerAPI} VideoPlayerAPI
+   */
+
+  /**
+   * @typedef {Object} StepData
+   * @property {string} id
+   * @property {string} type
+   * @property {string} directionLine
+   * @property {boolean} isNew
+   * @property {string} languageCode
    */
 
   const store = mainStore();
@@ -50,8 +61,6 @@
 
   /** @type {import('vue').Ref<HTMLElement|null>} */
   const videoContainer = ref(null);
-  /** @type {import('vue').Ref<any|null>} */
-  const directionLineRef = ref(null);
   /** @type {import('vue').Ref<boolean>} */
   const showControls = ref(true);
 
@@ -71,6 +80,30 @@
   } = useVideoPlayer(videoContainer);
 
   /**
+   * Current step information for direction line
+   */
+  const currentStepIndex = ref(0);
+  /** @type {import('vue').Ref<StepData|null>} */
+  const currentStepData = ref(null);
+
+  /**
+   * Computed property for current direction line
+   */
+  const currentDirectionLine = computed(() => {
+    if (!currentStepData.value) return null;
+
+    const stepInfo = currentStepData.value;
+    return new DirectionLine({
+      stepId: stepInfo.id || `step_${currentStepIndex.value}`,
+      name: stepInfo.type || 'interactive_step',
+      text: stepInfo.directionLine || '',
+      isNew: stepInfo.isNew !== false,
+      languageCode: stepInfo.languageCode || 'en',
+      stepType: stepInfo.type || 'interactive_step',
+    });
+  });
+
+  /**
    * Lifecycle hook: Initialize video player and event listeners on mount
    * Sets up the video player, event listeners, and quick check state
    * @return {void}
@@ -83,14 +116,8 @@
       quickCheckStore.updateQuickCheckState({ quickChecks: store.activityInfo.quick_checks });
     }
 
-    // Auto-play direction line audio if enabled
-    if (store.actionSettings.useAutoPlay && store.currentStepInfo) {
-      setTimeout(() => {
-        if (directionLineRef.value) {
-          directionLineRef.value.autoPlayAudio();
-        }
-      }, 1000);
-    }
+    // Initialize direction line for current step
+    initializeDirectionLine();
   });
 
   /**
@@ -101,7 +128,64 @@
   onUnmounted(() => {
     cleanupVideoPlayer();
     cleanupEventListeners();
+    store.cleanupDirectionLine();
   });
+
+  /**
+   * Initialize direction line for the current step
+   */
+  const initializeDirectionLine = () => {
+    // Get current step data from sequencer or activity info
+    const currentScreen = store.sequencer.currentScreen;
+    if (currentScreen && currentScreen.type !== 'intro') {
+      currentStepData.value = {
+        id: currentScreen.id || `step_${currentStepIndex.value}`,
+        type: currentScreen.type || 'interactive_step',
+        directionLine: currentScreen.directionLine || '',
+        isNew: currentScreen.isNew !== false,
+        languageCode: 'en',
+      };
+
+      // Set direction line in store
+      if (currentDirectionLine.value) {
+        store.setCurrentDirectionLine(currentDirectionLine.value);
+        store.startDirectionLineAudio();
+      }
+    }
+  };
+
+  /**
+   * Handle direction line play event
+   */
+  const handleDirectionLinePlay = () => {
+    // Pause video when direction line audio starts
+    if (videoPlayer.value && isPlaying.value) {
+      videoPlayer.value.pause();
+      isPlaying.value = false;
+    }
+  };
+
+  /**
+   * Handle direction line pause event
+   */
+  const handleDirectionLinePause = () => {
+    // Resume video if autoplay is enabled
+    if (videoPlayer.value && store.actionSettings.useAutoPlay) {
+      videoPlayer.value.play();
+      isPlaying.value = true;
+    }
+  };
+
+  /**
+   * Handle direction line audio ended event
+   */
+  const handleDirectionLineAudioEnded = () => {
+    // Resume video if autoplay is enabled
+    if (videoPlayer.value && store.actionSettings.useAutoPlay) {
+      videoPlayer.value.play();
+      isPlaying.value = true;
+    }
+  };
 
   /**
    * Watch for changes in auto-play setting and handle accordingly
@@ -123,40 +207,6 @@
   );
 
   /**
-   * Watch for step changes and handle direction line audio
-   */
-  watch(
-    () => store.currentStep,
-    (newStep) => {
-      if (store.actionSettings.useAutoPlay && store.currentStepInfo) {
-        setTimeout(() => {
-          if (directionLineRef.value) {
-            directionLineRef.value.autoPlayAudio();
-          }
-        }, 500);
-      }
-    }
-  );
-
-  /**
-   * Handle direction line audio ended event
-   * @return {void}
-   */
-  const handleDirectionLineAudioEnded = () => {
-    // Resume video playback if auto-play is enabled
-    if (store.actionSettings.useAutoPlay && videoPlayer.value) {
-      videoPlayer.value.play()
-        .then(() => {
-          isPlaying.value = true;
-        })
-        .catch(/** @param {Error} error */ (error) => {
-          console.error('Error resuming video after direction line audio:', error);
-          isPlaying.value = false;
-        });
-    }
-  };
-
-  /**
    * Toggle between play and pause states
    * Handles the play/pause button click functionality
    * @return {void}
@@ -166,16 +216,8 @@
 
     if (isPlaying.value) {
       videoPlayer.value.pause();
-      isPlaying.value = false;
     } else {
-      videoPlayer.value.play()
-        .then(() => {
-          isPlaying.value = true;
-        })
-        .catch(/** @param {Error} error */ (error) => {
-          console.error('Error playing video:', error);
-          isPlaying.value = false;
-        });
+      videoPlayer.value.play();
     }
   };
 
@@ -197,8 +239,8 @@
    * @return {boolean} True if videojs_player is available and functional
    */
   const hasVideoJsPlayer = () => {
-    return !!(videoPlayer.value?.videojs_player &&
-      typeof videoPlayer.value.videojs_player.currentTime === 'function');
+    return videoPlayer.value?.videojs_player &&
+      typeof videoPlayer.value.videojs_player.currentTime === 'function';
   };
 
   /**
@@ -210,14 +252,8 @@
     if (!videoPlayer.value?.videojs_player) return;
 
     videoPlayer.value.videojs_player.currentTime(0);
-    videoPlayer.value.videojs_player.play()
-      .then(() => {
-        isPlaying.value = true;
-      })
-      .catch(/** @param {Error} error */ (error) => {
-        console.error('Error restarting video:', error);
-        isPlaying.value = false;
-      });
+    videoPlayer.value.videojs_player.play();
+    isPlaying.value = true;
   };
 
   /**

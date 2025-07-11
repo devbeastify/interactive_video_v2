@@ -6,7 +6,7 @@
         @click="play" />
     </div>
     <div class="direction-line__text">
-      {{ directionLine.text }}
+      <span v-html="directionLine.text"></span>
     </div>
   </div>
 </template>
@@ -38,8 +38,12 @@
    */
   function showPlayButton() {
     const hasAudio = props.directionLine.audioPath && props.directionLine.audioPath.length > 0;
+    const hasText = props.directionLine.text && props.directionLine.text.length > 0;
     const isNew = props.directionLine.isNew;
-    return hasAudio && isNew;
+    const hasTTS = 'speechSynthesis' in window;
+    
+    // Show button if we have audio file OR if we have text and TTS is available
+    return isNew && (hasAudio || (hasText && hasTTS));
   }
 
   /**
@@ -129,22 +133,39 @@
    */
   async function playTTS() {
     if (!props.directionLine.text || !('speechSynthesis' in window)) {
+      console.warn('TTS not available or no text to speak');
       emit('audioEnded');
       return;
     }
 
     return new Promise((resolve) => {
-      const utterance = new SpeechSynthesisUtterance(props.directionLine.text);
+      // Extract text content from HTML
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = props.directionLine.text;
+      const textContent = tempDiv.textContent || tempDiv.innerText || '';
+
+      if (!textContent.trim()) {
+        console.warn('No text content to speak');
+        emit('audioEnded');
+        resolve();
+        return;
+      }
+
+      console.log('Using TTS to speak:', textContent);
+
+      const utterance = new SpeechSynthesisUtterance(textContent);
       utterance.lang = props.directionLine.languageCode || 'en';
       utterance.rate = 0.9;
       utterance.pitch = 1;
 
       utterance.onstart = () => {
+        console.log('TTS started');
         playButtonState.value = 'playing';
         emit('play');
       };
 
       utterance.onend = () => {
+        console.log('TTS ended');
         playButtonState.value = 'paused';
         emit('audioEnded');
         resolve();
@@ -157,6 +178,8 @@
         resolve();
       };
 
+      // Cancel any existing speech before starting new one
+      speechSynthesis.cancel();
       speechSynthesis.speak(utterance);
     });
   }

@@ -29,34 +29,12 @@ import { DirectionLine } from './direction_line';
  */
 
 /**
- * @typedef StepData
- * @property {string} id
- * @property {string} name
- * @property {string} [directionLineAudio]
- * @property {string} [directionLineText]
- * @property {string} [languageCode]
- * @property {number} startTime
- * @property {number} endTime
- */
-
-/**
- * @typedef Step
- * @property {string} id
- * @property {string} name
- * @property {DirectionLine} directionLine
- * @property {number} startTime
- * @property {number} endTime
- */
-
-/**
  * @typedef ActivityInfo
  * @property {string} topic
  * @property {string} sub_topic
  * @property {string} title
  * @property {Array<any>} reference
  * @property {Array<any>} quick_checks
- * @property {Array<StepData>} [steps]
- * @property {string} [languageCode]
  */
 
 /**
@@ -64,8 +42,9 @@ import { DirectionLine } from './direction_line';
  * @property {ActionSettings} actionSettings
  * @property {boolean} isInitialized
  * @property {ActivityInfo} activityInfo
- * @property {number} currentStep
- * @property {Array<Step>} processedSteps
+ * @property {DirectionLine|null} currentDirectionLine
+ * @property {boolean} isDirectionLinePlaying
+ * @property {number|null} directionLineTimer
  */
 
 export const mainStore = defineStore('interactive_video_v2', {
@@ -74,7 +53,6 @@ export const mainStore = defineStore('interactive_video_v2', {
       useAutoPlay: false,
     },
     isInitialized: false,
-    currentStep: 0,
     /** @type {ActivityInfo} */
     activityInfo: {
       topic: '',
@@ -82,40 +60,14 @@ export const mainStore = defineStore('interactive_video_v2', {
       title: '',
       reference: [],
       quick_checks: [],
-      steps: [],
     },
-    /** @type {Array<Step>} */
-    processedSteps: [],
     sequencer: new Sequencer(),
+    /** @type {DirectionLine|null} */
+    currentDirectionLine: null,
+    isDirectionLinePlaying: false,
+    /** @type {number|null} */
+    directionLineTimer: null,
   }),
-  getters: {
-    /**
-     * Get the current step
-     * @return {Step|null}
-     */
-    currentStepInfo() {
-      if (this.processedSteps && this.processedSteps.length > 0) {
-        return this.processedSteps[this.currentStep] || null;
-      }
-      return null;
-    },
-
-    /**
-     * Get the total number of steps
-     * @return {number}
-     */
-    totalSteps() {
-      return this.processedSteps ? this.processedSteps.length : 0;
-    },
-
-    /**
-     * Check if we're on the last step
-     * @return {boolean}
-     */
-    isLastStep() {
-      return this.currentStep === this.totalSteps - 1;
-    },
-  },
   actions: {
     /**
      * Initialize the store with activity information and build screens
@@ -130,7 +82,6 @@ export const mainStore = defineStore('interactive_video_v2', {
         })
         .then((activityInfo) => {
           this.activityInfo = activityInfo;
-          this._setupSteps();
           const screens = buildScreensForActivity(activityInfo);
           this.sequencer.addScreen(screens);
           this.sequencer.goToScreen('intro');
@@ -139,105 +90,6 @@ export const mainStore = defineStore('interactive_video_v2', {
 
       this.initializeAutoPlaySetting();
       this.isInitialized = true;
-    },
-
-    /**
-     * Setup steps with direction lines
-     * @private
-     */
-    _setupSteps() {
-      // Create default steps if none exist
-      if (!this.activityInfo.steps || this.activityInfo.steps.length === 0) {
-        const defaultDirectionLine = new DirectionLine({
-          audioPath: '',
-          isNew: true,
-          name: 'video_step',
-          text: 'Watch the video and follow along.',
-          stepId: 'step-1',
-          languageCode: this.activityInfo.languageCode || 'en',
-        });
-
-        this.processedSteps = [
-          {
-            id: 'step-1',
-            name: 'video_step',
-            directionLine: defaultDirectionLine,
-            startTime: 0,
-            endTime: 30,
-          },
-        ];
-        return;
-      }
-
-      // Process existing steps
-      this.processedSteps = this.activityInfo.steps.map((stepData, index) => {
-        const directionLine = new DirectionLine({
-          audioPath: stepData.directionLineAudio || '',
-          isNew: index === 0, // First step is new
-          name: stepData.name || 'unknown',
-          text: stepData.directionLineText || '',
-          stepId: stepData.id || `step-${index + 1}`,
-          languageCode: stepData.languageCode || this.activityInfo.languageCode || 'en',
-        });
-
-        return {
-          id: stepData.id,
-          name: stepData.name,
-          directionLine,
-          startTime: stepData.startTime || 0,
-          endTime: stepData.endTime || 30,
-        };
-      });
-    },
-
-    /**
-     * Go to the next step
-     */
-    nextStep() {
-      if (this.currentStep < this.totalSteps - 1) {
-        this.currentStep++;
-        this._updateStepDirectionLine();
-      }
-    },
-
-    /**
-     * Go to the previous step
-     */
-    previousStep() {
-      if (this.currentStep > 0) {
-        this.currentStep--;
-        this._updateStepDirectionLine();
-      }
-    },
-
-    /**
-     * Go to a specific step
-     * @param {number} stepIndex
-     */
-    goToStep(stepIndex) {
-      if (stepIndex >= 0 && stepIndex < this.totalSteps) {
-        this.currentStep = stepIndex;
-        this._updateStepDirectionLine();
-      }
-    },
-
-    /**
-     * Update the direction line for the current step
-     * @private
-     */
-    _updateStepDirectionLine() {
-      const currentStep = this.currentStepInfo;
-      if (currentStep && currentStep.directionLine) {
-        // Mark as new if it's different from the previous step
-        const previousStep = this.currentStep > 0 ? this.processedSteps[this.currentStep - 1] : null;
-        if (previousStep) {
-          currentStep.directionLine.isNew = 
-            currentStep.directionLine.text !== previousStep.directionLine.text ||
-            currentStep.directionLine.audioPath !== previousStep.directionLine.audioPath;
-        } else {
-          currentStep.directionLine.isNew = true;
-        }
-      }
     },
 
     /**
@@ -272,6 +124,183 @@ export const mainStore = defineStore('interactive_video_v2', {
     resetIndex() {
       this.actionSettings.useAutoPlay = true;
       localStorage.setItem('interactive_video_autoplay', 'true');
+    },
+
+    /**
+     * Set the current direction line for the active step
+     * @param {DirectionLine} directionLine
+     */
+    setCurrentDirectionLine(directionLine) {
+      this.currentDirectionLine = directionLine;
+    },
+
+    /**
+     * Clear the current direction line
+     */
+    clearCurrentDirectionLine() {
+      this.currentDirectionLine = null;
+      this.isDirectionLinePlaying = false;
+    },
+
+    /**
+     * Start direction line audio playback
+     */
+    startDirectionLineAudio() {
+      if (!this.currentDirectionLine) return;
+
+      this.isDirectionLinePlaying = true;
+      
+      // Set up timer for autoplay after 500ms
+      this.directionLineTimer = /** @type {number} */ (/** @type {unknown} */ (setTimeout(() => {
+        if (this.currentDirectionLine && this.currentDirectionLine.isNew) {
+          this.playDirectionLineAudio();
+        }
+      }, 500)));
+    },
+
+    /**
+     * Play direction line audio
+     */
+    async playDirectionLineAudio() {
+      if (!this.currentDirectionLine) return;
+
+      try {
+        // Try to generate audio if needed
+        const audioAvailable = await this.currentDirectionLine.generateAudioIfNeeded();
+        
+        if (audioAvailable && this.currentDirectionLine.audioPath) {
+          // Play audio file
+          await this._playAudioFile();
+        } else {
+          // Fallback to TTS
+          await this._playTTS();
+        }
+      } catch (error) {
+        console.error('Error playing direction line audio:', error);
+        // Fallback to TTS
+        await this._playTTS();
+      }
+    },
+
+    /**
+     * Play audio file from URL
+     * @private
+     * @return {Promise<void>}
+     */
+    async _playAudioFile() {
+      if (!this.currentDirectionLine?.audioPath) return;
+
+      return new Promise((resolve, reject) => {
+        const audio = new Audio(this.currentDirectionLine.audioPath);
+
+        audio.addEventListener('ended', () => {
+          this.isDirectionLinePlaying = false;
+          resolve();
+        }, { once: true });
+
+        audio.addEventListener('error', (error) => {
+          console.error('Audio file error:', error);
+          this.isDirectionLinePlaying = false;
+          reject(error);
+        }, { once: true });
+
+        if (audio.readyState >= 4) {
+          audio.play()
+            .then(() => {
+              this.isDirectionLinePlaying = true;
+            })
+            .catch(reject);
+        } else {
+          audio.addEventListener('canplaythrough', () => {
+            audio.play()
+              .then(() => {
+                this.isDirectionLinePlaying = true;
+              })
+              .catch(reject);
+          }, { once: true });
+        }
+      });
+    },
+
+    /**
+     * Play audio using TTS
+     * @private
+     * @return {Promise<void>}
+     */
+    async _playTTS() {
+      if (!this.currentDirectionLine?.text || !('speechSynthesis' in window)) {
+        console.warn('TTS not available or no text to speak');
+        this.isDirectionLinePlaying = false;
+        return;
+      }
+
+      return new Promise((resolve) => {
+        // Extract text content from HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = this.currentDirectionLine.text;
+        const textContent = tempDiv.textContent || tempDiv.innerText || '';
+
+        if (!textContent.trim()) {
+          console.warn('No text content to speak');
+          this.isDirectionLinePlaying = false;
+          resolve();
+          return;
+        }
+
+        console.log('Using TTS to speak:', textContent);
+
+        const utterance = new SpeechSynthesisUtterance(textContent);
+        utterance.lang = this.currentDirectionLine.languageCode || 'en';
+        utterance.rate = 0.9;
+        utterance.pitch = 1;
+
+        utterance.onstart = () => {
+          console.log('TTS started');
+          this.isDirectionLinePlaying = true;
+        };
+
+        utterance.onend = () => {
+          console.log('TTS ended');
+          this.isDirectionLinePlaying = false;
+          resolve();
+        };
+
+        utterance.onerror = (event) => {
+          console.error('TTS error:', event.error);
+          this.isDirectionLinePlaying = false;
+          resolve();
+        };
+
+        // Cancel any existing speech before starting new one
+        speechSynthesis.cancel();
+        speechSynthesis.speak(utterance);
+      });
+    },
+
+    /**
+     * Stop direction line audio playback
+     */
+    stopDirectionLineAudio() {
+      this.isDirectionLinePlaying = false;
+      
+      // Clear any existing timer
+      if (this.directionLineTimer) {
+        clearTimeout(this.directionLineTimer);
+        this.directionLineTimer = null;
+      }
+
+      // Stop any ongoing speech synthesis
+      if ('speechSynthesis' in window) {
+        speechSynthesis.cancel();
+      }
+    },
+
+    /**
+     * Clean up direction line resources when navigating away
+     */
+    cleanupDirectionLine() {
+      this.stopDirectionLineAudio();
+      this.clearCurrentDirectionLine();
     },
   },
 });

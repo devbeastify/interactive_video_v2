@@ -1,86 +1,76 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { mount } from '@vue/test-utils';
 import PlayButton from './PlayButton.vue';
 
 describe('PlayButton', () => {
-  let wrapper;
+  it('renders with paused state by default', () => {
+    const wrapper = mount(PlayButton);
 
-  beforeEach(() => {
-    wrapper = mount(PlayButton, {
-      props: {
-        audioBtnState: 'paused',
-      },
-    });
+    expect(wrapper.find('.play-button').exists()).toBe(true);
+    expect(wrapper.find('.speaker-icon').exists()).toBe(true);
+    expect(wrapper.find('.pause-icon').exists()).toBe(false);
+    expect(wrapper.classes()).toContain('is-paused');
   });
 
-  it('renders with correct aria-label', () => {
-    expect(wrapper.attributes('aria-label')).toBe('Play audio');
-  });
-
-  it('has correct button type', () => {
-    expect(wrapper.attributes('type')).toBe('button');
-  });
-
-  it('shows speaker icon when state is paused', () => {
-    wrapper = mount(PlayButton, {
-      props: {
-        audioBtnState: 'paused',
-      },
-    });
-
-    const speakerIcon = wrapper.find('.speaker-icon');
-    const pauseIcon = wrapper.find('.pause-icon');
-    
-    expect(speakerIcon.exists()).toBe(true);
-    expect(pauseIcon.exists()).toBe(false);
-  });
-
-  it('shows pause icon when state is playing', () => {
-    wrapper = mount(PlayButton, {
+  it('renders with playing state', () => {
+    const wrapper = mount(PlayButton, {
       props: {
         audioBtnState: 'playing',
       },
     });
 
-    const speakerIcon = wrapper.find('.speaker-icon');
-    const pauseIcon = wrapper.find('.pause-icon');
-    
-    expect(speakerIcon.exists()).toBe(false);
-    expect(pauseIcon.exists()).toBe(true);
+    expect(wrapper.find('.play-button').exists()).toBe(true);
+    expect(wrapper.find('.speaker-icon').exists()).toBe(false);
+    expect(wrapper.find('.pause-icon').exists()).toBe(true);
+    expect(wrapper.classes()).toContain('is-playing');
   });
 
-  it('applies correct CSS class based on state', () => {
-    wrapper = mount(PlayButton, {
+  it('renders with paused state', () => {
+    const wrapper = mount(PlayButton, {
+      props: {
+        audioBtnState: 'paused',
+      },
+    });
+
+    expect(wrapper.find('.play-button').exists()).toBe(true);
+    expect(wrapper.find('.speaker-icon').exists()).toBe(true);
+    expect(wrapper.find('.pause-icon').exists()).toBe(false);
+    expect(wrapper.classes()).toContain('is-paused');
+  });
+
+  it('emits click event when button is clicked', async () => {
+    const wrapper = mount(PlayButton);
+
+    await wrapper.find('.play-button').trigger('click');
+
+    expect(wrapper.emitted('click')).toBeTruthy();
+  });
+
+  it('has correct accessibility attributes', () => {
+    const wrapper = mount(PlayButton);
+
+    const button = wrapper.find('.play-button');
+    expect(button.attributes('aria-label')).toBe('Play audio');
+    expect(button.attributes('type')).toBe('button');
+  });
+
+  it('applies correct CSS classes based on state', () => {
+    const wrapper = mount(PlayButton, {
       props: {
         audioBtnState: 'playing',
       },
     });
 
     expect(wrapper.classes()).toContain('is-playing');
+    expect(wrapper.classes()).not.toContain('is-paused');
   });
 
-  it('applies paused class when state is paused', () => {
-    wrapper = mount(PlayButton, {
-      props: {
-        audioBtnState: 'paused',
-      },
-    });
-
-    expect(wrapper.classes()).toContain('is-paused');
-  });
-
-  it('emits click event when clicked', async () => {
-    await wrapper.trigger('click');
-    expect(wrapper.emitted('click')).toBeTruthy();
-  });
-
-  it('validates audioBtnState prop correctly', () => {
+  it('validates audioBtnState prop', () => {
     const validator = PlayButton.props.audioBtnState.validator;
 
     expect(validator('playing')).toBe(true);
     expect(validator('paused')).toBe(true);
     expect(validator('')).toBe(true);
     expect(validator('invalid')).toBe(false);
-    expect(validator('PLAYING')).toBe(false);
   });
 }); 

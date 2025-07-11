@@ -13,6 +13,7 @@
  * will be substituted for the default direction line if provided.
  * @property {string} stepId - Unique identifier for the step
  * @property {string} languageCode - Language code for audio generation
+ * @property {string} stepType - Type of step (quick_check, diagnostic, etc.)
  */
 
 /** @type {DirectionLineOptions} */
@@ -23,10 +24,11 @@ export const DEFAULT_DIRECTION_LINE_OPTIONS = {
   text: '',
   stepId: '',
   languageCode: 'en',
+  stepType: '',
 };
 
 /**
- * Represents a direction line as used by a Step.
+ * Represents a direction line as used by a Step in Interactive Video v2.
  */
 export class DirectionLine {
   /** @type {string} */
@@ -44,6 +46,9 @@ export class DirectionLine {
   /** @type {string} */
   languageCode = 'en';
 
+  /** @type {string} */
+  stepType = '';
+
   /** @type {boolean} */
   audioGenerated = false;
 
@@ -57,6 +62,7 @@ export class DirectionLine {
     this.isNew = opts.isNew;
     this.stepId = opts.stepId;
     this.languageCode = opts.languageCode;
+    this.stepType = opts.stepType;
     this.text = this._resolveText(opts.name, opts.text);
     
     // Generate dynamic audio path if not provided
@@ -103,15 +109,10 @@ export class DirectionLine {
       return true;
     }
 
-    // Try to generate audio using TTS
-    try {
-      await this._generateTTSAudio();
-      this.audioGenerated = true;
-      return true;
-    } catch (error) {
-      console.error('Failed to generate TTS audio:', error);
-      return false;
-    }
+    // If no audio file is available, we can still use TTS
+    // Don't mark as generated since TTS is dynamic
+    console.log('Audio file not available, TTS will be used as fallback');
+    return false;
   }
 
   /**
@@ -125,7 +126,17 @@ export class DirectionLine {
     try {
       // Use browser's built-in speech synthesis as fallback
       if ('speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance(this.text);
+        // Extract text content from HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = this.text;
+        const textContent = tempDiv.textContent || tempDiv.innerText || '';
+
+        if (!textContent.trim()) {
+          console.warn('No text content to speak');
+          return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(textContent);
         utterance.lang = this.languageCode;
         utterance.rate = 0.9;
         utterance.pitch = 1;
@@ -156,12 +167,16 @@ export class DirectionLine {
     }
 
     switch (name) {
+    case 'quick_check':
+      return 'Complete the interactive activity.';
+    case 'diagnostic':
+      return 'Answer the questions to test your understanding.';
+    case 'video_intro':
+      return 'Watch the video and follow along.';
     case 'video_step':
       return 'Watch the video and follow along.';
     case 'interactive_step':
       return 'Complete the interactive activity.';
-    case 'quiz_step':
-      return 'Answer the questions.';
     default:
       console.warn(
         `No default direction line for Step with name: ${name} could be found,` +
