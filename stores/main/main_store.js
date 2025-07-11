@@ -34,6 +34,7 @@ import { DirectionLine } from './direction_line';
  * @property {string} name
  * @property {string} [directionLineAudio]
  * @property {string} [directionLineText]
+ * @property {string} [languageCode]
  * @property {number} startTime
  * @property {number} endTime
  */
@@ -55,6 +56,7 @@ import { DirectionLine } from './direction_line';
  * @property {Array<any>} reference
  * @property {Array<any>} quick_checks
  * @property {Array<StepData>} [steps]
+ * @property {string} [languageCode]
  */
 
 /**
@@ -151,6 +153,8 @@ export const mainStore = defineStore('interactive_video_v2', {
           isNew: true,
           name: 'video_step',
           text: 'Watch the video and follow along.',
+          stepId: 'step-1',
+          languageCode: this.activityInfo.languageCode || 'en',
         });
 
         this.processedSteps = [
@@ -172,6 +176,8 @@ export const mainStore = defineStore('interactive_video_v2', {
           isNew: index === 0, // First step is new
           name: stepData.name || 'unknown',
           text: stepData.directionLineText || '',
+          stepId: stepData.id || `step-${index + 1}`,
+          languageCode: stepData.languageCode || this.activityInfo.languageCode || 'en',
         });
 
         return {

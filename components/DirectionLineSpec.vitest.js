@@ -20,16 +20,41 @@ global.Audio = vi.fn(() => ({
   readyState: 4,
 }));
 
+// Mock fetch for audio availability check
+global.fetch = vi.fn();
+
+// Mock speech synthesis
+global.speechSynthesis = {
+  speak: vi.fn(),
+  cancel: vi.fn(),
+};
+
+global.SpeechSynthesisUtterance = vi.fn(() => ({
+  lang: 'en',
+  rate: 1,
+  pitch: 1,
+  onstart: null,
+  onend: null,
+  onerror: null,
+}));
+
 describe('DirectionLine', () => {
   let wrapper;
   let mockDirectionLine;
 
   beforeEach(() => {
     mockDirectionLine = new DirectionLineClass({
-      audioPath: '/test-audio.mp3',
+      audioPath: '/audio/direction-lines/step-1/en.mp3',
       isNew: true,
       name: 'test_step',
       text: 'Test direction line text',
+      stepId: 'step-1',
+      languageCode: 'en',
+    });
+
+    // Mock fetch to return success
+    global.fetch.mockResolvedValue({
+      ok: true,
     });
   });
 
@@ -58,10 +83,12 @@ describe('DirectionLine', () => {
 
   it('does not show play button when step is not new', () => {
     const notNewDirectionLine = new DirectionLineClass({
-      audioPath: '/test-audio.mp3',
+      audioPath: '/audio/direction-lines/step-1/en.mp3',
       isNew: false,
       name: 'test_step',
       text: 'Test direction line text',
+      stepId: 'step-1',
+      languageCode: 'en',
     });
 
     wrapper = mount(DirectionLine, {
@@ -81,6 +108,8 @@ describe('DirectionLine', () => {
       isNew: true,
       name: 'test_step',
       text: 'Test direction line text',
+      stepId: 'step-1',
+      languageCode: 'en',
     });
 
     wrapper = mount(DirectionLine, {
@@ -92,6 +121,33 @@ describe('DirectionLine', () => {
 
     const playButton = wrapper.find('.play-button');
     expect(playButton.exists()).toBe(false);
+  });
+
+  it('generates dynamic audio path when stepId is provided', () => {
+    const dynamicDirectionLine = new DirectionLineClass({
+      isNew: true,
+      name: 'test_step',
+      text: 'Test direction line text',
+      stepId: 'step-2',
+      languageCode: 'es',
+    });
+
+    expect(dynamicDirectionLine.audioPath).toBe('/audio/direction-lines/step-2/es.mp3');
+  });
+
+  it('checks audio availability correctly', async () => {
+    const result = await mockDirectionLine.checkAudioAvailability();
+    expect(result).toBe(true);
+    expect(global.fetch).toHaveBeenCalledWith('/audio/direction-lines/step-1/en.mp3', { method: 'HEAD' });
+  });
+
+  it('handles audio availability check failure', async () => {
+    global.fetch.mockResolvedValue({
+      ok: false,
+    });
+
+    const result = await mockDirectionLine.checkAudioAvailability();
+    expect(result).toBe(false);
   });
 
   it('emits audio-ended event when audio finishes', async () => {
@@ -119,6 +175,40 @@ describe('DirectionLine', () => {
     
     if (endedCallback) {
       endedCallback();
+    }
+
+    expect(wrapper.emitted('audioEnded')).toBeTruthy();
+  });
+
+  it('falls back to TTS when audio file is not available', async () => {
+    global.fetch.mockResolvedValue({
+      ok: false,
+    });
+
+    const mockUtterance = {
+      lang: 'en',
+      rate: 0.9,
+      pitch: 1,
+      onstart: null,
+      onend: null,
+      onerror: null,
+    };
+
+    global.SpeechSynthesisUtterance = vi.fn(() => mockUtterance);
+
+    wrapper = mount(DirectionLine, {
+      props: {
+        directionLine: mockDirectionLine,
+        stepIndex: 0,
+      },
+    });
+
+    const playButton = wrapper.find('.play-button');
+    await playButton.trigger('click');
+
+    // Simulate TTS end
+    if (mockUtterance.onend) {
+      mockUtterance.onend();
     }
 
     expect(wrapper.emitted('audioEnded')).toBeTruthy();
