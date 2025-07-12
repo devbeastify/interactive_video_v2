@@ -91,7 +91,9 @@ export const useQuickCheckStore = defineStore('quickCheck', {
         );
       }
 
+      // Emit events for video resumption
       document.dispatchEvent(new CustomEvent('finishCheckpoint'));
+      document.dispatchEvent(new CustomEvent('quickCheckCompleted'));
 
       this.hideQuickCheck();
       this.reset();

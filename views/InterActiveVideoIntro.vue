@@ -11,7 +11,7 @@
           <BasicCheckbox
             v-if="false"
             id="autoplay-media"
-            :modelValue="store.actionSettings.useAutoPlay"
+            :modelValue="activitySettingsStore.useAutoPlay"
             size="lg"
             @change="updateSettings">
             Auto Play Video
@@ -32,6 +32,7 @@
 
   import { onMounted } from 'vue';
   import { mainStore } from '../stores/main/main_store';
+  import { useActivitySettingsStore } from '../stores/main/activity_settings_store';
   import { browserIsSafari } from '../lib/safari_browser_check';
   // @ts-expect-error - Music doesn't have types, tsconfig needs new path aliases
   import BasicCheckbox from 'MusicV3/components/basic_checkbox/v2.0/BasicCheckbox.vue';
@@ -50,6 +51,12 @@
    * @type {ReturnType<typeof mainStore>}
    */
   const store = mainStore();
+
+  /**
+   * The activity settings store instance.
+   * @type {ReturnType<typeof useActivitySettingsStore>}
+   */
+  const activitySettingsStore = useActivitySettingsStore();
 
   /**
    * The topic of the current activity.
@@ -78,8 +85,13 @@
      * @param {{ video_path?: string, audio_path?: string }} reference
      * @returns {string[]}
      */
-    (reference) => [reference.video_path, reference.audio_path]
-  ).filter(Boolean);
+    (reference) => {
+      const sources = [];
+      if (reference.video_path) sources.push(reference.video_path);
+      if (reference.audio_path) sources.push(reference.audio_path);
+      return sources;
+    }
+  );
 
   /**
    * Media composable state and actions for the intro screen.
@@ -99,7 +111,7 @@
   const updateSettings = function(evt) {
     const target = /** @type {HTMLInputElement} */ (evt.target);
     const useAutoPlay = target.checked;
-    store.updateAutoPlaySetting(useAutoPlay);
+    activitySettingsStore.updateAutoPlaySetting(useAutoPlay);
   };
 
   /**
@@ -121,7 +133,7 @@
    * @returns {void}
    */
   onMounted(() => {
-    store.resetIndex();
+    activitySettingsStore.resetIndex();
     loadMedia();
   });
 </script>

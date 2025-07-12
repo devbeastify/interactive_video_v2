@@ -4,14 +4,15 @@
   <DirectionLineComponent
       v-if="currentDirectionLine"
       :direction-line="currentDirectionLine"
-      :step-index="currentStepIndex" />
+      :step-index="currentStepIndex"
+      ref="directionLineComponent" />
 </template>
 
 <script setup>
 // @ts-check
-import { onMounted, onUnmounted, ref, computed } from 'vue';
+import { onMounted, onUnmounted, ref, computed, nextTick } from 'vue';
 import { mainStore } from '../stores/main/main_store';
-import { DirectionLine } from '../stores/main/direction_line';
+import { useDirectionLineStore } from '../stores/main/direction_line_store';
 import DirectionLineComponent from '../components/DirectionLine.vue';
 
 /**
@@ -24,6 +25,7 @@ import DirectionLineComponent from '../components/DirectionLine.vue';
  */
 
 const store = mainStore();
+const directionLineStore = useDirectionLineStore();
 
 /**
  * Current step information for direction line
@@ -31,17 +33,35 @@ const store = mainStore();
 const currentStepIndex = ref(0);
 
 /**
+ * Reference to the direction line component
+ */
+const directionLineComponent = ref(/** @type {any} */ (null));
+
+/**
  * Computed property for current direction line from store
  */
-const currentDirectionLine = computed(() => store.currentDirectionLine);
+const currentDirectionLine = computed(() => directionLineStore.currentLine);
 
-onMounted(() => {
+onMounted(async () => {
+  console.log('DiagnosticScreen mounted');
   // Initialize direction line for current step
   initializeDirectionLine();
+  
+  // Wait for the component to be rendered and then auto-play
+  await nextTick();
+  console.log('Direction line component ref:', directionLineComponent.value);
+  console.log('Current direction line:', currentDirectionLine.value);
+  if (directionLineComponent.value && currentDirectionLine.value) {
+    console.log('Auto-playing direction line audio');
+    // Auto-play the direction line audio
+    directionLineComponent.value.autoPlayAudio();
+  } else {
+    console.warn('Cannot auto-play: missing component ref or direction line');
+  }
 });
 
 onUnmounted(() => {
-  store.cleanupDirectionLine();
+  directionLineStore.cleanupDirectionLine();
 });
 
 function goToIntro() {

@@ -37,8 +37,9 @@
   import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
   import { mainStore } from '../stores/main/main_store';
   import { useQuickCheckStore } from '../stores/main/quick_check_store';
+  import { useDirectionLineStore } from '../stores/main/direction_line_store';
+  import { useActivitySettingsStore } from '../stores/main/activity_settings_store';
   import { useVideoPlayer } from '../composables/use_video_player';
-  import { DirectionLine } from '../stores/main/direction_line';
   import QuickCheck from '../components/QuickCheck.vue';
   import DirectionLineComponent from '../components/DirectionLine.vue';
 
@@ -58,6 +59,8 @@
 
   const store = mainStore();
   const quickCheckStore = useQuickCheckStore();
+  const directionLineStore = useDirectionLineStore();
+  const activitySettingsStore = useActivitySettingsStore();
 
   /** @type {import('vue').Ref<HTMLElement|null>} */
   const videoContainer = ref(null);
@@ -77,6 +80,7 @@
     setupCheckpoints,
     setupVideoEvents,
     handleCheckpointReached,
+    resumeVideoAfterCheckpoint,
   } = useVideoPlayer(videoContainer);
 
   /**
@@ -87,7 +91,7 @@
   /**
    * Computed property for current direction line from store
    */
-  const currentDirectionLine = computed(() => store.currentDirectionLine);
+  const currentDirectionLine = computed(() => directionLineStore.currentLine);
 
   /**
    * Computed property to check if QuickCheck is visible
@@ -110,6 +114,9 @@
 
     // Initialize direction line for current step
     initializeDirectionLine();
+
+    // Listen for quick check completion
+    document.addEventListener('quickCheckCompleted', handleQuickCheckCompleted);
   });
 
   /**
@@ -118,10 +125,25 @@
    * @return {void}
    */
   onUnmounted(() => {
-    cleanupVideoPlayer();
-    cleanupEventListeners();
-    store.cleanupDirectionLine();
+    try {
+      cleanupVideoPlayer();
+      cleanupEventListeners();
+      directionLineStore.cleanupDirectionLine();
+      
+      // Remove event listener
+      document.removeEventListener('quickCheckCompleted', handleQuickCheckCompleted);
+    } catch (error) {
+      console.warn('Error during component cleanup:', error);
+    }
   });
+
+  /**
+   * Handle quick check completion
+   */
+  const handleQuickCheckCompleted = () => {
+    // Resume video after quick check completion
+    resumeVideoAfterCheckpoint();
+  };
 
   /**
    * Initialize direction line for the current step
@@ -135,6 +157,7 @@
    * Handle direction line play event
    */
   const handleDirectionLinePlay = () => {
+    console.log('Direction line started playing, pausing video');
     // Pause video when direction line audio starts
     if (videoPlayer.value && isPlaying.value) {
       videoPlayer.value.pause();
@@ -146,8 +169,9 @@
    * Handle direction line pause event
    */
   const handleDirectionLinePause = () => {
+    console.log('Direction line paused');
     // Resume video if autoplay is enabled
-    if (videoPlayer.value && store.actionSettings.useAutoPlay) {
+    if (videoPlayer.value && activitySettingsStore.useAutoPlay) {
       videoPlayer.value.play();
       isPlaying.value = true;
     }
@@ -157,8 +181,9 @@
    * Handle direction line audio ended event
    */
   const handleDirectionLineAudioEnded = () => {
+    console.log('Direction line audio ended');
     // Resume video if autoplay is enabled
-    if (videoPlayer.value && store.actionSettings.useAutoPlay) {
+    if (videoPlayer.value && activitySettingsStore.useAutoPlay) {
       videoPlayer.value.play();
       isPlaying.value = true;
     }
@@ -169,23 +194,77 @@
    * Automatically plays or pauses video based on the auto-play setting
    * @return {void}
    */
-  watch(
-    () => store.actionSettings.useAutoPlay,
-    (newValue) => {
-      if (videoPlayer.value) {
-        if (newValue && !isPlaying.value) {
-          handleAutoPlay();
-        } else if (!newValue && isPlaying.value) {
-          videoPlayer.value.pause();
-          isPlaying.value = false;
-        }
+  watch(() => activitySettingsStore.useAutoPlay, (newValue) => {
+    if (videoPlayer.value) {
+      if (newValue) {
+        handleAutoPlay();
+      } else {
+        videoPlayer.value.pause();
+        isPlaying.value = false;
       }
     }
-  );
+  });
 
   /**
-   * Toggle between play and pause states
-   * Handles the play/pause button click functionality
+   * Watch for quick check completion and resume video
+   */
+  watch(() => quickCheckStore.isVisible, (isVisible) => {
+    if (!isVisible && quickCheckStore.isComplete) {
+      // Quick check was completed, resume video
+      resumeVideoAfterCheckpoint();
+    }
+  });
+
+  /**
+   * Watch for direction line completion and start video
+   */
+  watch(() => directionLineStore.isPlaying, (isDirectionLinePlaying) => {
+    console.log('Direction line playing state changed:', isDirectionLinePlaying);
+    console.log('Activity settings autoplay:', activitySettingsStore.useAutoPlay);
+    console.log('Video player available:', !!videoPlayer.value);
+    
+    if (!isDirectionLinePlaying && activitySettingsStore.useAutoPlay && videoPlayer.value) {
+      // Direction line finished, start video if autoplay is enabled
+      // Add a longer delay to ensure direction line is completely finished
+      console.log('Direction line finished, scheduling video start');
+      setTimeout(() => {
+        console.log('Checking if video should start...');
+        console.log('Video player available:', !!videoPlayer.value);
+        console.log('Direction line still playing:', directionLineStore.isPlaying);
+        console.log('Video currently playing:', isPlaying.value);
+        
+        if (videoPlayer.value && !directionLineStore.isPlaying && !isPlaying.value) {
+          console.log('Starting video after direction line completion');
+          videoPlayer.value.play();
+          isPlaying.value = true;
+        } else {
+          console.log('Video start conditions not met');
+        }
+      }, 1500); // Increased delay to ensure direction line is completely finished
+    }
+  });
+
+  /**
+   * Set up event listeners for video player
+   * @return {void}
+   */
+  const setupEventListeners = () => {
+    if (videoPlayer.value) {
+      setupVideoEvents();
+      setupCheckpoints();
+    }
+  };
+
+  /**
+   * Clean up event listeners
+   * @return {void}
+   */
+  const cleanupEventListeners = () => {
+    // Event listeners are cleaned up by the video player composable
+  };
+
+  /**
+   * Toggle play/pause state of the video
    * @return {void}
    */
   const togglePlayPause = () => {
@@ -193,83 +272,45 @@
 
     if (isPlaying.value) {
       videoPlayer.value.pause();
+      isPlaying.value = false;
     } else {
-      videoPlayer.value.play();
+      videoPlayer.value.play()
+        .then(() => {
+          isPlaying.value = true;
+        })
+        .catch((/** @type {Error} */ error) => {
+          console.error('Failed to play video:', error);
+        });
     }
   };
 
   /**
-   * Restart video playback from the beginning
-   * Uses the underlying videojs_player if available for more precise control
+   * Restart the video from the beginning
    * @return {void}
    */
   const restart = () => {
     if (!videoPlayer.value) return;
 
-    if (hasVideoJsPlayer()) {
-      restartWithVideoJsPlayer();
+    // Use videojs_player if available for more precise control
+    if (videoPlayer.value.videojs_player) {
+      videoPlayer.value.videojs_player.currentTime(0);
+      videoPlayer.value.videojs_player.play();
+      isPlaying.value = true;
+    } else {
+      // Fallback: destroy and reinitialize the video player
+      videoPlayer.value.destroy();
+      setTimeout(() => {
+        initializeVideoPlayer();
+      }, 100);
     }
   };
 
   /**
-   * Check if the video player has an underlying videojs_player available
-   * @return {boolean} True if videojs_player is available and functional
-   */
-  const hasVideoJsPlayer = () => {
-    return videoPlayer.value?.videojs_player &&
-      typeof videoPlayer.value.videojs_player.currentTime === 'function';
-  };
-
-  /**
-   * Restart video using the videojs_player's currentTime method
-   * Provides more precise control over video playback position
-   * @return {void}
-   */
-  const restartWithVideoJsPlayer = () => {
-    if (!videoPlayer.value?.videojs_player) return;
-
-    videoPlayer.value.videojs_player.currentTime(0);
-    videoPlayer.value.videojs_player.play();
-    isPlaying.value = true;
-  };
-
-  /**
-   * Navigate back to the intro screen using the sequencer
-   * Allows users to return to the beginning of the interactive experience
+   * Navigate back to the intro screen
    * @return {void}
    */
   const goToIntro = () => {
     store.sequencer.goToScreen('intro');
-  };
-
-  /**
-   * Set up global event listeners for video player interactions
-   * Listens for custom events like checkpoint completion
-   * @return {void}
-   */
-  const setupEventListeners = () => {
-    document.addEventListener('finishCheckpoint', handleFinishCheckpoint);
-  };
-
-  /**
-   * Clean up global event listeners to prevent memory leaks
-   * Removes all event listeners added by this component
-   * @return {void}
-   */
-  const cleanupEventListeners = () => {
-    document.removeEventListener('finishCheckpoint', handleFinishCheckpoint);
-  };
-
-  /**
-   * Handle finish checkpoint event from QuickCheck component
-   * Resumes video playback if auto-play is enabled after checkpoint completion
-   * @return {void}
-   */
-  const handleFinishCheckpoint = () => {
-    if (videoPlayer.value && store.actionSettings.useAutoPlay) {
-      videoPlayer.value.play();
-      isPlaying.value = true;
-    }
   };
 </script>
 
@@ -277,53 +318,409 @@
 @use 'MusicV3/v3/styles/base' as base;
 
 .interactive-video-player {
-  width: 100%;
-  max-width: base.rpx(1200);
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   padding: base.rpx(16);
 }
 
 .c-interactive-video {
-  position: relative;
   width: 100%;
+  max-width: base.rpx(800);
+  margin: base.rpx(16) 0;
 }
 
 .c-interactive-video-video {
   position: relative;
   width: 100%;
-}
-
-.js-tutorial-container {
-  width: 100%;
-  min-height: base.rpx(400);
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
   background: #000;
+  border-radius: base.rpx(8);
+  overflow: hidden;
 }
 
 .video-controls {
   display: flex;
   gap: base.rpx(16);
-  justify-content: center;
   margin-top: base.rpx(16);
 }
 
 .control-btn {
-  padding: base.rpx(8) base.rpx(24);
+  padding: base.rpx(8) base.rpx(16);
+  background: #007bff;
+  color: white;
   border: none;
   border-radius: base.rpx(4);
-  font-size: base.rpx(16);
-  font-weight: 600;
   cursor: pointer;
-  background-color: var(--global-button-background-primary, #252525);
-  color: var(--global-button-text-primary, #fff);
-  transition: background-color 0.3s ease;
+  font-size: base.rpx(14);
 
-  &:hover:not(:disabled) {
-    background-color: var(--global-button-background-primary-hover, #1f7069);
+  &:hover {
+    background: #0056b3;
   }
+}
+</style>
+<template>
+  <div v-show="currentDirectionLine && !isQuickCheckVisible"
+    :class="$style['interactive-video-player']">
+    <!-- Direction Line for current step -->
+    <DirectionLineComponent
+      v-if="currentDirectionLine"
+      :direction-line="currentDirectionLine"
+      :step-index="currentStepIndex"
+      @play="handleDirectionLinePlay"
+      @pause="handleDirectionLinePause"
+      @audio-ended="handleDirectionLineAudioEnded" />
 
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
+    <div :class="$style['c-interactive-video']">
+      <div :class="$style['c-interactive-video-video']">
+        <div ref="videoContainer" class="js-tutorial-container" />
+      </div>
+    </div>
+
+    <div v-if="showControls" :class="$style['video-controls']">
+      <button :class="$style['control-btn']" @click="togglePlayPause">
+        {{ isPlaying ? 'Pause' : 'Play' }}
+      </button>
+      <button :class="$style['control-btn']" @click="restart">
+        Restart
+      </button>
+      <button :class="$style['control-btn']" @click="goToIntro">
+        Back to Intro
+      </button>
+    </div>
+  </div>
+  <QuickCheck />
+</template>
+
+<script setup>
+// @ts-check
+
+  import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+  import { mainStore } from '../stores/main/main_store';
+  import { useQuickCheckStore } from '../stores/main/quick_check_store';
+  import { useDirectionLineStore } from '../stores/main/direction_line_store';
+  import { useActivitySettingsStore } from '../stores/main/activity_settings_store';
+  import { useVideoPlayer } from '../composables/use_video_player';
+  import QuickCheck from '../components/QuickCheck.vue';
+  import DirectionLineComponent from '../components/DirectionLine.vue';
+
+  /**
+   * @typedef {import('../composables/use_video_player').VideoPlayer} VideoPlayer
+   * @typedef {import('../composables/use_video_player').VideoPlayerAPI} VideoPlayerAPI
+   */
+
+  /**
+   * @typedef {Object} StepData
+   * @property {string} id
+   * @property {string} type
+   * @property {string} directionLine
+   * @property {boolean} isNew
+   * @property {string} languageCode
+   */
+
+  const store = mainStore();
+  const quickCheckStore = useQuickCheckStore();
+  const directionLineStore = useDirectionLineStore();
+  const activitySettingsStore = useActivitySettingsStore();
+
+  /** @type {import('vue').Ref<HTMLElement|null>} */
+  const videoContainer = ref(null);
+  /** @type {import('vue').Ref<boolean>} */
+  const showControls = ref(true);
+
+  /**
+   * Video player API from the useVideoPlayer composable
+   * @type {VideoPlayerAPI}
+   */
+  const {
+    videoPlayer,
+    isPlaying,
+    initializeVideoPlayer,
+    cleanupVideoPlayer,
+    handleAutoPlay,
+    setupCheckpoints,
+    setupVideoEvents,
+    handleCheckpointReached,
+    resumeVideoAfterCheckpoint,
+  } = useVideoPlayer(videoContainer);
+
+  /**
+   * Current step information for direction line
+   */
+  const currentStepIndex = ref(0);
+
+  /**
+   * Computed property for current direction line from store
+   */
+  const currentDirectionLine = computed(() => directionLineStore.currentLine);
+
+  /**
+   * Computed property to check if QuickCheck is visible
+   * Used to conditionally hide other sections when QuickCheck is shown
+   */
+  const isQuickCheckVisible = computed(() => quickCheckStore.isVisible);
+
+  /**
+   * Lifecycle hook: Initialize video player and event listeners on mount
+   * Sets up the video player, event listeners, and quick check state
+   * @return {void}
+   */
+  onMounted(() => {
+    initializeVideoPlayer();
+    setupEventListeners();
+
+    if (store.activityInfo.quick_checks) {
+      quickCheckStore.updateQuickCheckState({ quickChecks: store.activityInfo.quick_checks });
+    }
+
+    // Initialize direction line for current step
+    initializeDirectionLine();
+
+    // Listen for quick check completion
+    document.addEventListener('quickCheckCompleted', handleQuickCheckCompleted);
+  });
+
+  /**
+   * Lifecycle hook: Clean up video player and event listeners on unmount
+   * Ensures proper cleanup of resources to prevent memory leaks
+   * @return {void}
+   */
+  onUnmounted(() => {
+    try {
+      cleanupVideoPlayer();
+      cleanupEventListeners();
+      directionLineStore.cleanupDirectionLine();
+      
+      // Remove event listener
+      document.removeEventListener('quickCheckCompleted', handleQuickCheckCompleted);
+    } catch (error) {
+      console.warn('Error during component cleanup:', error);
+    }
+  });
+
+  /**
+   * Handle quick check completion
+   */
+  const handleQuickCheckCompleted = () => {
+    // Resume video after quick check completion
+    resumeVideoAfterCheckpoint();
+  };
+
+  /**
+   * Initialize direction line for the current step
+   */
+  const initializeDirectionLine = () => {
+    // Use centralized DL logic from store
+    store.initializeDirectionLineForStep('player');
+  };
+
+  /**
+   * Handle direction line play event
+   */
+  const handleDirectionLinePlay = () => {
+    console.log('Direction line started playing, pausing video');
+    // Pause video when direction line audio starts
+    if (videoPlayer.value && isPlaying.value) {
+      videoPlayer.value.pause();
+      isPlaying.value = false;
+    }
+  };
+
+  /**
+   * Handle direction line pause event
+   */
+  const handleDirectionLinePause = () => {
+    console.log('Direction line paused');
+    // Resume video if autoplay is enabled
+    if (videoPlayer.value && activitySettingsStore.useAutoPlay) {
+      videoPlayer.value.play();
+      isPlaying.value = true;
+    }
+  };
+
+  /**
+   * Handle direction line audio ended event
+   */
+  const handleDirectionLineAudioEnded = () => {
+    console.log('Direction line audio ended');
+    // Resume video if autoplay is enabled
+    if (videoPlayer.value && activitySettingsStore.useAutoPlay) {
+      videoPlayer.value.play();
+      isPlaying.value = true;
+    }
+  };
+
+  /**
+   * Watch for changes in auto-play setting and handle accordingly
+   * Automatically plays or pauses video based on the auto-play setting
+   * @return {void}
+   */
+  watch(() => activitySettingsStore.useAutoPlay, (newValue) => {
+    if (videoPlayer.value) {
+      if (newValue) {
+        handleAutoPlay();
+      } else {
+        videoPlayer.value.pause();
+        isPlaying.value = false;
+      }
+    }
+  });
+
+  /**
+   * Watch for quick check completion and resume video
+   */
+  watch(() => quickCheckStore.isVisible, (isVisible) => {
+    if (!isVisible && quickCheckStore.isComplete) {
+      // Quick check was completed, resume video
+      resumeVideoAfterCheckpoint();
+    }
+  });
+
+  /**
+   * Watch for direction line completion and start video
+   */
+  watch(() => directionLineStore.isPlaying, (isDirectionLinePlaying) => {
+    console.log('Direction line playing state changed:', isDirectionLinePlaying);
+    console.log('Activity settings autoplay:', activitySettingsStore.useAutoPlay);
+    console.log('Video player available:', !!videoPlayer.value);
+    
+    if (!isDirectionLinePlaying && activitySettingsStore.useAutoPlay && videoPlayer.value) {
+      // Direction line finished, start video if autoplay is enabled
+      // Add a longer delay to ensure direction line is completely finished
+      console.log('Direction line finished, scheduling video start');
+      setTimeout(() => {
+        console.log('Checking if video should start...');
+        console.log('Video player available:', !!videoPlayer.value);
+        console.log('Direction line still playing:', directionLineStore.isPlaying);
+        console.log('Video currently playing:', isPlaying.value);
+        
+        if (videoPlayer.value && !directionLineStore.isPlaying && !isPlaying.value) {
+          console.log('Starting video after direction line completion');
+          videoPlayer.value.play();
+          isPlaying.value = true;
+        } else {
+          console.log('Video start conditions not met');
+        }
+      }, 1500); // Increased delay to ensure direction line is completely finished
+    }
+  });
+
+  /**
+   * Set up event listeners for video player
+   * @return {void}
+   */
+  const setupEventListeners = () => {
+    if (videoPlayer.value) {
+      setupVideoEvents();
+      setupCheckpoints();
+    }
+  };
+
+  /**
+   * Clean up event listeners
+   * @return {void}
+   */
+  const cleanupEventListeners = () => {
+    // Event listeners are cleaned up by the video player composable
+  };
+
+  /**
+   * Toggle play/pause state of the video
+   * @return {void}
+   */
+  const togglePlayPause = () => {
+    if (!videoPlayer.value) return;
+
+    if (isPlaying.value) {
+      videoPlayer.value.pause();
+      isPlaying.value = false;
+    } else {
+      videoPlayer.value.play()
+        .then(() => {
+          isPlaying.value = true;
+        })
+        .catch((/** @type {Error} */ error) => {
+          console.error('Failed to play video:', error);
+        });
+    }
+  };
+
+  /**
+   * Restart the video from the beginning
+   * @return {void}
+   */
+  const restart = () => {
+    if (!videoPlayer.value) return;
+
+    // Use videojs_player if available for more precise control
+    if (videoPlayer.value.videojs_player) {
+      videoPlayer.value.videojs_player.currentTime(0);
+      videoPlayer.value.videojs_player.play();
+      isPlaying.value = true;
+    } else {
+      // Fallback: destroy and reinitialize the video player
+      videoPlayer.value.destroy();
+      setTimeout(() => {
+        initializeVideoPlayer();
+      }, 100);
+    }
+  };
+
+  /**
+   * Navigate back to the intro screen
+   * @return {void}
+   */
+  const goToIntro = () => {
+    store.sequencer.goToScreen('intro');
+  };
+</script>
+
+<style lang="scss" module>
+@use 'MusicV3/v3/styles/base' as base;
+
+.interactive-video-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: base.rpx(16);
+}
+
+.c-interactive-video {
+  width: 100%;
+  max-width: base.rpx(800);
+  margin: base.rpx(16) 0;
+}
+
+.c-interactive-video-video {
+  position: relative;
+  width: 100%;
+  height: 0;
+  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  background: #000;
+  border-radius: base.rpx(8);
+  overflow: hidden;
+}
+
+.video-controls {
+  display: flex;
+  gap: base.rpx(16);
+  margin-top: base.rpx(16);
+}
+
+.control-btn {
+  padding: base.rpx(8) base.rpx(16);
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: base.rpx(4);
+  cursor: pointer;
+  font-size: base.rpx(14);
+
+  &:hover {
+    background: #0056b3;
   }
 }
 </style>

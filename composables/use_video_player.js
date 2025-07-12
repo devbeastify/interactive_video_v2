@@ -3,6 +3,7 @@
 import { ref } from 'vue';
 import { mainStore } from '../stores/main/main_store';
 import { useQuickCheckStore } from '../stores/main/quick_check_store';
+import { useActivitySettingsStore } from '../stores/main/activity_settings_store';
 
 /**
  * @typedef {Object} VideoJSPlayer
@@ -12,6 +13,7 @@ import { useQuickCheckStore } from '../stores/main/quick_check_store';
  * @property {Function} pause - Pause video playback
  * @property {Function} readyState - Get current ready state
  * @property {Function} currentTime - Get or set current playback time
+ * @property {Function} dispose - Dispose of the video player
  */
 
 /**
@@ -86,6 +88,7 @@ import { useQuickCheckStore } from '../stores/main/quick_check_store';
  * @property {Function} handleAutoPlay - Handle auto-play functionality
  * @property {Function} setupCheckpoints - Set up interactive checkpoints
  * @property {Function} handleCheckpointReached - Handle checkpoint reached events
+ * @property {Function} resumeVideoAfterCheckpoint - Resume video after checkpoint completion
  * @property {Function} setupVideoEvents - Set up video event listeners
  */
 
@@ -109,35 +112,44 @@ export function useVideoPlayer(videoContainer) {
    */
   const initializeVideoPlayer = () => {
     setTimeout(() => {
-      if (videoContainer.value && mainStore().activityInfo.reference.length > 0) {
-        /** @type {VideoData} */
-        const videoData = mainStore().activityInfo.reference[0];
+      try {
+        if (videoContainer.value && mainStore().activityInfo.reference.length > 0) {
+          /** @type {VideoData} */
+          const videoData = mainStore().activityInfo.reference[0];
 
-        // @ts-expect-error - VHL.Video.File constructor returns a different type
-        videoPlayer.value = new VHL.Video.File();
+          // @ts-expect-error - VHL.Video.File constructor returns a different type
+          videoPlayer.value = new VHL.Video.File();
 
-        /** @type {VideoOptions} */
-        const options = {
-          videoContainer: videoContainer.value,
-          sourceURL: videoData.video_path,
-          fluid: true,
-          videoTracks: createCaptionObject(videoData),
-        };
+          /** @type {VideoOptions} */
+          const options = {
+            videoContainer: videoContainer.value,
+            sourceURL: videoData.video_path,
+            fluid: true,
+            videoTracks: createCaptionObject(videoData),
+          };
 
-        if (videoPlayer.value) {
-          videoPlayer.value.init(options);
-          videoPlayer.value.show_controls = true;
-          videoPlayer.value.initialize_video();
-          videoPlayer.value.show_video();
+          if (videoPlayer.value) {
+            videoPlayer.value.init(options);
+            videoPlayer.value.show_controls = true;
+            videoPlayer.value.initialize_video();
+            videoPlayer.value.show_video();
+          }
+
+          if (useQuickCheckStore().hasQuickChecks) {
+            setupCheckpoints();
+          }
+
+          setupVideoEvents();
+
+          // Don't auto-start video immediately - wait for direction line completion
+          // The video will be started by the watcher in InteractiveVideoPlayer.vue
+          // after the direction line audio completes
+          console.log('Video player initialized, waiting for direction line completion');
         }
-
-        if (useQuickCheckStore().hasQuickChecks) {
-          setupCheckpoints();
-        }
-
-        setupVideoEvents();
-
-        handleAutoPlay();
+      } catch (error) {
+        console.error('Error initializing video player:', error);
+        videoPlayer.value = null;
+        isPlaying.value = false;
       }
     }, 100);
   };
@@ -149,7 +161,7 @@ export function useVideoPlayer(videoContainer) {
   const handleAutoPlay = () => {
     if (!videoPlayer.value) return;
 
-    if (mainStore().actionSettings.useAutoPlay) {
+    if (useActivitySettingsStore().useAutoPlay) {
       const checkVideoReady = () => {
         if (videoPlayer.value && videoPlayer.value.videojs_player) {
           /** @type {VideoJSPlayer} */
@@ -218,56 +230,49 @@ export function useVideoPlayer(videoContainer) {
     }
 
     const quickCheckStore = useQuickCheckStore();
-    // @ts-expect-error - currentOffset can be number in practice
-    quickCheckStore.currentOffset = offset;
-
-    const pronunciationToggle = document.querySelector('.js-speech-rec-toggle');
-    if (pronunciationToggle) {
-      // @ts-expect-error - pronunciationToggle can be Element in practice
-      quickCheckStore.pronunciationToggle = pronunciationToggle;
-    }
-
+    quickCheckStore.updateQuickCheckState({ currentOffset: offset });
     quickCheckStore.showQuickCheck();
   };
 
   /**
-   * Create caption object for video tracks
-   * @param {VideoData} videoData - The video data object
-   * @return {Array<CaptionTrack>} Array of caption tracks
+   * Resume video after checkpoint completion
+   * @return {void}
+   */
+  const resumeVideoAfterCheckpoint = () => {
+    if (videoPlayer.value && useActivitySettingsStore().useAutoPlay) {
+      videoPlayer.value.play();
+      isPlaying.value = true;
+    }
+  };
+
+  /**
+   * Create caption tracks for the video
+   * @param {VideoData} videoData - Video data containing subtitle paths
+   * @return {Array<CaptionTrack>}
    */
   const createCaptionObject = (videoData) => {
     /** @type {Array<CaptionTrack>} */
-    const arrayCaption = [];
+    const tracks = [];
 
-    const enableClosedCaptions = /** @type {HTMLInputElement|null} */ (document.getElementById(
-      'enableClosedCaptions'
-    ))?.value;
-    const allowForeign = /** @type {HTMLInputElement|null} */
-      (document.getElementById('allowForeign'))?.value;
-    const allowEnglish = /** @type {HTMLInputElement|null} */
-      (document.getElementById('allowEnglish'))?.value;
-
-    if (enableClosedCaptions === 'true') {
-      if (videoData.english_subtitles_path && allowEnglish === 'true') {
-        arrayCaption.push({
-          src: videoData.english_subtitles_path,
-          kind: 'captions',
-          srclang: 'en',
-          label: 'English',
-        });
-      }
-
-      if (videoData.foreign_subtitles_path && allowForeign === 'true') {
-        arrayCaption.push({
-          src: videoData.foreign_subtitles_path,
-          kind: 'captions',
-          srclang: videoData.foreign_language,
-          label: 'Foreign',
-        });
-      }
+    if (videoData.english_subtitles_path) {
+      tracks.push({
+        src: videoData.english_subtitles_path,
+        kind: 'subtitles',
+        srclang: 'en',
+        label: 'English',
+      });
     }
 
-    return arrayCaption;
+    if (videoData.foreign_subtitles_path) {
+      tracks.push({
+        src: videoData.foreign_subtitles_path,
+        kind: 'subtitles',
+        srclang: videoData.foreign_language || 'es',
+        label: 'Foreign Language',
+      });
+    }
+
+    return tracks;
   };
 
   /**
@@ -277,13 +282,7 @@ export function useVideoPlayer(videoContainer) {
   const setupVideoEvents = () => {
     if (!videoPlayer.value || !videoPlayer.value.videojs_player) return;
 
-    /** @type {VideoJSPlayer} */
     const player = videoPlayer.value.videojs_player;
-
-    player.on('ended', () => {
-      isPlaying.value = false;
-      mainStore().sequencer.goToScreen('diagnostic');
-    });
 
     player.on('play', () => {
       isPlaying.value = true;
@@ -293,10 +292,21 @@ export function useVideoPlayer(videoContainer) {
       isPlaying.value = false;
     });
 
+    player.on('ended', () => {
+      isPlaying.value = false;
+      // Navigate to diagnostic screen when video ends
+      mainStore().sequencer.goToScreen('diagnostic');
+    });
+
     player.on('loadedmetadata', () => {
-      if (mainStore().actionSettings.useAutoPlay && !isPlaying.value) {
+      if (useActivitySettingsStore().useAutoPlay && !isPlaying.value) {
         handleAutoPlay();
       }
+    });
+
+    player.on('error', (/** @type {any} */ error) => {
+      console.error('Video player error:', error);
+      isPlaying.value = false;
     });
   };
 
@@ -306,8 +316,21 @@ export function useVideoPlayer(videoContainer) {
    */
   const cleanupVideoPlayer = () => {
     if (videoPlayer.value) {
-      videoPlayer.value.hide_video();
-      videoPlayer.value = null;
+      try {
+        // Check if destroy method exists before calling it
+        if (typeof videoPlayer.value.destroy === 'function') {
+          videoPlayer.value.destroy();
+        } else if (videoPlayer.value.videojs_player && typeof videoPlayer.value.videojs_player.dispose === 'function') {
+          // Fallback to VideoJS dispose method
+          videoPlayer.value.videojs_player.dispose();
+        }
+        console.log('Video player cleaned up successfully');
+      } catch (error) {
+        console.warn('Error during video player cleanup:', error);
+      } finally {
+        videoPlayer.value = null;
+        isPlaying.value = false;
+      }
     }
   };
 
@@ -319,6 +342,7 @@ export function useVideoPlayer(videoContainer) {
     handleAutoPlay,
     setupCheckpoints,
     handleCheckpointReached,
+    resumeVideoAfterCheckpoint,
     setupVideoEvents,
   };
 }
