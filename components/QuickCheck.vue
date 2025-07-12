@@ -33,6 +33,13 @@
             @pronunciation-complete="handlePronunciationComplete" />
         </div>
 
+        <div
+          v-else-if="quickCheckStore.currentQuickCheck.type === 'quick_check_drag_and_drop'">
+          <DragAndDropQuestion
+            :question="quickCheckStore.currentQuickCheck"
+            @answer-submitted="handleAnswerSubmitted" />
+        </div>
+
         <div>
           <button :class="$style['quick-check-complete-btn']" @click="handleComplete">
             Complete
@@ -52,6 +59,7 @@ import { mainStore } from '../stores/main/main_store';
 import MultipleChoiceQuestion from './questions/MultipleChoiceQuestion.vue';
 import FillInTheBlanksQuestion from './questions/FillInTheBlanksQuestion.vue';
 import PronunciationQuestion from './questions/PronunciationQuestion.vue';
+import DragAndDropQuestion from './questions/DragAndDropQuestion.vue';
 
 const quickCheckStore = useQuickCheckStore();
 const store = mainStore();

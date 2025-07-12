@@ -74,6 +74,33 @@ export const useDirectionLineStore = defineStore('directionLine', {
       }
     },
 
+    /**
+     * Play audio for a specific direction line (used by component)
+     * @param {DirectionLine} directionLine
+     */
+    async playAudioForDirectionLine(/** @type {DirectionLine} */ directionLine) {
+      if (!directionLine) return;
+
+      console.log('Playing audio for direction line:', directionLine.text);
+      
+      try {
+        // Try to generate audio if needed
+        const audioAvailable = await directionLine.generateAudioIfNeeded();
+        
+        if (audioAvailable && directionLine.audioPath) {
+          // Play audio file
+          await this._playAudioFileForDirectionLine(directionLine);
+        } else {
+          // Fallback to TTS
+          await this._playTTSForDirectionLine(directionLine);
+        }
+      } catch (error) {
+        console.error('Error playing direction line audio:', error);
+        // Fallback to TTS
+        await this._playTTSForDirectionLine(directionLine);
+      }
+    },
+
     async _playAudioFile() {
       if (!this.currentDirectionLine?.audioPath) return;
 
@@ -107,6 +134,56 @@ export const useDirectionLineStore = defineStore('directionLine', {
       await AudioService.playTTS(
         this.currentDirectionLine.text,
         this.currentDirectionLine.languageCode || 'en',
+        {
+          onStart: () => {
+            console.log('TTS started playing');
+            this.isDirectionLinePlaying = true;
+          },
+          onEnd: () => {
+            console.log('TTS finished playing');
+            this.isDirectionLinePlaying = false;
+          },
+          onError: () => {
+            console.log('TTS error');
+            this.isDirectionLinePlaying = false;
+          },
+        }
+      );
+    },
+
+    async _playAudioFileForDirectionLine(/** @type {DirectionLine} */ directionLine) {
+      if (!directionLine?.audioPath) return;
+
+      console.log('Playing audio file:', directionLine.audioPath);
+      
+      await AudioService.playAudioFile(directionLine.audioPath, {
+        onStart: () => {
+          console.log('Audio file started playing');
+          this.isDirectionLinePlaying = true;
+        },
+        onEnd: () => {
+          console.log('Audio file finished playing');
+          this.isDirectionLinePlaying = false;
+        },
+        onError: () => {
+          console.log('Audio file error');
+          this.isDirectionLinePlaying = false;
+        },
+      });
+    },
+
+    async _playTTSForDirectionLine(/** @type {DirectionLine} */ directionLine) {
+      if (!directionLine?.text) {
+        console.warn('TTS not available or no text to speak');
+        this.isDirectionLinePlaying = false;
+        return;
+      }
+
+      console.log('Playing TTS for text:', directionLine.text);
+      
+      await AudioService.playTTS(
+        directionLine.text,
+        directionLine.languageCode || 'en',
         {
           onStart: () => {
             console.log('TTS started playing');

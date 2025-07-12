@@ -12,9 +12,9 @@
 </template>
 
 <script setup>
-  import { defineExpose, ref, onMounted } from 'vue';
+  import { defineExpose, ref, onMounted, watch } from 'vue';
   import PlayButton from './PlayButton.vue';
-  import { AudioService } from '../lib/audio_service';
+  import { useDirectionLineStore } from '../stores/main/direction_line_store';
 
   const props = defineProps({
     directionLine: {
@@ -29,6 +29,7 @@
 
   const emit = defineEmits(['play', 'pause', 'audioEnded']);
   const playButtonState = ref('paused');
+  const directionLineStore = useDirectionLineStore();
 
   /**
    * Determines if the play button should be shown.
@@ -58,78 +59,28 @@
   });
 
   /**
-   * Plays the audio with dynamic generation support.
+   * Watch for direction line store playing state changes
+   */
+  watch(() => directionLineStore.isPlaying, (isPlaying) => {
+    playButtonState.value = isPlaying ? 'playing' : 'paused';
+    
+    if (isPlaying) {
+      emit('play');
+    } else {
+      emit('audioEnded');
+    }
+  });
+
+  /**
+   * Plays the audio using the store's logic.
    */
   async function play() {
     try {
-      // Try to generate audio if needed
-      if (props.directionLine.generateAudioIfNeeded) {
-        const audioAvailable = await props.directionLine.generateAudioIfNeeded();
-        if (!audioAvailable) {
-          // Fallback to TTS
-          await playTTS();
-          return;
-        }
-      }
-
-      // Play audio file
-      if (props.directionLine.audioPath) {
-        await playAudioFile();
-      } else {
-        // Fallback to TTS
-        await playTTS();
-      }
+      // Use the store's audio playback logic with the current direction line
+      await directionLineStore.playAudioForDirectionLine(props.directionLine);
     } catch (error) {
       console.error('Error playing direction line audio:', error);
-      // Fallback to TTS
-      await playTTS();
     }
-  }
-
-  /**
-   * Play audio file from URL
-   * @private
-   */
-  async function playAudioFile() {
-    await AudioService.playAudioFile(props.directionLine.audioPath, {
-      onStart: () => {
-        playButtonState.value = 'playing';
-        emit('play');
-      },
-      onEnd: () => {
-        playButtonState.value = 'paused';
-        emit('audioEnded');
-      },
-      onError: () => {
-        playButtonState.value = 'paused';
-        emit('audioEnded');
-      },
-    });
-  }
-
-  /**
-   * Play audio using TTS
-   * @private
-   */
-  async function playTTS() {
-    await AudioService.playTTS(
-      props.directionLine.text,
-      props.directionLine.languageCode || 'en',
-      {
-        onStart: () => {
-          playButtonState.value = 'playing';
-          emit('play');
-        },
-        onEnd: () => {
-          playButtonState.value = 'paused';
-          emit('audioEnded');
-        },
-        onError: () => {
-          playButtonState.value = 'paused';
-          emit('audioEnded');
-        },
-      }
-    );
   }
 
   /**

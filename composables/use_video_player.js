@@ -142,8 +142,7 @@ export function useVideoPlayer(videoContainer) {
           setupVideoEvents();
 
           // Don't auto-start video immediately - wait for direction line completion
-          // The video will be started by the watcher in InteractiveVideoPlayer.vue
-          // after the direction line audio completes
+          // Video will be started by the direction line completion handler
           console.log('Video player initialized, waiting for direction line completion');
         }
       } catch (error) {
@@ -299,9 +298,8 @@ export function useVideoPlayer(videoContainer) {
     });
 
     player.on('loadedmetadata', () => {
-      if (useActivitySettingsStore().useAutoPlay && !isPlaying.value) {
-        handleAutoPlay();
-      }
+      // Don't auto-start video - wait for direction line completion
+      console.log('Video metadata loaded, waiting for direction line completion');
     });
 
     player.on('error', (/** @type {any} */ error) => {
