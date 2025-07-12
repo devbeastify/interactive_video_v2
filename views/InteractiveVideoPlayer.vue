@@ -1,5 +1,6 @@
 <template>
-  <div :class="$style['interactive-video-player']">
+  <div v-show="currentDirectionLine && !isQuickCheckVisible"
+    :class="$style['interactive-video-player']">
     <!-- Direction Line for current step -->
     <DirectionLineComponent
       v-if="currentDirectionLine"
@@ -26,9 +27,8 @@
         Back to Intro
       </button>
     </div>
-
-    <QuickCheck />
   </div>
+  <QuickCheck />
 </template>
 
 <script setup>
@@ -88,6 +88,12 @@
    * Computed property for current direction line from store
    */
   const currentDirectionLine = computed(() => store.currentDirectionLine);
+
+  /**
+   * Computed property to check if QuickCheck is visible
+   * Used to conditionally hide other sections when QuickCheck is shown
+   */
+  const isQuickCheckVisible = computed(() => quickCheckStore.isVisible);
 
   /**
    * Lifecycle hook: Initialize video player and event listeners on mount
