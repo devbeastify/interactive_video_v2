@@ -102,6 +102,10 @@ export const mainStore = defineStore('interactive_video_v2', {
           return state.activityInfo.dl || '';
         case 'player':
           return state.activityInfo.dl || '';
+        case 'quick_check':
+          // For QuickCheck, we need to get the DL from the current quick check
+          // This will be handled in the component since we need access to currentQuickCheck
+          return state.activityInfo.dl || 'Complete the interactive activity.';
         case 'diagnostic':
           return state.activityInfo.diagnostic?.dl || '';
         default:
@@ -388,6 +392,9 @@ export const mainStore = defineStore('interactive_video_v2', {
     _getLanguageCodeForStep(stepType) {
       switch (stepType) {
         case 'diagnostic':
+          return this.activityInfo.diagnostic?.language || 'en';
+        case 'quick_check':
+          // Use diagnostic language if available, otherwise default to 'en'
           return this.activityInfo.diagnostic?.language || 'en';
         default:
           return 'en';
