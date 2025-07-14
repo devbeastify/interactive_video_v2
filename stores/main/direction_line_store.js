@@ -8,14 +8,20 @@ export const useDirectionLineStore = defineStore('directionLine', {
   state: () => ({
     /** @type {DirectionLine|null} */
     currentDirectionLine: null,
+    /** @type {DirectionLine|null} */
+    quickCheckDirectionLine: null,
     isDirectionLinePlaying: false,
+    isQuickCheckDirectionLinePlaying: false,
     /** @type {number|null} */
     directionLineTimer: null,
+    /** @type {number|null} */
+    quickCheckDirectionLineTimer: null,
   }),
 
   getters: {
-    isPlaying: (state) => state.isDirectionLinePlaying,
+    isPlaying: (state) => state.isDirectionLinePlaying || state.isQuickCheckDirectionLinePlaying,
     currentLine: (state) => state.currentDirectionLine,
+    quickCheckLine: (state) => state.quickCheckDirectionLine,
   },
 
   actions: {
@@ -26,9 +32,21 @@ export const useDirectionLineStore = defineStore('directionLine', {
       this.currentDirectionLine = directionLine;
     },
 
+    /**
+     * @param {DirectionLine} directionLine
+     */
+    setQuickCheckDirectionLine(directionLine) {
+      this.quickCheckDirectionLine = directionLine;
+    },
+
     clearCurrentDirectionLine() {
       this.currentDirectionLine = null;
       this.isDirectionLinePlaying = false;
+    },
+
+    clearQuickCheckDirectionLine() {
+      this.quickCheckDirectionLine = null;
+      this.isQuickCheckDirectionLinePlaying = false;
     },
 
     startDirectionLineAudio() {
@@ -47,6 +65,26 @@ export const useDirectionLineStore = defineStore('directionLine', {
           this.playDirectionLineAudio();
         } else {
           console.warn('Timer triggered but direction line is not new or missing');
+        }
+      }, 500)));
+    },
+
+    startQuickCheckDirectionLineAudio() {
+      if (!this.quickCheckDirectionLine) {
+        console.warn('No quick check direction line to start audio');
+        return;
+      }
+
+      console.log('Starting quick check direction line audio for:', this.quickCheckDirectionLine.text);
+      this.isQuickCheckDirectionLinePlaying = true;
+      
+      // Set up timer for autoplay after 500ms
+      this.quickCheckDirectionLineTimer = /** @type {number} */ (/** @type {unknown} */ (setTimeout(() => {
+        if (this.quickCheckDirectionLine && this.quickCheckDirectionLine.isNew) {
+          console.log('Timer triggered, playing quick check direction line audio');
+          this.playQuickCheckDirectionLineAudio();
+        } else {
+          console.warn('Timer triggered but quick check direction line is not new or missing');
         }
       }, 500)));
     },
@@ -71,6 +109,29 @@ export const useDirectionLineStore = defineStore('directionLine', {
         console.error('Error playing direction line audio:', error);
         // Fallback to TTS
         await this._playTTS();
+      }
+    },
+
+    async playQuickCheckDirectionLineAudio() {
+      if (!this.quickCheckDirectionLine) return;
+
+      console.log('Playing quick check direction line audio for:', this.quickCheckDirectionLine.text);
+      
+      try {
+        // Try to generate audio if needed
+        const audioAvailable = await this.quickCheckDirectionLine.generateAudioIfNeeded();
+        
+        if (audioAvailable && this.quickCheckDirectionLine.audioPath) {
+          // Play audio file
+          await this._playQuickCheckAudioFile();
+        } else {
+          // Fallback to TTS
+          await this._playQuickCheckTTS();
+        }
+      } catch (error) {
+        console.error('Error playing quick check direction line audio:', error);
+        // Fallback to TTS
+        await this._playQuickCheckTTS();
       }
     },
 
@@ -201,6 +262,56 @@ export const useDirectionLineStore = defineStore('directionLine', {
       );
     },
 
+    async _playQuickCheckAudioFile() {
+      if (!this.quickCheckDirectionLine?.audioPath) return;
+
+      console.log('Playing quick check audio file:', this.quickCheckDirectionLine.audioPath);
+      
+      await AudioService.playAudioFile(this.quickCheckDirectionLine.audioPath, {
+        onStart: () => {
+          console.log('Quick check audio file started playing');
+          this.isQuickCheckDirectionLinePlaying = true;
+        },
+        onEnd: () => {
+          console.log('Quick check audio file finished playing');
+          this.isQuickCheckDirectionLinePlaying = false;
+        },
+        onError: () => {
+          console.log('Quick check audio file error');
+          this.isQuickCheckDirectionLinePlaying = false;
+        },
+      });
+    },
+
+    async _playQuickCheckTTS() {
+      if (!this.quickCheckDirectionLine?.text) {
+        console.warn('TTS not available or no text to speak for quick check');
+        this.isQuickCheckDirectionLinePlaying = false;
+        return;
+      }
+
+      console.log('Playing TTS for quick check text:', this.quickCheckDirectionLine.text);
+      
+      await AudioService.playTTS(
+        this.quickCheckDirectionLine.text,
+        this.quickCheckDirectionLine.languageCode || 'en',
+        {
+          onStart: () => {
+            console.log('Quick check TTS started playing');
+            this.isQuickCheckDirectionLinePlaying = true;
+          },
+          onEnd: () => {
+            console.log('Quick check TTS finished playing');
+            this.isQuickCheckDirectionLinePlaying = false;
+          },
+          onError: () => {
+            console.log('Quick check TTS error');
+            this.isQuickCheckDirectionLinePlaying = false;
+          },
+        }
+      );
+    },
+
     stopDirectionLineAudio() {
       this.isDirectionLinePlaying = false;
       
@@ -214,9 +325,24 @@ export const useDirectionLineStore = defineStore('directionLine', {
       AudioService.stopAudio();
     },
 
+    stopQuickCheckDirectionLineAudio() {
+      this.isQuickCheckDirectionLinePlaying = false;
+      
+      // Clear any existing timer
+      if (this.quickCheckDirectionLineTimer) {
+        clearTimeout(this.quickCheckDirectionLineTimer);
+        this.quickCheckDirectionLineTimer = null;
+      }
+
+      // Stop any ongoing speech synthesis
+      AudioService.stopAudio();
+    },
+
     cleanupDirectionLine() {
       this.stopDirectionLineAudio();
+      this.stopQuickCheckDirectionLineAudio();
       this.clearCurrentDirectionLine();
+      this.clearQuickCheckDirectionLine();
     },
 
     /**

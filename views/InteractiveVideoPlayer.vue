@@ -158,7 +158,7 @@
    * Handle direction line play event
    */
   const handleDirectionLinePlay = () => {
-    console.log('Direction line started playing, pausing video');
+    console.log('Main direction line started playing, pausing video');
     // Pause video when direction line audio starts
     if (videoPlayer.value && isPlaying.value) {
       videoPlayer.value.pause();
@@ -170,9 +170,10 @@
    * Handle direction line pause event
    */
   const handleDirectionLinePause = () => {
-    console.log('Direction line paused');
-    // Resume video if autoplay is enabled
-    if (videoPlayer.value && activitySettingsStore.useAutoPlay) {
+    console.log('Main direction line paused');
+    // Resume video if autoplay is enabled and no quick check is visible and no direction line is playing
+    if (videoPlayer.value && activitySettingsStore.useAutoPlay && 
+        !isQuickCheckVisible.value && !directionLineStore.isPlaying) {
       videoPlayer.value.play();
       isPlaying.value = true;
     }
@@ -182,9 +183,10 @@
    * Handle direction line audio ended event
    */
   const handleDirectionLineAudioEnded = () => {
-    console.log('Direction line audio ended, resuming video');
-    // Resume video when direction line audio ends
-    if (videoPlayer.value && activitySettingsStore.useAutoPlay) {
+    console.log('Main direction line audio ended, resuming video');
+    // Resume video when direction line audio ends, but only if no quick check is visible and no direction line is playing
+    if (videoPlayer.value && activitySettingsStore.useAutoPlay && 
+        !isQuickCheckVisible.value && !directionLineStore.isPlaying) {
       videoPlayer.value.play();
       isPlaying.value = true;
     }
