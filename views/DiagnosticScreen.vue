@@ -1,78 +1,92 @@
 <template>
-  <button @click="goToIntro">Back to Intro</button>
-  <!-- Direction Line for current step -->
-  <DirectionLineComponent
+  <div>
+    <button @click="goToIntro">
+      Back to Intro
+    </button>
+    <DirectionLineComponent
       v-if="currentDirectionLine"
-      :direction-line="currentDirectionLine"
-      :step-index="currentStepIndex"
-      ref="directionLineComponent" />
+      ref="directionLineComponent"
+      :directionLine="currentDirectionLine"
+      :stepIndex="currentStepIndex" />
+  </div>
 </template>
 
 <script setup>
 // @ts-check
-import { onMounted, onUnmounted, ref, computed, nextTick } from 'vue';
-import { mainStore } from '../stores/main/main_store';
-import { useDirectionLineStore } from '../stores/main/direction_line_store';
-import DirectionLineComponent from '../components/DirectionLine.vue';
+  import { onMounted, onUnmounted, ref, computed, nextTick } from 'vue';
+  import { mainStore } from '../stores/main/main_store';
+  import { useDirectionLineStore } from '../stores/main/direction_line_store';
+  import DirectionLineComponent from '../components/DirectionLine.vue';
 
-/**
- * @typedef {Object} StepData
- * @property {string} id
- * @property {string} type
- * @property {string} directionLine
- * @property {boolean} isNew
- * @property {string} languageCode
- */
+  /**
+   * @typedef {Object} StepData
+   * @property {string} id
+   * @property {string} type
+   * @property {string} directionLine
+   * @property {boolean} isNew
+   * @property {string} languageCode
+   */
 
-const store = mainStore();
-const directionLineStore = useDirectionLineStore();
+  /**
+   * @typedef {Object} DirectionLineComponentRef
+   * @property {Function} autoPlayAudio - Method to auto-play direction line audio
+   */
 
-/**
- * Current step information for direction line
- */
-const currentStepIndex = ref(0);
+  const store = mainStore();
+  const directionLineStore = useDirectionLineStore();
 
-/**
- * Reference to the direction line component
- */
-const directionLineComponent = ref(/** @type {any} */ (null));
+  /**
+   * Current step information for direction line
+   */
+  const currentStepIndex = ref(0);
 
-/**
- * Computed property for current direction line from store
- */
-const currentDirectionLine = computed(() => directionLineStore.currentLine);
+  /**
+   * Reference to the direction line component
+   */
+  const directionLineComponent = ref(/** @type {DirectionLineComponentRef | null} */ (null));
 
-onMounted(async () => {
-  console.log('DiagnosticScreen mounted');
-  // Initialize direction line for current step
-  initializeDirectionLine();
-  
-  // Wait for the component to be rendered and then auto-play
-  await nextTick();
-  console.log('Direction line component ref:', directionLineComponent.value);
-  console.log('Current direction line:', currentDirectionLine.value);
-  if (directionLineComponent.value && currentDirectionLine.value) {
-    console.log('Auto-playing direction line audio');
-    // Auto-play the direction line audio
-    directionLineComponent.value.autoPlayAudio();
-  } else {
-    console.warn('Cannot auto-play: missing component ref or direction line');
+  /**
+   * Computed property for current direction line from store
+   */
+  const currentDirectionLine = computed(() => directionLineStore.currentLine);
+
+  /**
+   * Initialize direction line for the current step
+   */
+  const initializeDirectionLine = () => {
+    store.initializeDirectionLineForStep('diagnostic');
+  };
+
+  /**
+   * Attempts to auto-play direction line audio if component and data are available
+   */
+  const attemptAutoPlayAudio = async () => {
+    await nextTick();
+
+    if (directionLineComponent.value && currentDirectionLine.value) {
+      directionLineComponent.value.autoPlayAudio();
+    }
+  };
+
+  /**
+   * Handles the component mounting process
+   */
+  const handleComponentMount = async () => {
+    console.log('DiagnosticScreen mounted');
+    initializeDirectionLine();
+    await attemptAutoPlayAudio();
+  };
+
+  /**
+   * Navigates back to the intro screen
+   */
+  function goToIntro() {
+    store.sequencer.goToScreen('intro');
   }
-});
 
-onUnmounted(() => {
-  directionLineStore.cleanupDirectionLine();
-});
+  onMounted(handleComponentMount);
 
-function goToIntro() {
-  store.sequencer.goToScreen('intro');
-}
-
-/**
- * Initialize direction line for the current step
- */
-const initializeDirectionLine = () => {
-  // Use centralized DL logic from store
-  store.initializeDirectionLineForStep('diagnostic');
-};
-</script> 
+  onUnmounted(() => {
+    directionLineStore.cleanupDirectionLine();
+  });
+</script>

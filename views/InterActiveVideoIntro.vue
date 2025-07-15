@@ -33,7 +33,6 @@
   import { onMounted } from 'vue';
   import { mainStore } from '../stores/main/main_store';
   import { useActivitySettingsStore } from '../stores/main/activity_settings_store';
-  import { browserIsSafari } from '../lib/safari_browser_check';
   // @ts-expect-error - Music doesn't have types, tsconfig needs new path aliases
   import BasicCheckbox from 'MusicV3/components/basic_checkbox/v2.0/BasicCheckbox.vue';
   import BeginAction from '../components/BeginAction.vue';
@@ -82,8 +81,10 @@
    */
   const allMediaSources = store.activityInfo.reference.flatMap(
     /**
-     * @param {{ video_path?: string, audio_path?: string }} reference
-     * @returns {string[]}
+     * @param {Object} reference - The reference object containing media paths
+     * @param {string} [reference.video_path] - Optional video path
+     * @param {string} [reference.audio_path] - Optional audio path
+     * @return {string[]}
      */
     (reference) => {
       const sources = [];
@@ -116,7 +117,7 @@
 
   /**
    * Starts the activity by moving to the player screen.
-   * @param {Event} e
+   * @param {Event} e - The event that triggered the start action
    * @return {Promise<void>}
    */
   const startActivity = async (e) => {
@@ -130,10 +131,10 @@
 
   /**
    * Lifecycle hook to load media when the component is mounted.
-   * @returns {void}
+   * @return {void}
    */
   onMounted(() => {
-    activitySettingsStore.resetIndex();
+    activitySettingsStore.resetAutoPlayToEnabled();
     loadMedia();
   });
 </script>

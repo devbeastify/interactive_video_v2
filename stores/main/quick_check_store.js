@@ -21,6 +21,15 @@ import { defineStore } from 'pinia';
  * @property {Array<QuickCheck>} quickChecks
  */
 
+/**
+ * @typedef QuickCheckUpdatePayload
+ * @property {number|null} [currentOffset]
+ * @property {Object|null} [content]
+ * @property {boolean} [isComplete]
+ * @property {HTMLInputElement|null} [pronunciationToggle]
+ * @property {boolean} [isVisible]
+ */
+
 export const useQuickCheckStore = defineStore('quickCheck', {
   state: () => ({
     currentOffset: null,
@@ -91,7 +100,6 @@ export const useQuickCheckStore = defineStore('quickCheck', {
         );
       }
 
-      // Emit events for video resumption
       document.dispatchEvent(new CustomEvent('finishCheckpoint'));
       document.dispatchEvent(new CustomEvent('quickCheckCompleted'));
 
@@ -111,9 +119,10 @@ export const useQuickCheckStore = defineStore('quickCheck', {
         isVisible: false,
       });
     },
+
     /**
      * Update multiple quick check state properties at once
-     * @param {any} payload - The state properties to update
+     * @param {QuickCheckUpdatePayload} payload - The state properties to update
      */
     updateQuickCheckState(payload) {
       this.$patch(payload);

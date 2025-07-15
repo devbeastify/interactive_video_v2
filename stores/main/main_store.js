@@ -34,13 +34,27 @@ import { useActivitySettingsStore } from './activity_settings_store';
  */
 
 /**
+ * @typedef ReferenceItem
+ * @property {string} type
+ * @property {string} value
+ * @property {Object} metadata
+ */
+
+/**
+ * @typedef QuickCheckItem
+ * @property {string} type
+ * @property {Object} content
+ * @property {Object} configuration
+ */
+
+/**
  * @typedef ActivityInfo
  * @property {string} topic
  * @property {string} sub_topic
  * @property {string} title
  * @property {string} dl - Main direction line
- * @property {Array<any>} reference
- * @property {Array<any>} quick_checks
+ * @property {Array<ReferenceItem>} reference
+ * @property {Array<QuickCheckItem>} quick_checks
  * @property {DiagnosticData} diagnostic
  */
 
@@ -78,24 +92,23 @@ export const mainStore = defineStore('interactive_video_v2', {
     /**
      * Get direction line text for a specific step type
      * @param {MainStoreState} state - The store state
-     * @return {function(string): string} Function that takes stepType and returns direction line text
+     * @return {function(string): string} Function that takes stepType and returns
+     * direction line text
      */
     getDirectionLineForStep: (state) => (stepType) => {
       switch (stepType) {
-        case 'intro':
-          return state.activityInfo.dl || '';
-        case 'player':
-          return state.activityInfo.dl || '';
-        case 'quick_check':
-          // Removed DL logic for quick check as requested
-          return '';
-        case 'diagnostic':
-          const diagnosticDL = state.activityInfo.diagnostic?.dl || '';
-          console.log('Getting diagnostic DL:', diagnosticDL);
-          console.log('Full activity info:', state.activityInfo);
-          return diagnosticDL;
-        default:
-          return state.activityInfo.dl || '';
+      case 'intro':
+        return state.activityInfo.dl || '';
+      case 'player':
+        return state.activityInfo.dl || '';
+      case 'quick_check':
+        return '';
+      case 'diagnostic': {
+        const diagnosticDL = state.activityInfo.diagnostic?.dl || '';
+        return diagnosticDL;
+      }
+      default:
+        return state.activityInfo.dl || '';
       }
     },
 
@@ -124,18 +137,14 @@ export const mainStore = defineStore('interactive_video_v2', {
           }
           return parseActivityInfo(activityInfo);
         })
-        .then((/** @type {any} */ activityInfo) => {
+        .then((/** @type {ActivityInfo} */ activityInfo) => {
           this.activityInfo = activityInfo;
-          console.log('Activity info loaded:', activityInfo);
-          console.log('Diagnostic data:', activityInfo.diagnostic);
-          console.log('Diagnostic DL:', activityInfo.diagnostic?.dl);
           const screens = buildScreensForActivity(activityInfo);
           this.sequencer.addScreen(screens);
           this.sequencer.goToScreen('intro');
         })
         .catch((error) => console.error(error));
 
-      // Initialize activity settings store
       const activitySettingsStore = useActivitySettingsStore();
       if (!activitySettingsStore.isInitialized) {
         activitySettingsStore.init();
@@ -149,15 +158,15 @@ export const mainStore = defineStore('interactive_video_v2', {
      * @param {string} stepType - The step type to initialize direction line for
      */
     initializeDirectionLineForStep(stepType) {
-      console.log('Initializing direction line for step type:', stepType);
       const directionLineStore = useDirectionLineStore();
       const directionLineText = this.getDirectionLineForStep(stepType);
       const languageCode = this._getLanguageCodeForStep(stepType);
-      
-      console.log('Direction line text:', directionLineText);
-      console.log('Language code:', languageCode);
-      
-      directionLineStore.initializeDirectionLineForStep(stepType, directionLineText, languageCode);
+
+      directionLineStore.initializeDirectionLineForStep(
+        stepType,
+        directionLineText,
+        languageCode
+      );
     },
 
     /**
@@ -168,13 +177,12 @@ export const mainStore = defineStore('interactive_video_v2', {
      */
     _getLanguageCodeForStep(stepType) {
       switch (stepType) {
-        case 'diagnostic':
-          return this.activityInfo.diagnostic?.language || 'en';
-        case 'quick_check':
-          // Removed DL logic for quick check as requested
-          return 'en';
-        default:
-          return 'en';
+      case 'diagnostic':
+        return this.activityInfo.diagnostic?.language || 'en';
+      case 'quick_check':
+        return 'en';
+      default:
+        return 'en';
       }
     },
   },

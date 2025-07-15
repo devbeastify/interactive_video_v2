@@ -42,14 +42,14 @@ describe('InteractiveVideoApp', () => {
   });
 
   describe('rendering', () => {
-    it('should render correctly when mounted', () => {
+    it('renders the component when mounted', () => {
       const { pinia } = setupInteractiveVideoAppTest();
       const wrapper = createInteractiveVideoAppWrapper({ pinia });
 
       expect(wrapper.exists()).toBe(true);
     });
 
-    it('should render intro component when current screen is intro', async () => {
+    it('displays intro component when current screen is intro', async () => {
       const { pinia, mainStoreInstance } = setupInteractiveVideoAppTest();
 
       mainStoreInstance.sequencer.addScreen([
@@ -64,7 +64,7 @@ describe('InteractiveVideoApp', () => {
       expect(wrapper.findComponent({ name: 'InteractiveVideoIntro' }).exists()).toBe(true);
     });
 
-    it('should render player component when current screen is player', async () => {
+    it('displays player component when current screen is player', async () => {
       const { pinia, mainStoreInstance } = setupInteractiveVideoAppTest();
 
       mainStoreInstance.sequencer.addScreen([
@@ -81,7 +81,7 @@ describe('InteractiveVideoApp', () => {
   });
 
   describe('screen transitions', () => {
-    it('should transition from intro to player when start event is emitted', async () => {
+    it('transitions from intro to player when start event is emitted', async () => {
       const { pinia, mainStoreInstance } = setupInteractiveVideoAppTest();
 
       mainStoreInstance.$patch({
@@ -100,7 +100,7 @@ describe('InteractiveVideoApp', () => {
       }
     });
 
-    it('should handle screen changes from store updates', async () => {
+    it('handles screen changes from store updates', async () => {
       const { pinia, mainStoreInstance } = setupInteractiveVideoAppTest();
 
       const wrapper = createInteractiveVideoAppWrapper({ pinia });
@@ -114,7 +114,7 @@ describe('InteractiveVideoApp', () => {
   });
 
   describe('store integration', () => {
-    it('should reflect store state correctly', async () => {
+    it('reflects store state correctly', async () => {
       const { pinia, mainStoreInstance } = setupInteractiveVideoAppTest();
 
       mainStoreInstance.$patch({
@@ -131,7 +131,7 @@ describe('InteractiveVideoApp', () => {
       expect(wrapper.exists()).toBe(true);
     });
 
-    it('should handle store state changes', async () => {
+    it('handles store state changes', async () => {
       const { pinia, mainStoreInstance } = setupInteractiveVideoAppTest();
 
       const wrapper = createInteractiveVideoAppWrapper({ pinia });
@@ -145,14 +145,14 @@ describe('InteractiveVideoApp', () => {
   });
 
   describe('component lifecycle', () => {
-    it('should initialize correctly on mount', () => {
+    it('initializes correctly on mount', () => {
       const { pinia } = setupInteractiveVideoAppTest();
       const wrapper = createInteractiveVideoAppWrapper({ pinia });
 
       expect(wrapper.exists()).toBe(true);
     });
 
-    it('should handle unmounting gracefully', () => {
+    it('handles unmounting gracefully', () => {
       const { pinia } = setupInteractiveVideoAppTest();
       const wrapper = createInteractiveVideoAppWrapper({ pinia });
 
@@ -163,13 +163,13 @@ describe('InteractiveVideoApp', () => {
   });
 
   describe('error handling', () => {
-    it('should handle missing store gracefully', () => {
+    it('handles missing store gracefully', () => {
       const wrapper = createInteractiveVideoAppWrapper();
 
       expect(wrapper.exists()).toBe(true);
     });
 
-    it('should handle invalid screen states', async () => {
+    it('handles invalid screen states', async () => {
       const { pinia, mainStoreInstance } = setupInteractiveVideoAppTest();
 
       mainStoreInstance.$patch({

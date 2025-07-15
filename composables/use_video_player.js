@@ -107,50 +107,88 @@ export function useVideoPlayer(videoContainer) {
   const isPlaying = ref(false);
 
   /**
+   * Create video player instance
+   * @return {VideoPlayer|null}
+   */
+  const createVideoPlayerInstance = () => {
+    // @ts-expect-error - VHL.Video.File constructor returns a different type
+    return new VHL.Video.File();
+  };
+
+  /**
+   * Initialize video player with options
+   * @param {VideoPlayer} player - Video player instance
+   * @param {VideoOptions} options - Video options
+   * @return {void}
+   */
+  const initializePlayerWithOptions = (player, options) => {
+    player.init(options);
+    player.show_controls = true;
+    player.initialize_video();
+    player.show_video();
+  };
+
+  /**
    * Initialize the video player using VHL.Video.File
    * @return {void}
    */
   const initializeVideoPlayer = () => {
     setTimeout(() => {
       try {
-        if (videoContainer.value && mainStore().activityInfo.reference.length > 0) {
-          /** @type {VideoData} */
-          const videoData = mainStore().activityInfo.reference[0];
-
-          // @ts-expect-error - VHL.Video.File constructor returns a different type
-          videoPlayer.value = new VHL.Video.File();
-
-          /** @type {VideoOptions} */
-          const options = {
-            videoContainer: videoContainer.value,
-            sourceURL: videoData.video_path,
-            fluid: true,
-            videoTracks: createCaptionObject(videoData),
-          };
-
-          if (videoPlayer.value) {
-            videoPlayer.value.init(options);
-            videoPlayer.value.show_controls = true;
-            videoPlayer.value.initialize_video();
-            videoPlayer.value.show_video();
-          }
-
-          if (useQuickCheckStore().hasQuickChecks) {
-            setupCheckpoints();
-          }
-
-          setupVideoEvents();
-
-          // Don't auto-start video immediately - wait for direction line completion
-          // Video will be started by the direction line completion handler
-          console.log('Video player initialized, waiting for direction line completion');
+        if (!videoContainer.value ||
+            mainStore().activityInfo.reference.length === 0) {
+          return;
         }
+
+        /** @type {VideoData} */
+        const videoData = mainStore().activityInfo.reference[0];
+        videoPlayer.value = createVideoPlayerInstance();
+
+        /** @type {VideoOptions} */
+        const options = {
+          videoContainer: videoContainer.value,
+          sourceURL: videoData.video_path,
+          fluid: true,
+          videoTracks: createCaptionObject(videoData),
+        };
+
+        if (videoPlayer.value) {
+          initializePlayerWithOptions(videoPlayer.value, options);
+        }
+
+        if (useQuickCheckStore().hasQuickChecks) {
+          setupCheckpoints();
+        }
+
+        setupVideoEvents();
+        console.log('Video player initialized, waiting for direction line completion');
       } catch (error) {
         console.error('Error initializing video player:', error);
         videoPlayer.value = null;
         isPlaying.value = false;
       }
     }, 100);
+  };
+
+  /**
+   * Check if video is ready and start playback
+   * @param {VideoJSPlayer} player - VideoJS player instance
+   * @return {void}
+   */
+  const checkVideoReadyAndPlay = (player) => {
+    if (player.readyState() >= 1) {
+      player
+        .play()
+        .then(() => {
+          isPlaying.value = true;
+        })
+        .catch(/** @param {Error} error */ (error) => {
+          console.warn('Auto-play failed:', error);
+          isPlaying.value = false;
+        });
+    } else {
+      setTimeout(() => checkVideoReadyAndPlay(player), 100);
+    }
   };
 
   /**
@@ -165,20 +203,7 @@ export function useVideoPlayer(videoContainer) {
         if (videoPlayer.value && videoPlayer.value.videojs_player) {
           /** @type {VideoJSPlayer} */
           const player = videoPlayer.value.videojs_player;
-
-          if (player.readyState() >= 1) {
-            player
-              .play()
-              .then(() => {
-                isPlaying.value = true;
-              })
-              .catch(/** @param {Error} error */ (error) => {
-                console.warn('Auto-play failed:', error);
-                isPlaying.value = false;
-              });
-          } else {
-            setTimeout(checkVideoReady, 100);
-          }
+          checkVideoReadyAndPlay(player);
         }
       };
 
@@ -189,6 +214,23 @@ export function useVideoPlayer(videoContainer) {
   };
 
   /**
+   * Create checkpoint points from quick checks
+   * @return {Array<CheckpointPoint>}
+   */
+  const createCheckpointPoints = () => {
+    return useQuickCheckStore().quickChecks
+      .map(
+      /**
+      * @param {QuickCheck} quickCheck - The quick check data
+      * @return {CheckpointPoint} The checkpoint point object
+      */ (quickCheck) => ({
+          offset: quickCheck.offset,
+          gap: quickCheck.gap,
+          stop: true,
+        }));
+  };
+
+  /**
    * Set up interactive checkpoints
    * @return {void}
    */
@@ -196,12 +238,7 @@ export function useVideoPlayer(videoContainer) {
     if (!videoPlayer.value || !useQuickCheckStore().hasQuickChecks) return;
 
     /** @type {Array<CheckpointPoint>} */
-    const points = useQuickCheckStore().quickChecks
-      .map(/** @param {QuickCheck} quickCheck */ (quickCheck) => ({
-        offset: quickCheck.offset,
-        gap: quickCheck.gap,
-        stop: true,
-      }));
+    const points = createCheckpointPoints();
 
     /** @type {PluginSettings} */
     const pluginSettings = {
@@ -275,6 +312,16 @@ export function useVideoPlayer(videoContainer) {
   };
 
   /**
+   * Handle video player error
+   * @param {Error} error - Error object
+   * @return {void}
+   */
+  const handleVideoError = (error) => {
+    console.error('Video player error:', error);
+    isPlaying.value = false;
+  };
+
+  /**
    * Set up video event listeners
    * @return {void}
    */
@@ -293,19 +340,14 @@ export function useVideoPlayer(videoContainer) {
 
     player.on('ended', () => {
       isPlaying.value = false;
-      // Navigate to diagnostic screen when video ends
       mainStore().sequencer.goToScreen('diagnostic');
     });
 
     player.on('loadedmetadata', () => {
-      // Don't auto-start video - wait for direction line completion
       console.log('Video metadata loaded, waiting for direction line completion');
     });
 
-    player.on('error', (/** @type {any} */ error) => {
-      console.error('Video player error:', error);
-      isPlaying.value = false;
-    });
+    player.on('error', handleVideoError);
   };
 
   /**
@@ -315,11 +357,10 @@ export function useVideoPlayer(videoContainer) {
   const cleanupVideoPlayer = () => {
     if (videoPlayer.value) {
       try {
-        // Check if destroy method exists before calling it
         if (typeof videoPlayer.value.destroy === 'function') {
           videoPlayer.value.destroy();
-        } else if (videoPlayer.value.videojs_player && typeof videoPlayer.value.videojs_player.dispose === 'function') {
-          // Fallback to VideoJS dispose method
+        } else if (videoPlayer.value.videojs_player &&
+                   typeof videoPlayer.value.videojs_player.dispose === 'function') {
           videoPlayer.value.videojs_player.dispose();
         }
         console.log('Video player cleaned up successfully');

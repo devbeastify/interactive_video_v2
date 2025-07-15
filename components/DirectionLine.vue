@@ -1,12 +1,14 @@
 <template>
-  <div class="direction-line">
-    <div v-if="showPlayButton()" class="direction-line__play-button-wrapper">
+  <div :class="$style['direction-line']">
+    <div
+      v-if="showPlayButton()"
+      :class="$style['direction-line__play-button-wrapper']">
       <PlayButton
         :audioBtnState="playButtonState"
         @click="play" />
     </div>
-    <div class="direction-line__text">
-      <span v-html="directionLine.text"></span>
+    <div :class="$style['direction-line__text']">
+      <span v-html="directionLine.text" />
     </div>
   </div>
 </template>
@@ -15,6 +17,18 @@
   import { defineExpose, ref, onMounted, watch } from 'vue';
   import PlayButton from './PlayButton.vue';
   import { useDirectionLineStore } from '../stores/main/direction_line_store';
+
+  /**
+   * @typedef {Object} DirectionLine
+   * @property {string} text - The direction text content
+   * @property {string} audioPath - Path to the audio file
+   * @property {boolean} isNew - Whether this is a new direction line
+   * @property {Function} generateAudioIfNeeded - Function to generate audio if needed
+   */
+
+  /**
+   * @typedef {'playing' | 'paused'} PlayButtonState
+   */
 
   const props = defineProps({
     directionLine: {
@@ -32,16 +46,41 @@
   const directionLineStore = useDirectionLineStore();
 
   /**
+   * Checks if the direction line has audio content
+   * @param {DirectionLine} directionLine - The direction line object
+   * @return {boolean} True if audio is available, false otherwise
+   */
+  function hasAudioContent(directionLine) {
+    return directionLine.audioPath && directionLine.audioPath.length > 0;
+  }
+
+  /**
+   * Checks if the direction line has text content
+   * @param {DirectionLine} directionLine - The direction line object
+   * @return {boolean} True if text is available, false otherwise
+   */
+  function hasTextContent(directionLine) {
+    return directionLine.text && directionLine.text.length > 0;
+  }
+
+  /**
+   * Checks if text-to-speech is available in the browser
+   * @return {boolean} True if TTS is available, false otherwise
+   */
+  function hasTextToSpeech() {
+    return 'speechSynthesis' in window;
+  }
+
+  /**
    * Determines if the play button should be shown.
-   * @return {boolean} True if the play button should be shown, false otherwise.
+   * @return {boolean} True if the play button should be shown, false otherwise
    */
   function showPlayButton() {
-    const hasAudio = props.directionLine.audioPath && props.directionLine.audioPath.length > 0;
-    const hasText = props.directionLine.text && props.directionLine.text.length > 0;
+    const hasAudio = hasAudioContent(props.directionLine);
+    const hasText = hasTextContent(props.directionLine);
     const isNew = props.directionLine.isNew;
-    const hasTTS = 'speechSynthesis' in window;
-    
-    // Show button if we have audio file OR if we have text and TTS is available
+    const hasTTS = hasTextToSpeech();
+
     return isNew && (hasAudio || (hasText && hasTTS));
   }
 
@@ -63,7 +102,7 @@
    */
   watch(() => directionLineStore.isPlaying, (isPlaying) => {
     playButtonState.value = isPlaying ? 'playing' : 'paused';
-    
+
     if (isPlaying) {
       emit('play');
     } else {
@@ -76,7 +115,6 @@
    */
   async function play() {
     try {
-      // Use the store's audio playback logic with the current direction line
       await directionLineStore.playAudioForDirectionLine(props.directionLine);
     } catch (error) {
       console.error('Error playing direction line audio:', error);
@@ -89,6 +127,7 @@
   function autoPlayAudio() {
     console.log('Auto-playing direction line audio');
     const halfSecond = 500;
+
     setTimeout(() => {
       if (props.directionLine && props.directionLine.text) {
         play();
@@ -103,24 +142,25 @@
   });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss" module>
+@use 'MusicV3/v3/styles/base' as base;
+
 .direction-line {
   align-items: center;
   display: flex;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: base.rpx(16);
 
   &__play-button-wrapper {
-    margin-right: 1rem;
-    // Visually centers the button graphic with the text.
-    transform: translateY(0.25rem);
+    margin-right: base.rpx(16);
+    transform: translateY(base.rpx(4));
   }
 
   &__text {
     flex-grow: 1;
-    font-size: 1.1rem;
+    font-size: base.rpx(18);
     font-weight: 500;
     text-align: center;
   }
 }
-</style> 
+</style>

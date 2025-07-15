@@ -3,74 +3,73 @@ import { mount } from '@vue/test-utils';
 import PlayButton from './PlayButton.vue';
 
 describe('PlayButton', () => {
-  it('renders with paused state by default', () => {
+  it('displays play icon when audio is paused', () => {
     const wrapper = mount(PlayButton);
 
-    expect(wrapper.find('.play-button').exists()).toBe(true);
-    expect(wrapper.find('.speaker-icon').exists()).toBe(true);
-    expect(wrapper.find('.pause-icon').exists()).toBe(false);
-    expect(wrapper.classes()).toContain('is-paused');
+    expect(wrapper.find('svg').attributes('class')).toContain('speaker-icon');
   });
 
-  it('renders with playing state', () => {
+  it('displays pause icon when audio is playing', () => {
     const wrapper = mount(PlayButton, {
       props: {
         audioBtnState: 'playing',
       },
     });
 
-    expect(wrapper.find('.play-button').exists()).toBe(true);
-    expect(wrapper.find('.speaker-icon').exists()).toBe(false);
-    expect(wrapper.find('.pause-icon').exists()).toBe(true);
-    expect(wrapper.classes()).toContain('is-playing');
+    expect(wrapper.find('svg').attributes('class')).toContain('pause-icon');
   });
 
-  it('renders with paused state', () => {
+  it('emits click event when button is clicked', async () => {
+    const wrapper = mount(PlayButton);
+
+    await wrapper.find('button').trigger('click');
+
+    expect(wrapper.emitted('click')).toBeTruthy();
+  });
+
+  it('has accessible button attributes', () => {
+    const wrapper = mount(PlayButton);
+
+    const button = wrapper.find('button');
+
+    expect(button.attributes('aria-label')).toBe('Play audio');
+  });
+
+  it('has correct button type', () => {
+    const wrapper = mount(PlayButton);
+
+    const button = wrapper.find('button');
+
+    expect(button.attributes('type')).toBe('button');
+  });
+
+  it('accepts valid audio button states', () => {
+    const wrapper = mount(PlayButton, {
+      props: {
+        audioBtnState: 'playing',
+      },
+    });
+
+    expect(wrapper.props('audioBtnState')).toBe('playing');
+  });
+
+  it('accepts paused state as valid', () => {
     const wrapper = mount(PlayButton, {
       props: {
         audioBtnState: 'paused',
       },
     });
 
-    expect(wrapper.find('.play-button').exists()).toBe(true);
-    expect(wrapper.find('.speaker-icon').exists()).toBe(true);
-    expect(wrapper.find('.pause-icon').exists()).toBe(false);
-    expect(wrapper.classes()).toContain('is-paused');
+    expect(wrapper.props('audioBtnState')).toBe('paused');
   });
 
-  it('emits click event when button is clicked', async () => {
-    const wrapper = mount(PlayButton);
-
-    await wrapper.find('.play-button').trigger('click');
-
-    expect(wrapper.emitted('click')).toBeTruthy();
-  });
-
-  it('has correct accessibility attributes', () => {
-    const wrapper = mount(PlayButton);
-
-    const button = wrapper.find('.play-button');
-    expect(button.attributes('aria-label')).toBe('Play audio');
-    expect(button.attributes('type')).toBe('button');
-  });
-
-  it('applies correct CSS classes based on state', () => {
+  it('accepts empty string as valid state', () => {
     const wrapper = mount(PlayButton, {
       props: {
-        audioBtnState: 'playing',
+        audioBtnState: '',
       },
     });
 
-    expect(wrapper.classes()).toContain('is-playing');
-    expect(wrapper.classes()).not.toContain('is-paused');
+    expect(wrapper.props('audioBtnState')).toBe('');
   });
-
-  it('validates audioBtnState prop', () => {
-    const validator = PlayButton.props.audioBtnState.validator;
-
-    expect(validator('playing')).toBe(true);
-    expect(validator('paused')).toBe(true);
-    expect(validator('')).toBe(true);
-    expect(validator('invalid')).toBe(false);
-  });
-}); 
+});

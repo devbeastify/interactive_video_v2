@@ -9,7 +9,7 @@ import { useMedia } from './use_media';
  * @param {Object} [options]
  * @param {boolean} [options.shouldResolve=true] - Whether the media should resolve successfully
  * @param {boolean} [options.shouldReject=false] - Whether the media should reject
- * @returns {{
+ * @return {{
  *   originalCreateElement: typeof document.createElement,
  *   mockMediaElement: ReturnType<typeof vi.fn>
  * }}
@@ -53,7 +53,7 @@ describe('#useMedia', () => {
   });
 
   describe('return values', () => {
-    it('should return an object with expected properties', () => {
+    it('returns an object with expected properties', () => {
       const result = useMedia([]);
 
       expect(result).toHaveProperty('mediaState');
@@ -61,52 +61,62 @@ describe('#useMedia', () => {
       expect(result).toHaveProperty('whitelistMedia');
     });
 
-    it('should return mediaState as a ref', () => {
+    it('returns mediaState as a ref', () => {
       const { mediaState } = useMedia([]);
+
       expect(mediaState).toBeDefined();
       expect(typeof mediaState.value).toBe('string');
     });
 
-    it('should initialize mediaState to "idle"', () => {
+    it('initializes mediaState to "idle"', () => {
       const { mediaState } = useMedia([]);
+
       expect(mediaState.value).toBe('idle');
     });
 
-    it('should return loadMedia as a function', () => {
+    it('returns loadMedia as a function', () => {
       const { loadMedia } = useMedia([]);
+
       expect(typeof loadMedia).toBe('function');
     });
 
-    it('should return whitelistMedia as a function', () => {
+    it('returns whitelistMedia as a function', () => {
       const { whitelistMedia } = useMedia([]);
+
       expect(typeof whitelistMedia).toBe('function');
     });
   });
 
   describe('loadMedia', () => {
-    it('should set mediaState to "loaded" when no media files are provided', async () => {
+    it('sets mediaState to "loaded" when no media files are provided', async () => {
       const { mediaState, loadMedia } = useMedia([]);
+
       await loadMedia();
+
       expect(mediaState.value).toBe('loaded');
     });
 
-    it('should set mediaState to "loaded" when all video files load successfully', async () => {
+    it('sets mediaState to "loaded" when all video files load successfully', async () => {
       const { mediaState, loadMedia } = useMedia(['video1.mp4', 'video2.mp4']);
       const { originalCreateElement } = setupMockMediaElement({ shouldResolve: true });
+
       await loadMedia();
+
       expect(mediaState.value).toBe('loaded');
       document.createElement = originalCreateElement;
     });
 
-    it('should set mediaState to "loaded" when all audio files load successfully', async () => {
+    it('sets mediaState to "loaded" when all audio files load successfully', async () => {
       const { mediaState, loadMedia } = useMedia(['audio1.mp3', 'audio2.wav']);
       const { originalCreateElement } = setupMockMediaElement({ shouldResolve: true });
+
       await loadMedia();
+
       expect(mediaState.value).toBe('loaded');
       document.createElement = originalCreateElement;
     });
 
-    it('should set mediaState to "error" when any media file fails to load', async () => {
+    it('sets mediaState to "error" when any media file fails to load', async () => {
       const { mediaState, loadMedia } = useMedia(['video1.mp4', 'audio1.mp3']);
 
       let callCount = 0;
@@ -128,47 +138,55 @@ describe('#useMedia', () => {
         callCount++;
         return media;
       });
+
       await loadMedia();
+
       expect(mediaState.value).toBe('error');
       document.createElement = originalCreateElement;
     });
   });
 
   describe('whitelistMedia', () => {
-    it('should resolve immediately when no media files are provided', async () => {
+    it('resolves immediately when no media files are provided', async () => {
       const { whitelistMedia } = useMedia([]);
+
       await expect(whitelistMedia()).resolves.toBeUndefined();
     });
 
-    it('should attempt to play and pause videos and audios for whitelisting', async () => {
+    it('attempts to play and pause videos and audios for whitelisting', async () => {
       const { whitelistMedia } = useMedia(['video1.mp4', 'audio1.mp3']);
       const { originalCreateElement, mockMediaElement } = setupMockMediaElement({
         shouldResolve: true,
       });
+
       await whitelistMedia();
+
       expect(mockMediaElement).toHaveBeenCalledWith('video');
       expect(mockMediaElement).toHaveBeenCalledWith('audio');
       document.createElement = originalCreateElement;
     });
 
-    it('should handle play promises that resolve for both video and audio', async () => {
+    it('handles play promises that resolve for both video and audio', async () => {
       const { whitelistMedia } = useMedia(['video1.mp4', 'audio1.mp3']);
       const { originalCreateElement } = setupMockMediaElement({ shouldResolve: true });
+
       await whitelistMedia();
+
       expect(true).toBe(true);
       document.createElement = originalCreateElement;
     });
 
-    it('should not reject if play promise is rejected (should resolve)', async () => {
+    it('does not reject if play promise is rejected', async () => {
       const { whitelistMedia } = useMedia(['video1.mp4']);
       const { originalCreateElement } = setupMockMediaElement({
         shouldResolve: true, shouldReject: true,
       });
+
       await expect(whitelistMedia()).resolves.toBeUndefined();
       document.createElement = originalCreateElement;
     });
 
-    it('should handle browsers that do not return play promises', async () => {
+    it('handles browsers that do not return play promises', async () => {
       const { originalCreateElement } = setupMockMediaElement({ shouldResolve: true });
       document.createElement = vi.fn().mockImplementation((tag) => {
         if (tag === 'video' || tag === 'audio') {
@@ -181,7 +199,9 @@ describe('#useMedia', () => {
         return originalCreateElement.call(document, tag);
       });
       const { whitelistMedia } = useMedia(['video1.mp4', 'audio1.mp3']);
+
       await whitelistMedia();
+
       expect(true).toBe(true);
       document.createElement = originalCreateElement;
     });

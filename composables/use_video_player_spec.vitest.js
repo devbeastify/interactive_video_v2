@@ -53,7 +53,7 @@ function setupVHLMock() {
 
 /**
  * Sets up Pinia for testing
- * @returns {import('pinia').Pinia} The created Pinia instance
+ * @return {import('pinia').Pinia} The created Pinia instance
  */
 function setupPinia() {
   const pinia = createPinia();
@@ -81,7 +81,9 @@ describe('#useVideoPlayer', () => {
     setupVHLMock();
     setupPinia();
 
-    const element = /** @type {HTMLElement} */ (document.querySelector('.js-tutorial-container'));
+    const element = /** @type {HTMLElement} */ (
+      document.querySelector('.js-tutorial-container')
+    );
     mockVideoContainer = ref(element);
   });
 
@@ -90,59 +92,105 @@ describe('#useVideoPlayer', () => {
   });
 
   describe('return values', () => {
-    it('should return an object with expected properties', () => {
+    it('returns an object with videoPlayer property', () => {
       const result = useVideoPlayer(mockVideoContainer);
 
       expect(result).toHaveProperty('videoPlayer');
+    });
+
+    it('returns an object with isPlaying property', () => {
+      const result = useVideoPlayer(mockVideoContainer);
+
       expect(result).toHaveProperty('isPlaying');
+    });
+
+    it('returns an object with initializeVideoPlayer property', () => {
+      const result = useVideoPlayer(mockVideoContainer);
+
       expect(result).toHaveProperty('initializeVideoPlayer');
+    });
+
+    it('returns an object with cleanupVideoPlayer property', () => {
+      const result = useVideoPlayer(mockVideoContainer);
+
       expect(result).toHaveProperty('cleanupVideoPlayer');
+    });
+
+    it('returns an object with handleAutoPlay property', () => {
+      const result = useVideoPlayer(mockVideoContainer);
+
       expect(result).toHaveProperty('handleAutoPlay');
+    });
+
+    it('returns an object with setupCheckpoints property', () => {
+      const result = useVideoPlayer(mockVideoContainer);
+
       expect(result).toHaveProperty('setupCheckpoints');
+    });
+
+    it('returns an object with handleCheckpointReached property', () => {
+      const result = useVideoPlayer(mockVideoContainer);
+
       expect(result).toHaveProperty('handleCheckpointReached');
+    });
+
+    it('returns an object with setupVideoEvents property', () => {
+      const result = useVideoPlayer(mockVideoContainer);
+
       expect(result).toHaveProperty('setupVideoEvents');
     });
 
-    it('should return videoPlayer as a ref', () => {
+    it('returns videoPlayer as a ref', () => {
       const { videoPlayer } = useVideoPlayer(mockVideoContainer);
+
       expect(videoPlayer).toBeDefined();
+    });
+
+    it('initializes videoPlayer ref to null', () => {
+      const { videoPlayer } = useVideoPlayer(mockVideoContainer);
+
       expect(videoPlayer.value).toBeNull();
     });
 
-    it('should return isPlaying as a ref', () => {
+    it('returns isPlaying as a ref', () => {
       const { isPlaying } = useVideoPlayer(mockVideoContainer);
+
       expect(isPlaying).toBeDefined();
-      expect(typeof isPlaying.value).toBe('boolean');
     });
 
-    it('should initialize isPlaying to false', () => {
+    it('initializes isPlaying to false', () => {
       const { isPlaying } = useVideoPlayer(mockVideoContainer);
+
       expect(isPlaying.value).toBe(false);
     });
 
-    it('should return handleAutoPlay as a function', () => {
+    it('returns handleAutoPlay as a function', () => {
       const { handleAutoPlay } = useVideoPlayer(mockVideoContainer);
+
       expect(typeof handleAutoPlay).toBe('function');
     });
 
-    it('should return setupCheckpoints as a function', () => {
+    it('returns setupCheckpoints as a function', () => {
       const { setupCheckpoints } = useVideoPlayer(mockVideoContainer);
+
       expect(typeof setupCheckpoints).toBe('function');
     });
 
-    it('should return handleCheckpointReached as a function', () => {
+    it('returns handleCheckpointReached as a function', () => {
       const { handleCheckpointReached } = useVideoPlayer(mockVideoContainer);
+
       expect(typeof handleCheckpointReached).toBe('function');
     });
 
-    it('should return setupVideoEvents as a function', () => {
+    it('returns setupVideoEvents as a function', () => {
       const { setupVideoEvents } = useVideoPlayer(mockVideoContainer);
+
       expect(typeof setupVideoEvents).toBe('function');
     });
   });
 
   describe('initializeVideoPlayer', () => {
-    it('should create VHL.Video.File instance', () => {
+    it('creates VHL.Video.File instance', () => {
       const { initializeVideoPlayer } = useVideoPlayer(mockVideoContainer);
 
       initializeVideoPlayer();
@@ -152,7 +200,7 @@ describe('#useVideoPlayer', () => {
       }, 150);
     });
 
-    it('should initialize video player with correct parameters', () => {
+    it('calls init method on video file instance', () => {
       const { initializeVideoPlayer } = useVideoPlayer(mockVideoContainer);
 
       initializeVideoPlayer();
@@ -161,23 +209,46 @@ describe('#useVideoPlayer', () => {
         // @ts-expect-error - Accessing mock results
         const mockVideoFile = global.VHL.Video.File.mock.results[0].value;
         expect(mockVideoFile.init).toHaveBeenCalled();
+      }, 150);
+    });
+
+    it('calls initialize_video method on video file instance', () => {
+      const { initializeVideoPlayer } = useVideoPlayer(mockVideoContainer);
+
+      initializeVideoPlayer();
+
+      setTimeout(() => {
+        // @ts-expect-error - Accessing mock results
+        const mockVideoFile = global.VHL.Video.File.mock.results[0].value;
         expect(mockVideoFile.initialize_video).toHaveBeenCalled();
+      }, 150);
+    });
+
+    it('calls show_video method on video file instance', () => {
+      const { initializeVideoPlayer } = useVideoPlayer(mockVideoContainer);
+
+      initializeVideoPlayer();
+
+      setTimeout(() => {
+        // @ts-expect-error - Accessing mock results
+        const mockVideoFile = global.VHL.Video.File.mock.results[0].value;
         expect(mockVideoFile.show_video).toHaveBeenCalled();
       }, 150);
     });
 
-    it('should set videoPlayer ref to created instance', () => {
-      const { videoPlayer, initializeVideoPlayer } = useVideoPlayer(mockVideoContainer);
+    it('sets videoPlayer ref to created instance', () => {
+      const { videoPlayer, initializeVideoPlayer } = useVideoPlayer(
+        mockVideoContainer
+      );
 
       initializeVideoPlayer();
 
       setTimeout(() => {
         expect(videoPlayer.value).toBeDefined();
-        expect(typeof videoPlayer.value).toBe('object');
       }, 150);
     });
 
-    it('should set show_controls to true', () => {
+    it('sets show_controls to true', () => {
       const { initializeVideoPlayer } = useVideoPlayer(mockVideoContainer);
 
       initializeVideoPlayer();
@@ -191,9 +262,10 @@ describe('#useVideoPlayer', () => {
   });
 
   describe('cleanupVideoPlayer', () => {
-    it('should hide video and set videoPlayer to null when cleanup is called', () => {
-      const { videoPlayer, initializeVideoPlayer, cleanupVideoPlayer } =
-        useVideoPlayer(mockVideoContainer);
+    it('hides video when cleanup is called', () => {
+      const { initializeVideoPlayer, cleanupVideoPlayer } = useVideoPlayer(
+        mockVideoContainer
+      );
 
       initializeVideoPlayer();
 
@@ -203,19 +275,31 @@ describe('#useVideoPlayer', () => {
         // @ts-expect-error - Accessing mock results
         const mockVideoFile = global.VHL.Video.File.mock.results[0].value;
         expect(mockVideoFile.hide_video).toHaveBeenCalled();
+      }, 150);
+    });
+
+    it('sets videoPlayer to null when cleanup is called', () => {
+      const { videoPlayer, initializeVideoPlayer, cleanupVideoPlayer } =
+        useVideoPlayer(mockVideoContainer);
+
+      initializeVideoPlayer();
+
+      setTimeout(() => {
+        cleanupVideoPlayer();
+
         expect(videoPlayer.value).toBeNull();
       }, 150);
     });
   });
 
   describe('handleAutoPlay', () => {
-    it('should handle auto play when enabled', () => {
+    it('handles auto play when enabled', () => {
       const { handleAutoPlay } = useVideoPlayer(mockVideoContainer);
 
       expect(() => handleAutoPlay()).not.toThrow();
     });
 
-    it('should not throw when video player is null', () => {
+    it('does not throw when video player is null', () => {
       const { handleAutoPlay } = useVideoPlayer(mockVideoContainer);
 
       expect(() => handleAutoPlay()).not.toThrow();
@@ -223,13 +307,13 @@ describe('#useVideoPlayer', () => {
   });
 
   describe('setupCheckpoints', () => {
-    it('should not throw when called', () => {
+    it('does not throw when called', () => {
       const { setupCheckpoints } = useVideoPlayer(mockVideoContainer);
 
       expect(() => setupCheckpoints()).not.toThrow();
     });
 
-    it('should not throw when video player is null', () => {
+    it('does not throw when video player is null', () => {
       const { setupCheckpoints } = useVideoPlayer(mockVideoContainer);
 
       expect(() => setupCheckpoints()).not.toThrow();
@@ -237,13 +321,13 @@ describe('#useVideoPlayer', () => {
   });
 
   describe('handleCheckpointReached', () => {
-    it('should handle checkpoint reached event', () => {
+    it('handles checkpoint reached event', () => {
       const { handleCheckpointReached } = useVideoPlayer(mockVideoContainer);
 
       expect(() => handleCheckpointReached(10)).not.toThrow();
     });
 
-    it('should not throw when video player is null', () => {
+    it('does not throw when video player is null', () => {
       const { handleCheckpointReached } = useVideoPlayer(mockVideoContainer);
 
       expect(() => handleCheckpointReached(10)).not.toThrow();
@@ -251,13 +335,13 @@ describe('#useVideoPlayer', () => {
   });
 
   describe('setupVideoEvents', () => {
-    it('should not throw when called', () => {
+    it('does not throw when called', () => {
       const { setupVideoEvents } = useVideoPlayer(mockVideoContainer);
 
       expect(() => setupVideoEvents()).not.toThrow();
     });
 
-    it('should not throw when video player is null', () => {
+    it('does not throw when video player is null', () => {
       const { setupVideoEvents } = useVideoPlayer(mockVideoContainer);
 
       expect(() => setupVideoEvents()).not.toThrow();

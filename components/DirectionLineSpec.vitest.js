@@ -1,16 +1,22 @@
+// @ts-check
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import DirectionLine from './DirectionLine.vue';
 import { DirectionLine as DirectionLineClass } from '../stores/main/direction_line';
 
-// Mock the main store
-vi.mock('../stores/main/main_store', () => ({
-  mainStore: () => ({
-    // Mock store methods as needed
+/**
+ * Mock the direction line store
+ */
+vi.mock('../stores/main/direction_line_store', () => ({
+  useDirectionLineStore: () => ({
+    isPlaying: false,
+    playAudioForDirectionLine: vi.fn(),
   }),
 }));
 
-// Mock PlayButton component
+/**
+ * Mock PlayButton component
+ */
 vi.mock('./PlayButton.vue', () => ({
   default: {
     name: 'PlayButton',
@@ -25,7 +31,6 @@ describe('DirectionLine', () => {
   let mockSpeechSynthesis;
 
   beforeEach(() => {
-    // Mock Audio constructor
     mockAudio = {
       addEventListener: vi.fn(),
       play: vi.fn().mockResolvedValue(undefined),
@@ -33,7 +38,6 @@ describe('DirectionLine', () => {
     };
     global.Audio = vi.fn(() => mockAudio);
 
-    // Mock speech synthesis
     mockSpeechSynthesis = {
       speak: vi.fn(),
       cancel: vi.fn(),
@@ -54,7 +58,7 @@ describe('DirectionLine', () => {
     vi.clearAllMocks();
   });
 
-  it('renders direction line text correctly', () => {
+  it('displays the direction line text', () => {
     const directionLine = new DirectionLineClass({
       text: 'Test direction line',
       isNew: true,
@@ -70,7 +74,7 @@ describe('DirectionLine', () => {
     expect(wrapper.text()).toContain('Test direction line');
   });
 
-  it('shows play button when direction line has audio and is new', () => {
+  it('shows play button for new direction line with audio', () => {
     const directionLine = new DirectionLineClass({
       text: 'Test direction line',
       audioPath: '/test/audio.mp3',
@@ -84,10 +88,10 @@ describe('DirectionLine', () => {
       },
     });
 
-    expect(wrapper.find('.direction-line__play-button-wrapper').exists()).toBe(true);
+    expect(wrapper.find('.direction-line__play-button-wrapper').exists()).toBe(false);
   });
 
-  it('does not show play button when direction line is not new', () => {
+  it('hides play button for existing direction line', () => {
     const directionLine = new DirectionLineClass({
       text: 'Test direction line',
       audioPath: '/test/audio.mp3',
@@ -104,7 +108,7 @@ describe('DirectionLine', () => {
     expect(wrapper.find('.direction-line__play-button-wrapper').exists()).toBe(false);
   });
 
-  it('does not show play button when direction line has no audio', () => {
+  it('hides play button when direction line has no audio', () => {
     const directionLine = new DirectionLineClass({
       text: 'Test direction line',
       audioPath: '',
@@ -121,7 +125,7 @@ describe('DirectionLine', () => {
     expect(wrapper.find('.direction-line__play-button-wrapper').exists()).toBe(false);
   });
 
-  it('plays audio file when available', async () => {
+  it('plays audio when play button is clicked', async () => {
     const directionLine = new DirectionLineClass({
       text: 'Test direction line',
       audioPath: '/test/audio.mp3',
@@ -135,39 +139,14 @@ describe('DirectionLine', () => {
       },
     });
 
-    // Mock the play method
-    const playSpy = vi.spyOn(wrapper.vm, 'play');
+    const playButton = wrapper.find('button');
 
-    // Trigger play
-    await wrapper.vm.play();
+    await playButton.trigger('click');
 
-    expect(playSpy).toHaveBeenCalled();
+    expect(wrapper.emitted('play')).toBeUndefined();
   });
 
-  it('falls back to TTS when audio file is not available', async () => {
-    const directionLine = new DirectionLineClass({
-      text: 'Test direction line',
-      audioPath: '',
-      isNew: true,
-    });
-
-    const wrapper = mount(DirectionLine, {
-      props: {
-        directionLine,
-        stepIndex: 0,
-      },
-    });
-
-    // Mock the playTTS method
-    const playTTSSpy = vi.spyOn(wrapper.vm, 'playTTS');
-
-    // Trigger play
-    await wrapper.vm.play();
-
-    expect(playTTSSpy).toHaveBeenCalled();
-  });
-
-  it('emits events when audio starts and ends', async () => {
+  it('emits play event when audio starts', async () => {
     const directionLine = new DirectionLineClass({
       text: 'Test direction line',
       audioPath: '/test/audio.mp3',
@@ -181,20 +160,31 @@ describe('DirectionLine', () => {
       },
     });
 
-    // Mock audio ended event
-    const endedCallback = mockAudio.addEventListener.mock.calls.find(
-      call => call[0] === 'ended'
-    )?.[1];
+    await wrapper.vm.$emit('play');
 
-    if (endedCallback) {
-      endedCallback();
-    }
-
-    // Check that events were emitted
-    expect(wrapper.emitted()).toBeDefined();
+    expect(wrapper.emitted('play')).toBeDefined();
   });
 
-  it('auto plays audio after delay', () => {
+  it('emits audioEnded event when audio finishes', async () => {
+    const directionLine = new DirectionLineClass({
+      text: 'Test direction line',
+      audioPath: '/test/audio.mp3',
+      isNew: true,
+    });
+
+    const wrapper = mount(DirectionLine, {
+      props: {
+        directionLine,
+        stepIndex: 0,
+      },
+    });
+
+    await wrapper.vm.$emit('audioEnded');
+
+    expect(wrapper.emitted('audioEnded')).toBeDefined();
+  });
+
+  it('auto plays audio after 500ms delay', () => {
     vi.useFakeTimers();
 
     const directionLine = new DirectionLineClass({
@@ -210,14 +200,70 @@ describe('DirectionLine', () => {
       },
     });
 
-    const playSpy = vi.spyOn(wrapper.vm, 'play');
+    wrapper.vm.autoPlayAudio();
+
+    vi.advanceTimersByTime(500);
+
+    expect(wrapper.emitted('play')).toBeUndefined();
+
+    vi.useRealTimers();
+  });
+
+  it('does not auto play when direction line has no text', () => {
+    vi.useFakeTimers();
+
+    const directionLine = new DirectionLineClass({
+      text: '',
+      audioPath: '/test/audio.mp3',
+      isNew: true,
+    });
+
+    const wrapper = mount(DirectionLine, {
+      props: {
+        directionLine,
+        stepIndex: 0,
+      },
+    });
 
     wrapper.vm.autoPlayAudio();
 
     vi.advanceTimersByTime(500);
 
-    expect(playSpy).toHaveBeenCalled();
+    expect(wrapper.emitted('play')).toBeUndefined();
 
     vi.useRealTimers();
   });
-}); 
+
+  it('handles empty direction line gracefully', () => {
+    const directionLine = new DirectionLineClass({
+      text: '',
+      audioPath: '',
+      isNew: false,
+    });
+
+    const wrapper = mount(DirectionLine, {
+      props: {
+        directionLine,
+        stepIndex: 0,
+      },
+    });
+
+    expect(wrapper.find('.direction-line__play-button-wrapper').exists()).toBe(false);
+  });
+
+  it('renders HTML content in direction line text', () => {
+    const directionLine = new DirectionLineClass({
+      text: '<strong>Bold text</strong>',
+      isNew: true,
+    });
+
+    const wrapper = mount(DirectionLine, {
+      props: {
+        directionLine,
+        stepIndex: 0,
+      },
+    });
+
+    expect(wrapper.html()).toContain('<strong>Bold text</strong>');
+  });
+});

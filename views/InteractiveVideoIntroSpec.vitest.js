@@ -36,7 +36,7 @@ function createMockActivityInfo() {
 
 /**
  * Sets up Pinia and main store for InteractiveVideoIntro tests.
- * @returns {{
+ * @return {{
  * pinia: ReturnType<typeof createPinia>,
  * mainStoreInstance: ReturnType<typeof mainStore>
  * }}
@@ -96,14 +96,14 @@ describe('InteractiveVideoIntro', () => {
   });
 
   describe('rendering', () => {
-    it('should render correctly when mounted', () => {
+    it('renders the component when mounted', () => {
       const { pinia } = setupInteractiveVideoIntroTest();
       const wrapper = createInteractiveVideoIntroWrapper({ pinia });
 
       expect(wrapper.exists()).toBe(true);
     });
 
-    it('should render intro screen with title', async () => {
+    it('displays the video title', async () => {
       const { pinia, mainStoreInstance } = setupInteractiveVideoIntroTest();
 
       mainStoreInstance.$patch({
@@ -116,7 +116,7 @@ describe('InteractiveVideoIntro', () => {
       expect(wrapper.text()).toContain('Test Video Title');
     });
 
-    it('should render topic and sub topic', async () => {
+    it('displays the topic', async () => {
       const { pinia, mainStoreInstance } = setupInteractiveVideoIntroTest();
 
       mainStoreInstance.$patch({
@@ -128,28 +128,43 @@ describe('InteractiveVideoIntro', () => {
 
       expect(wrapper.text()).toContain('Test Topic');
     });
+
+    it('displays the sub topic', async () => {
+      const { pinia, mainStoreInstance } = setupInteractiveVideoIntroTest();
+
+      mainStoreInstance.$patch({
+        activityInfo: createMockActivityInfo(),
+      });
+
+      const wrapper = createInteractiveVideoIntroWrapper({ pinia });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.text()).toContain('Test Sub Topic');
+    });
   });
 
   describe('auto-play checkbox', () => {
-    it('should not render auto-play checkbox (hidden)', async () => {
+    it('hides the auto-play checkbox', async () => {
       const { pinia } = setupInteractiveVideoIntroTest();
       const wrapper = createInteractiveVideoIntroWrapper({ pinia });
 
       const checkbox = wrapper.find('input[type="checkbox"]');
+
       expect(checkbox.exists()).toBe(false);
     });
 
-    it('should not show auto-play toggle in UI', async () => {
+    it('hides the auto-play toggle component', async () => {
       const { pinia } = setupInteractiveVideoIntroTest();
       const wrapper = createInteractiveVideoIntroWrapper({ pinia });
 
       const basicCheckbox = wrapper.findComponent({ name: 'BasicCheckbox' });
+
       expect(basicCheckbox.exists()).toBe(false);
     });
   });
 
   describe('media collection', () => {
-    it('should collect both video and audio files from reference', async () => {
+    it('collects video and audio files from reference', async () => {
       const { pinia, mainStoreInstance } = setupInteractiveVideoIntroTest();
 
       mainStoreInstance.$patch({
@@ -174,7 +189,7 @@ describe('InteractiveVideoIntro', () => {
       expect(wrapper.exists()).toBe(true);
     });
 
-    it('should filter out null/undefined media paths', async () => {
+    it('filters out null media paths', async () => {
       const { pinia, mainStoreInstance } = setupInteractiveVideoIntroTest();
 
       mainStoreInstance.$patch({
@@ -185,6 +200,23 @@ describe('InteractiveVideoIntro', () => {
               video_path: '/path/to/video.mp4',
               audio_path: null,
             },
+          ],
+        },
+      });
+
+      const wrapper = createInteractiveVideoIntroWrapper({ pinia });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.exists()).toBe(true);
+    });
+
+    it('filters out undefined media paths', async () => {
+      const { pinia, mainStoreInstance } = setupInteractiveVideoIntroTest();
+
+      mainStoreInstance.$patch({
+        activityInfo: {
+          ...createMockActivityInfo(),
+          reference: [
             {
               video_path: undefined,
               audio_path: '/path/to/audio.mp3',
@@ -201,49 +233,48 @@ describe('InteractiveVideoIntro', () => {
   });
 
   describe('begin action', () => {
-    it('should emit start event when begin is clicked', async () => {
+    it('renders the BeginAction component', async () => {
       const { pinia } = setupInteractiveVideoIntroTest();
       const wrapper = createInteractiveVideoIntroWrapper({ pinia });
 
       const beginActionComponent = wrapper.findComponent({ name: 'BeginAction' });
+
       expect(beginActionComponent.exists()).toBe(true);
-
-      const button = beginActionComponent.find('button');
-      expect(button.exists()).toBe(true);
-
-      expect(wrapper.exists()).toBe(true);
     });
 
-    it('should pass mediaState to BeginAction component', async () => {
+    it('renders a button within BeginAction', async () => {
       const { pinia } = setupInteractiveVideoIntroTest();
       const wrapper = createInteractiveVideoIntroWrapper({ pinia });
 
       const beginActionComponent = wrapper.findComponent({ name: 'BeginAction' });
-      expect(beginActionComponent.exists()).toBe(true);
+      const button = beginActionComponent.find('button');
+
+      expect(button.exists()).toBe(true);
+    });
+
+    it('passes mediaState prop to BeginAction component', async () => {
+      const { pinia } = setupInteractiveVideoIntroTest();
+      const wrapper = createInteractiveVideoIntroWrapper({ pinia });
+
+      const beginActionComponent = wrapper.findComponent({ name: 'BeginAction' });
 
       expect(beginActionComponent.props('mediaState')).toBeDefined();
     });
   });
 
   describe('loading state', () => {
-    it('should show loading icon when media state is loading', async () => {
+    it('hides loading icon when media is not loading', async () => {
       const { pinia } = setupInteractiveVideoIntroTest();
       const wrapper = createInteractiveVideoIntroWrapper({ pinia });
 
       const loadingIcon = wrapper.findComponent({ name: 'AnimatedLoadingIcon' });
+
       expect(loadingIcon.exists()).toBe(false);
     });
   });
 
   describe('component lifecycle', () => {
-    it('should call resetIndex when mounted', () => {
-      const { pinia } = setupInteractiveVideoIntroTest();
-      const wrapper = createInteractiveVideoIntroWrapper({ pinia });
-
-      expect(wrapper.exists()).toBe(true);
-    });
-
-    it('should call loadMedia when mounted', () => {
+    it('loads media when mounted', () => {
       const { pinia } = setupInteractiveVideoIntroTest();
       const wrapper = createInteractiveVideoIntroWrapper({ pinia });
 
@@ -252,19 +283,7 @@ describe('InteractiveVideoIntro', () => {
   });
 
   describe('error handling', () => {
-    it('should handle errors when starting activity fails', async () => {
-      const { pinia } = setupInteractiveVideoIntroTest();
-      const wrapper = createInteractiveVideoIntroWrapper({ pinia });
-
-      const beginButton = wrapper.find('button');
-      if (beginButton.exists()) {
-        await beginButton.trigger('click');
-      }
-
-      expect(wrapper.exists()).toBe(true);
-    });
-
-    it('should log errors when whitelistMedia fails', async () => {
+    it('handles errors when starting activity fails', async () => {
       const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const { pinia } = setupInteractiveVideoIntroTest();
       const wrapper = createInteractiveVideoIntroWrapper({ pinia });
@@ -280,7 +299,7 @@ describe('InteractiveVideoIntro', () => {
   });
 
   describe('media whitelisting', () => {
-    it('should call whitelistMedia when start button is clicked', async () => {
+    it('calls whitelistMedia when start button is clicked', async () => {
       const { pinia } = setupInteractiveVideoIntroTest();
       const wrapper = createInteractiveVideoIntroWrapper({ pinia });
 
@@ -292,7 +311,7 @@ describe('InteractiveVideoIntro', () => {
       expect(wrapper.exists()).toBe(true);
     });
 
-    it('should emit start event after successful whitelisting', async () => {
+    it('emits start event after successful whitelisting', async () => {
       const { pinia } = setupInteractiveVideoIntroTest();
       const wrapper = createInteractiveVideoIntroWrapper({ pinia });
 

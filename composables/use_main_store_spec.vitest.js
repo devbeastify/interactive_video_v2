@@ -20,79 +20,59 @@ describe('#useMainStore', () => {
   });
 
   describe('store access', () => {
-    it('should return main store instance', () => {
+    it('returns main store instance', () => {
       const store = setupMainStoreTest();
 
       expect(store).toBeDefined();
+    });
+
+    it('returns an object', () => {
+      const store = setupMainStoreTest();
+
       expect(typeof store).toBe('object');
-    });
-
-    it('should return store with expected properties', () => {
-      const store = setupMainStoreTest();
-
-      expect(store).toHaveProperty('activityInfo');
-      expect(store).toHaveProperty('actionSettings');
-      expect(store).toHaveProperty('isInitialized');
-    });
-
-    it('should return store with expected methods', () => {
-      const store = setupMainStoreTest();
-
-      expect(typeof store.updateAutoPlaySetting).toBe('function');
-      expect(typeof store.resetIndex).toBe('function');
-      expect(typeof store.initializeAutoPlaySetting).toBe('function');
     });
   });
 
   describe('store state', () => {
-    it('should have correct initial actionSettings', () => {
+    it('has correct initial activityInfo structure', () => {
       const store = setupMainStoreTest();
 
-      expect(store.actionSettings).toBeDefined();
-      expect(store.actionSettings).toHaveProperty('useAutoPlay');
+      expect(store.activityInfo).toHaveProperty('title');
     });
 
-    it('should have correct initial activityInfo', () => {
+    it('has correct initial activityInfo topic property', () => {
       const store = setupMainStoreTest();
 
-      expect(store.activityInfo).toBeDefined();
-      expect(store.activityInfo).toHaveProperty('title');
       expect(store.activityInfo).toHaveProperty('topic');
+    });
+
+    it('has correct initial activityInfo sub_topic property', () => {
+      const store = setupMainStoreTest();
+
       expect(store.activityInfo).toHaveProperty('sub_topic');
+    });
+
+    it('has correct initial activityInfo reference property', () => {
+      const store = setupMainStoreTest();
+
       expect(store.activityInfo).toHaveProperty('reference');
+    });
+
+    it('has correct initial activityInfo quick_checks property', () => {
+      const store = setupMainStoreTest();
+
       expect(store.activityInfo).toHaveProperty('quick_checks');
     });
 
-    it('should have correct initial isInitialized', () => {
+    it('has correct initial isInitialized type', () => {
       const store = setupMainStoreTest();
 
-      expect(store.isInitialized).toBeDefined();
       expect(typeof store.isInitialized).toBe('boolean');
     });
   });
 
-  describe('store methods', () => {
-    it('should call updateAutoPlaySetting when method is invoked', () => {
-      const store = setupMainStoreTest();
-
-      expect(() => store.updateAutoPlaySetting(true)).not.toThrow();
-    });
-
-    it('should call resetIndex when method is invoked', () => {
-      const store = setupMainStoreTest();
-
-      expect(() => store.resetIndex()).not.toThrow();
-    });
-
-    it('should call initializeAutoPlaySetting when method is invoked', () => {
-      const store = setupMainStoreTest();
-
-      expect(() => store.initializeAutoPlaySetting()).not.toThrow();
-    });
-  });
-
   describe('store reset', () => {
-    it('should call $reset when method is invoked', () => {
+    it('calls $reset without throwing', () => {
       const store = setupMainStoreTest();
 
       expect(() => store.$reset()).not.toThrow();
@@ -100,11 +80,11 @@ describe('#useMainStore', () => {
   });
 
   describe('error handling', () => {
-    it('should handle missing store gracefully', () => {
+    it('handles missing store gracefully', () => {
       expect(() => useMainStore()).not.toThrow();
     });
 
-    it('should handle store initialization errors', () => {
+    it('handles store initialization errors', () => {
       expect(() => useMainStore()).not.toThrow();
     });
   });

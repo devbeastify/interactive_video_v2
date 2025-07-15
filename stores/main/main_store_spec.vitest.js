@@ -9,8 +9,10 @@ import { mainStore } from './main_store';
  * @property {string} topic
  * @property {string} sub_topic
  * @property {string} title
+ * @property {string} dl
  * @property {Array<any>} reference
  * @property {Array<any>} quick_checks
+ * @property {Object} diagnostic
  */
 
 /**
@@ -22,8 +24,17 @@ function createMockActivityInfo() {
     topic: 'Test Topic',
     sub_topic: 'Test Sub Topic',
     title: 'Test Title',
+    dl: 'Test Direction Line',
     reference: [],
     quick_checks: [],
+    diagnostic: {
+      dl: 'Test Diagnostic Direction Line',
+      failure_message: '',
+      items: [],
+      language: 'en',
+      number_of_questions: '',
+      threshold: '',
+    },
   };
 }
 
@@ -34,15 +45,6 @@ function createMockActivityInfo() {
 function setupMainStoreTest() {
   const pinia = createPinia();
   setActivePinia(pinia);
-
-  Object.defineProperty(window, 'localStorage', {
-    value: {
-      getItem: vi.fn(),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-    },
-    writable: true,
-  });
 
   vi.mock('../../lib/safari_browser_check', () => ({
     browserIsSafari: vi.fn().mockReturnValue(false),
@@ -69,70 +71,45 @@ describe('mainStore', () => {
   });
 
   describe('initialization', () => {
-    it('should create store with default state', () => {
+    it('creates store with default state', () => {
       setupMainStoreTest();
       const store = mainStore();
 
-      expect(store).toBeDefined();
-      expect(store.actionSettings).toBeDefined();
-      expect(store.activityInfo).toBeDefined();
-      expect(store.sequencer).toBeDefined();
       expect(store.isInitialized).toBe(false);
     });
 
-    it('should initialize with correct default values', () => {
+    it('initializes with empty activity info', () => {
       setupMainStoreTest();
       const store = mainStore();
 
-      expect(store.actionSettings.useAutoPlay).toBe(false);
       expect(store.activityInfo).toEqual({
         topic: '',
         sub_topic: '',
         title: '',
+        dl: '',
         reference: [],
         quick_checks: [],
+        diagnostic: {
+          dl: '',
+          failure_message: '',
+          items: [],
+          language: '',
+          number_of_questions: '',
+          threshold: '',
+        },
       });
     });
-  });
 
-  describe('action settings', () => {
-    it('should update auto play setting', () => {
+    it('has sequencer instance', () => {
       setupMainStoreTest();
       const store = mainStore();
 
-      store.updateAutoPlaySetting(true);
-
-      expect(store.actionSettings.useAutoPlay).toBe(true);
-    });
-
-    it('should persist auto play setting to localStorage', () => {
-      setupMainStoreTest();
-      const store = mainStore();
-
-      store.updateAutoPlaySetting(true);
-
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'interactive_video_autoplay',
-        'true'
-      );
-    });
-
-    it('should reset auto play setting', () => {
-      setupMainStoreTest();
-      const store = mainStore();
-
-      store.resetIndex();
-
-      expect(store.actionSettings.useAutoPlay).toBe(true);
-      expect(localStorage.setItem).toHaveBeenCalledWith(
-        'interactive_video_autoplay',
-        'true'
-      );
+      expect(store.sequencer).toBeDefined();
     });
   });
 
   describe('store initialization', () => {
-    it('should initialize store when init is called', () => {
+    it('sets isInitialized to true when init is called', () => {
       setupMainStoreTest();
       const store = mainStore();
 
@@ -140,40 +117,121 @@ describe('mainStore', () => {
 
       expect(store.isInitialized).toBe(true);
     });
-
-    it('should initialize auto play setting', () => {
-      setupMainStoreTest();
-      const store = mainStore();
-
-      store.initializeAutoPlaySetting();
-
-      expect(store.actionSettings.useAutoPlay).toBeDefined();
-    });
   });
 
   describe('store reset', () => {
-    it('should reset store to initial state', () => {
+    it('resets store to initial state', () => {
       setupMainStoreTest();
       const store = mainStore();
 
-      store.updateAutoPlaySetting(true);
       store.isInitialized = true;
 
       store.$reset();
 
-      expect(store.actionSettings.useAutoPlay).toBe(false);
       expect(store.isInitialized).toBe(false);
     });
   });
 
-  describe('sequencer integration', () => {
-    it('should have sequencer instance', () => {
+  describe('direction line getters', () => {
+    it('returns main direction line for intro step', () => {
+      setupMainStoreTest();
+      const store = mainStore();
+      store.activityInfo.dl = 'Main Direction Line';
+
+      const directionLine = store.getDirectionLineForStep('intro');
+
+      expect(directionLine).toBe('Main Direction Line');
+    });
+
+    it('returns main direction line for player step', () => {
+      setupMainStoreTest();
+      const store = mainStore();
+      store.activityInfo.dl = 'Main Direction Line';
+
+      const directionLine = store.getDirectionLineForStep('player');
+
+      expect(directionLine).toBe('Main Direction Line');
+    });
+
+    it('returns empty string for quick_check step', () => {
       setupMainStoreTest();
       const store = mainStore();
 
-      expect(store.sequencer).toBeDefined();
-      expect(typeof store.sequencer.addScreen).toBe('function');
-      expect(typeof store.sequencer.goToScreen).toBe('function');
+      const directionLine = store.getDirectionLineForStep('quick_check');
+
+      expect(directionLine).toBe('');
+    });
+
+    it('returns diagnostic direction line for diagnostic step', () => {
+      setupMainStoreTest();
+      const store = mainStore();
+      store.activityInfo.diagnostic.dl = 'Diagnostic Direction Line';
+
+      const directionLine = store.getDirectionLineForStep('diagnostic');
+
+      expect(directionLine).toBe('Diagnostic Direction Line');
+    });
+
+    it('returns main direction line for unknown step', () => {
+      setupMainStoreTest();
+      const store = mainStore();
+      store.activityInfo.dl = 'Main Direction Line';
+
+      const directionLine = store.getDirectionLineForStep('unknown');
+
+      expect(directionLine).toBe('Main Direction Line');
+    });
+  });
+
+  describe('direction line availability', () => {
+    it('returns true when main direction line exists', () => {
+      setupMainStoreTest();
+      const store = mainStore();
+      store.activityInfo.dl = 'Main Direction Line';
+
+      const hasDirectionLines = store.hasDirectionLines;
+
+      expect(hasDirectionLines).toBe(true);
+    });
+
+    it('returns true when diagnostic direction line exists', () => {
+      setupMainStoreTest();
+      const store = mainStore();
+      store.activityInfo.diagnostic.dl = 'Diagnostic Direction Line';
+
+      const hasDirectionLines = store.hasDirectionLines;
+
+      expect(hasDirectionLines).toBe(true);
+    });
+
+    it('returns false when no direction lines exist', () => {
+      setupMainStoreTest();
+      const store = mainStore();
+
+      const hasDirectionLines = store.hasDirectionLines;
+
+      expect(hasDirectionLines).toBe(false);
+    });
+  });
+
+  describe('language code for step', () => {
+    it('returns diagnostic language for diagnostic step', () => {
+      setupMainStoreTest();
+      const store = mainStore();
+      store.activityInfo.diagnostic.language = 'es';
+
+      const languageCode = store._getLanguageCodeForStep('diagnostic');
+
+      expect(languageCode).toBe('es');
+    });
+
+    it('returns default language for non-diagnostic steps', () => {
+      setupMainStoreTest();
+      const store = mainStore();
+
+      const languageCode = store._getLanguageCodeForStep('intro');
+
+      expect(languageCode).toBe('en');
     });
   });
 });

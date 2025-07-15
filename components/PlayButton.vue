@@ -1,12 +1,11 @@
 <template>
   <button
-    class="play-button c-no-button"
-    :class="buttonStateClass"
+    :class="[$style['play-button'], $style['c-no-button'], $style[buttonStateClass]]"
     aria-label="Play audio"
     type="button">
     <svg
       v-if="audioBtnState === 'paused'"
-      class="speaker-icon"
+      :class="$style['speaker-icon']"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -14,18 +13,28 @@
       xmlns="http://www.w3.org/2000/svg">
       <path
         d="M12 2L13.09 8.26L20 9L13.09 9.74L12 16L10.91 9.74L4 9L10.91 8.26L12 2Z"
-        fill="currentColor"/>
+        fill="currentColor" />
     </svg>
     <svg
       v-else
-      class="pause-icon"
+      :class="$style['pause-icon']"
       width="24"
       height="24"
       viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg">
-      <rect x="6" y="4" width="4" height="16" fill="currentColor"/>
-      <rect x="14" y="4" width="4" height="16" fill="currentColor"/>
+      <rect
+        x="6"
+        y="4"
+        width="4"
+        height="16"
+        fill="currentColor" />
+      <rect
+        x="14"
+        y="4"
+        width="4"
+        height="16"
+        fill="currentColor" />
     </svg>
   </button>
 </template>
@@ -48,10 +57,12 @@
   });
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss" module>
+  @use 'MusicV3/v3/styles/base' as base;
+
   .play-button {
-    width: 2rem;
-    height: 2rem;
+    width: base.rpx(32);
+    height: base.rpx(32);
     border: none;
     border-radius: 50%;
     background: transparent;
@@ -66,8 +77,8 @@
     }
 
     &:focus {
-      outline: 2px solid #1f7069;
-      outline-offset: 2px;
+      outline: base.rpx(2) solid #1f7069;
+      outline-offset: base.rpx(2);
     }
   }
 
@@ -81,7 +92,7 @@
 
   .speaker-icon,
   .pause-icon {
-    width: 1.5rem;
-    height: 1.5rem;
+    width: base.rpx(24);
+    height: base.rpx(24);
   }
-</style> 
+</style>

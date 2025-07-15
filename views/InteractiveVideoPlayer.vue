@@ -1,34 +1,36 @@
 <template>
-  <div v-show="currentDirectionLine && !isQuickCheckVisible"
-    :class="$style['interactive-video-player']">
-    <!-- Direction Line for current step -->
-    <DirectionLineComponent
-      v-if="currentDirectionLine"
-      :direction-line="currentDirectionLine"
-      :step-index="currentStepIndex"
-      @play="handleDirectionLinePlay"
-      @pause="handleDirectionLinePause"
-      @audio-ended="handleDirectionLineAudioEnded" />
+  <div>
+    <div
+      v-show="currentDirectionLine && !isQuickCheckVisible"
+      :class="$style['interactive-video-player']">
+      <DirectionLineComponent
+        v-if="currentDirectionLine"
+        :directionLine="currentDirectionLine"
+        :stepIndex="currentStepIndex"
+        @play="handleDirectionLinePlay"
+        @pause="handleDirectionLinePause"
+        @audio-ended="handleDirectionLineAudioEnded" />
 
-    <div :class="$style['c-interactive-video']">
-      <div :class="$style['c-interactive-video-video']">
-        <div ref="videoContainer" class="js-tutorial-container" />
+      <div :class="$style['c-interactive-video']">
+        <div :class="$style['c-interactive-video-video']">
+          <div ref="videoContainer" class="js-tutorial-container" />
+        </div>
+      </div>
+
+      <div v-if="showControls" :class="$style['video-controls']">
+        <button :class="$style['control-btn']" @click="togglePlayPause">
+          {{ isPlaying ? 'Pause' : 'Play' }}
+        </button>
+        <button :class="$style['control-btn']" @click="restart">
+          Restart
+        </button>
+        <button :class="$style['control-btn']" @click="goToIntro">
+          Back to Intro
+        </button>
       </div>
     </div>
-
-    <div v-if="showControls" :class="$style['video-controls']">
-      <button :class="$style['control-btn']" @click="togglePlayPause">
-        {{ isPlaying ? 'Pause' : 'Play' }}
-      </button>
-      <button :class="$style['control-btn']" @click="restart">
-        Restart
-      </button>
-      <button :class="$style['control-btn']" @click="goToIntro">
-        Back to Intro
-      </button>
-    </div>
+    <QuickCheck />
   </div>
-  <QuickCheck />
 </template>
 
 <script setup>
@@ -79,7 +81,6 @@
     handleAutoPlay,
     setupCheckpoints,
     setupVideoEvents,
-    handleCheckpointReached,
     resumeVideoAfterCheckpoint,
   } = useVideoPlayer(videoContainer);
 
@@ -100,6 +101,27 @@
   const isQuickCheckVisible = computed(() => quickCheckStore.isVisible);
 
   /**
+   * Determines if video should resume based on current state
+   * @return {boolean} Whether video should resume
+   */
+  const shouldResumeVideo = () => {
+    return activitySettingsStore.useAutoPlay &&
+      !isQuickCheckVisible.value &&
+      !directionLineStore.isPlaying;
+  };
+
+  /**
+   * Resumes video playback if conditions are met
+   * @return {void}
+   */
+  const resumeVideoIfConditionsMet = () => {
+    if (videoPlayer.value && shouldResumeVideo()) {
+      videoPlayer.value.play();
+      isPlaying.value = true;
+    }
+  };
+
+  /**
    * Lifecycle hook: Initialize video player and event listeners on mount
    * Sets up the video player, event listeners, and quick check state
    * @return {void}
@@ -110,13 +132,12 @@
     setupEventListeners();
 
     if (store.activityInfo.quick_checks) {
-      quickCheckStore.updateQuickCheckState({ quickChecks: store.activityInfo.quick_checks });
+      quickCheckStore.updateQuickCheckState({
+        quickChecks: store.activityInfo.quick_checks,
+      });
     }
 
-    // Initialize direction line for current step
     initializeDirectionLine();
-
-    // Listen for quick check completion
     document.addEventListener('quickCheckCompleted', handleQuickCheckCompleted);
   });
 
@@ -128,10 +149,7 @@
   onUnmounted(() => {
     try {
       cleanupVideoPlayer();
-      cleanupEventListeners();
       directionLineStore.cleanupDirectionLine();
-      
-      // Remove event listener
       document.removeEventListener('quickCheckCompleted', handleQuickCheckCompleted);
     } catch (error) {
       console.warn('Error during component cleanup:', error);
@@ -140,26 +158,26 @@
 
   /**
    * Handle quick check completion
+   * @return {void}
    */
   const handleQuickCheckCompleted = () => {
-    // Resume video after quick check completion
     resumeVideoAfterCheckpoint();
   };
 
   /**
    * Initialize direction line for the current step
+   * @return {void}
    */
   const initializeDirectionLine = () => {
-    // Use centralized DL logic from store
     store.initializeDirectionLineForStep('player');
   };
 
   /**
    * Handle direction line play event
+   * @return {void}
    */
   const handleDirectionLinePlay = () => {
     console.log('Main direction line started playing, pausing video');
-    // Pause video when direction line audio starts
     if (videoPlayer.value && isPlaying.value) {
       videoPlayer.value.pause();
       isPlaying.value = false;
@@ -168,28 +186,20 @@
 
   /**
    * Handle direction line pause event
+   * @return {void}
    */
   const handleDirectionLinePause = () => {
     console.log('Main direction line paused');
-    // Resume video if autoplay is enabled and no quick check is visible and no direction line is playing
-    if (videoPlayer.value && activitySettingsStore.useAutoPlay && 
-        !isQuickCheckVisible.value && !directionLineStore.isPlaying) {
-      videoPlayer.value.play();
-      isPlaying.value = true;
-    }
+    resumeVideoIfConditionsMet();
   };
 
   /**
    * Handle direction line audio ended event
+   * @return {void}
    */
   const handleDirectionLineAudioEnded = () => {
     console.log('Main direction line audio ended, resuming video');
-    // Resume video when direction line audio ends, but only if no quick check is visible and no direction line is playing
-    if (videoPlayer.value && activitySettingsStore.useAutoPlay && 
-        !isQuickCheckVisible.value && !directionLineStore.isPlaying) {
-      videoPlayer.value.play();
-      isPlaying.value = true;
-    }
+    resumeVideoIfConditionsMet();
   };
 
   /**
@@ -210,10 +220,10 @@
 
   /**
    * Watch for quick check completion and resume video
+   * @return {void}
    */
   watch(() => quickCheckStore.isVisible, (isVisible) => {
     if (!isVisible && quickCheckStore.isComplete) {
-      // Quick check was completed, resume video
       resumeVideoAfterCheckpoint();
     }
   });
@@ -227,14 +237,6 @@
       setupVideoEvents();
       setupCheckpoints();
     }
-  };
-
-  /**
-   * Clean up event listeners
-   * @return {void}
-   */
-  const cleanupEventListeners = () => {
-    // Event listeners are cleaned up by the video player composable
   };
 
   /**
@@ -265,13 +267,11 @@
   const restart = () => {
     if (!videoPlayer.value) return;
 
-    // Use videojs_player if available for more precise control
     if (videoPlayer.value.videojs_player) {
       videoPlayer.value.videojs_player.currentTime(0);
       videoPlayer.value.videojs_player.play();
       isPlaying.value = true;
     } else {
-      // Fallback: destroy and reinitialize the video player
       videoPlayer.value.destroy();
       setTimeout(() => {
         initializeVideoPlayer();
@@ -309,7 +309,7 @@
   position: relative;
   width: 100%;
   height: 0;
-  padding-bottom: 56.25%; /* 16:9 aspect ratio */
+  padding-bottom: 56.25%;
   background: #000;
   border-radius: base.rpx(8);
   overflow: hidden;

@@ -8,6 +8,12 @@ import { browserIsSafari } from '../../lib/safari_browser_check';
  * @property {boolean} useAutoPlay
  */
 
+/**
+ * @typedef StoreState
+ * @property {ActionSettings} actionSettings
+ * @property {boolean} isInitialized
+ */
+
 export const useActivitySettingsStore = defineStore('activitySettings', {
   state: () => ({
     /** @type {ActionSettings} */
@@ -20,7 +26,7 @@ export const useActivitySettingsStore = defineStore('activitySettings', {
   getters: {
     /**
      * Get the current autoplay setting
-     * @param {any} state - The store state
+     * @param {StoreState} state - The store state
      * @return {boolean} Current autoplay setting
      */
     useAutoPlay: (state) => state.actionSettings.useAutoPlay,
@@ -28,10 +34,13 @@ export const useActivitySettingsStore = defineStore('activitySettings', {
 
   actions: {
     /**
-     * Initialize the autoplay setting based on browser type and stored preference
+     * Initialize the autoplay setting based on browser type and stored
+     * preference
      */
     initializeAutoPlaySetting() {
-      const storedAutoPlay = localStorage.getItem('interactive_video_autoplay');
+      const storedAutoPlay = localStorage.getItem(
+        'interactive_video_autoplay'
+      );
 
       if (storedAutoPlay !== null) {
         this.actionSettings.useAutoPlay = storedAutoPlay === 'true';
@@ -53,20 +62,21 @@ export const useActivitySettingsStore = defineStore('activitySettings', {
     },
 
     /**
-     * Reset the autoplay setting to true (enabled) and persist to localStorage
+     * Reset the autoplay setting to enabled and persist to localStorage
      * Called when InteractiveVideoIntro component is mounted
      */
-    resetIndex() {
+    resetAutoPlayToEnabled() {
       this.actionSettings.useAutoPlay = true;
       localStorage.setItem('interactive_video_autoplay', 'true');
     },
 
     /**
      * Initialize the settings store
+     * @return {void}
      */
     init() {
       this.initializeAutoPlaySetting();
       this.isInitialized = true;
     },
   },
-}); 
+});

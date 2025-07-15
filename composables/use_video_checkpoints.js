@@ -72,11 +72,14 @@ export function useVideoCheckpoints() {
     if (!videoPlayer || !quickChecksData) return;
 
     /** @type {Array<CheckpointPoint>} */
-    const points = quickChecksData.map(/** @param {QuickCheck} quickCheck */ (quickCheck) => ({
-      offset: quickCheck.offset,
-      gap: quickCheck.gap,
-      stop: true,
-    }));
+    const points = quickChecksData.map(/**
+     * @param {QuickCheck} quickCheck - The quick check data
+     * @return {CheckpointPoint} The checkpoint point object
+     */ (quickCheck) => ({
+        offset: quickCheck.offset,
+        gap: quickCheck.gap,
+        stop: true,
+      }));
 
     /** @type {PluginSettings} */
     const pluginSettings = {

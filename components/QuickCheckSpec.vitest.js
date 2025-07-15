@@ -73,14 +73,14 @@ describe('QuickCheck', () => {
   });
 
   describe('rendering', () => {
-    it('should render correctly when no quick check is active', () => {
+    it('renders when no quick check is active', () => {
       const { pinia } = setupQuickCheckTest();
       const wrapper = createQuickCheckWrapper({ pinia });
 
       expect(wrapper.exists()).toBe(true);
     });
 
-    it('should render multiple choice question when active', async () => {
+    it('displays multiple choice question when active', async () => {
       const { pinia, quickCheckStore } = setupQuickCheckTest();
 
       const mockQuestion = createMockQuestion('multiple_choice');
@@ -95,7 +95,7 @@ describe('QuickCheck', () => {
       expect(wrapper.text()).toContain('Quick Check');
     });
 
-    it('should render fill in the blanks question when active', async () => {
+    it('displays fill in the blanks question when active', async () => {
       const { pinia, quickCheckStore } = setupQuickCheckTest();
 
       const mockQuestion = createMockQuestion('fill_in_the_blanks');
@@ -109,13 +109,11 @@ describe('QuickCheck', () => {
 
       expect(wrapper.text()).toContain('Quick Check');
     });
-  });
 
-  describe('question handling', () => {
-    it('should handle multiple choice answer selection', async () => {
+    it('displays pronunciation question when active', async () => {
       const { pinia, quickCheckStore } = setupQuickCheckTest();
 
-      const mockQuestion = createMockQuestion('multiple_choice');
+      const mockQuestion = createMockQuestion('pronunciation');
       quickCheckStore.updateQuickCheckState({
         currentQuickCheck: mockQuestion,
         isVisible: true,
@@ -124,13 +122,13 @@ describe('QuickCheck', () => {
       const wrapper = createQuickCheckWrapper({ pinia });
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.exists()).toBe(true);
+      expect(wrapper.text()).toContain('Quick Check');
     });
 
-    it('should handle fill in the blanks answer submission', async () => {
+    it('displays drag and drop question when active', async () => {
       const { pinia, quickCheckStore } = setupQuickCheckTest();
 
-      const mockQuestion = createMockQuestion('fill_in_the_blanks');
+      const mockQuestion = createMockQuestion('quick_check_drag_and_drop');
       quickCheckStore.updateQuickCheckState({
         currentQuickCheck: mockQuestion,
         isVisible: true,
@@ -139,12 +137,12 @@ describe('QuickCheck', () => {
       const wrapper = createQuickCheckWrapper({ pinia });
       await wrapper.vm.$nextTick();
 
-      expect(wrapper.exists()).toBe(true);
+      expect(wrapper.text()).toContain('Quick Check');
     });
   });
 
   describe('store integration', () => {
-    it('should reflect store state correctly', async () => {
+    it('reflects store state when quick check is visible', async () => {
       const { pinia, quickCheckStore } = setupQuickCheckTest();
 
       quickCheckStore.updateQuickCheckState({
@@ -158,7 +156,7 @@ describe('QuickCheck', () => {
       expect(wrapper.text()).toContain('Quick Check');
     });
 
-    it('should hide when store indicates no quick check', async () => {
+    it('hides when store indicates no quick check', async () => {
       const { pinia, quickCheckStore } = setupQuickCheckTest();
 
       quickCheckStore.updateQuickCheckState({
@@ -174,20 +172,44 @@ describe('QuickCheck', () => {
   });
 
   describe('component lifecycle', () => {
-    it('should initialize correctly on mount', () => {
+    it('initializes correctly on mount', () => {
       const { pinia } = setupQuickCheckTest();
       const wrapper = createQuickCheckWrapper({ pinia });
 
       expect(wrapper.exists()).toBe(true);
     });
 
-    it('should handle unmounting gracefully', () => {
+    it('handles unmounting gracefully', () => {
       const { pinia } = setupQuickCheckTest();
       const wrapper = createQuickCheckWrapper({ pinia });
 
       wrapper.unmount();
 
       expect(wrapper.exists()).toBe(false);
+    });
+  });
+
+  describe('direction line integration', () => {
+    it('displays direction line when question has direction line content', async () => {
+      const { pinia, quickCheckStore } = setupQuickCheckTest();
+
+      const mockQuestion = {
+        ...createMockQuestion('multiple_choice'),
+        quick_check_content: {
+          dl: 'Listen carefully to the question',
+        },
+        offset: 1000,
+      };
+
+      quickCheckStore.updateQuickCheckState({
+        currentQuickCheck: mockQuestion,
+        isVisible: true,
+      });
+
+      const wrapper = createQuickCheckWrapper({ pinia });
+      await wrapper.vm.$nextTick();
+
+      expect(wrapper.text()).toContain('Quick Check');
     });
   });
 });
