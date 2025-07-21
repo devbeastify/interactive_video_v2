@@ -1,38 +1,26 @@
 // @ts-check
 
 import { defineStore } from 'pinia';
+import { mainStore } from './main_store';
 
 /**
  * @typedef QuickCheck
- * @property {number} offset
- * @property {number} gap
  * @property {string} type
  * @property {Object} quick_check_content
  * @property {string} prompt
  */
 
 /**
- * @typedef QuickCheckState
- * @property {number|null} currentOffset
- * @property {Object|null} content
- * @property {boolean} isComplete
- * @property {HTMLInputElement|null} pronunciationToggle
- * @property {boolean} isVisible
- * @property {Array<QuickCheck>} quickChecks
- */
-
-/**
  * @typedef QuickCheckUpdatePayload
- * @property {number|null} [currentOffset]
- * @property {Object|null} [content]
+ * @property {any|null} [content]
  * @property {boolean} [isComplete]
  * @property {HTMLInputElement|null} [pronunciationToggle]
  * @property {boolean} [isVisible]
+ * @property {Array<QuickCheck>} [quickChecks]
  */
 
 export const useQuickCheckStore = defineStore('quickCheck', {
   state: () => ({
-    currentOffset: null,
     content: null,
     isComplete: false,
     pronunciationToggle: null,
@@ -43,22 +31,8 @@ export const useQuickCheckStore = defineStore('quickCheck', {
 
   getters: {
     /**
-     * Get the current quick check based on offset
-     * @param {QuickCheckState} state - The current state
-     * @return {QuickCheck|undefined} The current quick check or undefined if not found
-     */
-    currentQuickCheck: (state) => {
-      if (!state.currentOffset || !state.quickChecks) {
-        return undefined;
-      }
-
-      const found = state.quickChecks.find((qc) => qc.offset === state.currentOffset);
-      return found || undefined;
-    },
-
-    /**
      * Check if there are any quick checks available
-     * @param {QuickCheckState} state - The current state
+     * @param {any} state - The current state
      * @return {boolean} True if there are quick checks available
      */
     hasQuickChecks: (state) => {
@@ -83,25 +57,47 @@ export const useQuickCheckStore = defineStore('quickCheck', {
 
     /**
      * Complete current quick check
+     * Point 9: Quick check completion triggers next video
      */
     completeQuickCheck() {
       this.isComplete = true;
 
-      const form = document.querySelector('.js-activity-main-form');
-      if (form) {
-        const submitEvent = new Event('submit', {
-          bubbles: true,
-          cancelable: true,
-        });
-        form.dispatchEvent(submitEvent);
-      } else {
-        console.warn(
-          'No .js-activity-main-form found. Skipping form submit event.'
-        );
+      // Safely dispatch form submit event
+      try {
+        const form = document.querySelector('.js-activity-main-form');
+        if (form) {
+          const submitEvent = new Event('submit', {
+            bubbles: true,
+            cancelable: true,
+          });
+          form.dispatchEvent(submitEvent);
+        } else {
+          console.warn(
+            'No .js-activity-main-form found. Skipping form submit event.'
+          );
+        }
+      } catch (error) {
+        console.warn('Error dispatching form submit event:', error);
       }
 
-      document.dispatchEvent(new CustomEvent('finishCheckpoint'));
-      document.dispatchEvent(new CustomEvent('quickCheckCompleted'));
+      // Safely dispatch custom events
+      try {
+        document.dispatchEvent(new CustomEvent('finishCheckpoint'));
+        document.dispatchEvent(new CustomEvent('quickCheckCompleted'));
+      } catch (error) {
+        console.warn('Error dispatching custom events:', error);
+      }
+
+      // Point 9: Quick check completion triggers next video
+      const store = mainStore();
+      const currentEntry = /** @type {any} */ (store.currentEntry);
+      
+      // Check if this is the last quick check
+      if (store.isAtLastEntry) {
+        store.sequencer.goToScreen('diagnostic');
+      } else {
+        store.goToNextEntry();
+      }
 
       this.hideQuickCheck();
       this.reset();
@@ -112,7 +108,6 @@ export const useQuickCheckStore = defineStore('quickCheck', {
      */
     reset() {
       this.$patch({
-        currentOffset: null,
         content: null,
         isComplete: false,
         pronunciationToggle: null,
@@ -122,10 +117,14 @@ export const useQuickCheckStore = defineStore('quickCheck', {
 
     /**
      * Update multiple quick check state properties at once
-     * @param {QuickCheckUpdatePayload} payload - The state properties to update
+     * @param {any} payload - The state properties to update
      */
     updateQuickCheckState(payload) {
-      this.$patch(payload);
+      if (payload.content !== undefined) this.content = payload.content;
+      if (payload.isComplete !== undefined) this.isComplete = payload.isComplete;
+      if (payload.pronunciationToggle !== undefined) this.pronunciationToggle = payload.pronunciationToggle;
+      if (payload.isVisible !== undefined) this.isVisible = payload.isVisible;
+      if (payload.quickChecks !== undefined) this.quickChecks = payload.quickChecks;
     },
   },
 });

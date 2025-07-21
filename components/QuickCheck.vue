@@ -2,7 +2,7 @@
   <div v-show="quickCheckStore.isVisible" :class="$style['quick-check']">
     <div :class="$style['quick-check-content']">
       <h3>Quick Check</h3>
-      <div v-if="quickCheckStore.currentQuickCheck">
+      <div v-if="currentQuickCheckData">
         <DirectionLineComponent
           v-if="quickCheckDirectionLine && quickCheckDirectionLine.text"
           :directionLine="quickCheckDirectionLine"
@@ -13,26 +13,26 @@
 
         <div v-if="isMultipleChoiceQuestion">
           <MultipleChoiceQuestion
-            :question="quickCheckStore.currentQuickCheck"
+            :question="currentQuickCheckData"
             @answer-selected="handleAnswerSelected" />
         </div>
 
         <div v-else-if="isFillInTheBlanksQuestion">
           <FillInTheBlanksQuestion
-            :question="quickCheckStore.currentQuickCheck"
+            :question="currentQuickCheckData"
             @answer-submitted="handleAnswerSubmitted" />
         </div>
 
         <div v-else-if="isPronunciationQuestion">
           <PronunciationQuestion
-            :question="quickCheckStore.currentQuickCheck"
+            :question="currentQuickCheckData"
             :pronunciationToggle="pronunciationToggle"
             @pronunciation-complete="handlePronunciationComplete" />
         </div>
 
         <div v-else-if="isDragAndDropQuestion">
           <DragAndDropQuestion
-            :question="quickCheckStore.currentQuickCheck"
+            :question="currentQuickCheckData"
             @answer-submitted="handleAnswerSubmitted" />
         </div>
 
@@ -54,6 +54,7 @@
   import { onMounted, onUnmounted, watch, computed, ref } from 'vue';
   import { useQuickCheckStore } from '../stores/main/quick_check_store';
   import { useDirectionLineStore } from '../stores/main/direction_line_store';
+  import { mainStore } from '../stores/main/main_store';
   import { DirectionLine } from '../stores/main/direction_line';
   import MultipleChoiceQuestion from './questions/MultipleChoiceQuestion.vue';
   import FillInTheBlanksQuestion from './questions/FillInTheBlanksQuestion.vue';
@@ -77,11 +78,20 @@
 
   const quickCheckStore = useQuickCheckStore();
   const directionLineStore = useDirectionLineStore();
+  const mainStoreInstance = mainStore();
 
   /**
    * Quick check direction line data
    */
   const quickCheckDirectionLine = ref(/** @type {DirectionLine|null} */ (null));
+
+  /**
+   * Computed property for current quick check data from main store
+   */
+  const currentQuickCheckData = computed(() => {
+    const currentEntry = /** @type {any} */ (mainStoreInstance.currentEntry);
+    return currentEntry && currentEntry.type === 'quick_check' ? currentEntry.data : null;
+  });
 
   /**
    * Computed property for pronunciation toggle
@@ -94,19 +104,19 @@
    * Computed properties for question type checking
    */
   const isMultipleChoiceQuestion = computed(() =>
-    quickCheckStore.currentQuickCheck?.type === 'multiple_choice'
+    currentQuickCheckData.value?.type === 'multiple_choice'
   );
 
   const isFillInTheBlanksQuestion = computed(() =>
-    quickCheckStore.currentQuickCheck?.type === 'fill_in_the_blanks'
+    currentQuickCheckData.value?.type === 'fill_in_the_blanks'
   );
 
   const isPronunciationQuestion = computed(() =>
-    quickCheckStore.currentQuickCheck?.type === 'pronunciation'
+    currentQuickCheckData.value?.type === 'pronunciation'
   );
 
   const isDragAndDropQuestion = computed(() =>
-    quickCheckStore.currentQuickCheck?.type === 'quick_check_drag_and_drop'
+    currentQuickCheckData.value?.type === 'quick_check_drag_and_drop'
   );
 
   /**
@@ -115,23 +125,22 @@
    * @return {boolean} Whether direction line exists
    */
   const hasDirectionLineContent = (quickCheckContent) => {
-    return quickCheckContent &&
+    return Boolean(quickCheckContent &&
       typeof quickCheckContent === 'object' &&
       'dl' in quickCheckContent &&
-      quickCheckContent.dl;
+      quickCheckContent.dl);
   };
 
   /**
    * Creates direction line configuration for quick check
    * @param {string} directionLineText - The direction line text
-   * @param {number|string} offset - The quick check offset
    * @return {Object} Direction line configuration
    */
-  const createDirectionLineConfig = (directionLineText, offset) => ({
+  const createDirectionLineConfig = (directionLineText) => ({
     text: directionLineText,
     languageCode: 'en',
     isNew: true,
-    stepId: `quick_check_${offset || Date.now()}`,
+    stepId: `quick_check_${Date.now()}`,
     stepType: 'quick_check',
     name: 'quick_check',
   });
@@ -150,13 +159,12 @@
    * Initializes quick check direction line
    */
   const initializeQuickCheckDirectionLine = () => {
-    const currentQC = quickCheckStore.currentQuickCheck;
+    const currentQC = currentQuickCheckData.value;
     if (!currentQC) return;
 
     if (hasDirectionLineContent(currentQC.quick_check_content)) {
       const directionLineConfig = createDirectionLineConfig(
-        currentQC.quick_check_content.dl,
-        currentQC.offset
+        currentQC.quick_check_content.dl
       );
 
       const directionLine = new DirectionLine(directionLineConfig);
@@ -270,7 +278,7 @@
   /**
    * Watch for quick check changes and initialize direction line
    */
-  watch(() => quickCheckStore.currentQuickCheck, () => {
+  watch(() => currentQuickCheckData.value, () => {
     initializeQuickCheckDirectionLine();
   });
 

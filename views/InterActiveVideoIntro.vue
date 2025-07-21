@@ -77,22 +77,52 @@
 
   /**
    * All media sources (video and audio) for the activity.
+   * This includes all videos from the mixed entries sequence.
+   * Excludes subtitle files (.vtt, .srt) as they cannot be loaded as media elements.
    * @type {string[]}
    */
-  const allMediaSources = store.activityInfo.reference.flatMap(
-    /**
-     * @param {Object} reference - The reference object containing media paths
-     * @param {string} [reference.video_path] - Optional video path
-     * @param {string} [reference.audio_path] - Optional audio path
-     * @return {string[]}
-     */
-    (reference) => {
-      const sources = [];
-      if (reference.video_path) sources.push(reference.video_path);
-      if (reference.audio_path) sources.push(reference.audio_path);
-      return sources;
+  const allMediaSources = (() => {
+    /** @type {string[]} */
+    const sources = [];
+    
+    // Helper function to check if a file is a subtitle
+    const isSubtitleFile = (/** @type {string} */ filePath) => {
+      const extension = filePath.split('.').pop()?.toLowerCase() || '';
+      return ['vtt', 'srt', 'ass', 'ssa'].includes(extension);
+    };
+    
+    // Get all video references from mixed entries
+    if (store.mixedEntries && store.mixedEntries.length > 0) {
+      store.mixedEntries.forEach((entry) => {
+        if (entry.type === 'video' && entry.data) {
+          const videoData = /** @type {any} */ (entry.data);
+          if (videoData.video_path && !isSubtitleFile(videoData.video_path)) {
+            sources.push(videoData.video_path);
+          }
+          // Don't include subtitle files in media loading
+          // if (videoData.english_subtitles_path) {
+          //   sources.push(videoData.english_subtitles_path);
+          // }
+          // if (videoData.foreign_subtitles_path) {
+          //   sources.push(videoData.foreign_subtitles_path);
+          // }
+        }
+      });
+    } else {
+      // Fallback to original logic if mixed entries not available
+      store.activityInfo.reference.forEach((reference) => {
+        const refData = /** @type {any} */ (reference);
+        if (refData.video_path && !isSubtitleFile(refData.video_path)) {
+          sources.push(refData.video_path);
+        }
+        if (refData.audio_path && !isSubtitleFile(refData.audio_path)) {
+          sources.push(refData.audio_path);
+        }
+      });
     }
-  );
+    
+    return sources;
+  })();
 
   /**
    * Media composable state and actions for the intro screen.

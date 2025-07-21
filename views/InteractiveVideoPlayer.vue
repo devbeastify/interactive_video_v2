@@ -1,7 +1,8 @@
 <template>
   <div>
+    <!-- Video Step -->
     <div
-      v-show="currentDirectionLine && !isQuickCheckVisible"
+      v-show="store.isCurrentEntryVideo && !isQuickCheckVisible"
       :class="$style['interactive-video-player']">
       <DirectionLineComponent
         v-if="currentDirectionLine"
@@ -29,7 +30,28 @@
         </button>
       </div>
     </div>
-    <QuickCheck />
+
+    <!-- Quick Check Step -->
+    <div
+      v-show="store.isCurrentEntryQuickCheck"
+      :class="$style['quick-check-step']">
+      <div :class="$style['quick-check-header']">
+        Activity {{ /** @type {any} */ (store.currentEntry)?.index + 1 }}
+      </div>
+      <div :class="$style['quick-check-content']">
+        <!-- Quick check content will be rendered here -->
+        <div v-if="/** @type {any} */ (store.currentEntry)?.data?.quick_check_content" v-html="/** @type {any} */ (store.currentEntry).data.quick_check_content"></div>
+      </div>
+      <button
+        type="button"
+        :class="$style['continue-button']"
+        @click="completeQuickCheck">
+        Continue
+      </button>
+    </div>
+
+    <!-- Original QuickCheck component for compatibility -->
+    <QuickCheck v-show="false" />
   </div>
 </template>
 
@@ -46,7 +68,6 @@
   import DirectionLineComponent from '../components/DirectionLine.vue';
 
   /**
-   * @typedef {import('../composables/use_video_player').VideoPlayer} VideoPlayer
    * @typedef {import('../composables/use_video_player').VideoPlayerAPI} VideoPlayerAPI
    */
 
@@ -78,10 +99,6 @@
     isPlaying,
     initializeVideoPlayer,
     cleanupVideoPlayer,
-    handleAutoPlay,
-    setupCheckpoints,
-    setupVideoEvents,
-    resumeVideoAfterCheckpoint,
   } = useVideoPlayer(videoContainer);
 
   /**
@@ -127,9 +144,7 @@
    * @return {void}
    */
   onMounted(() => {
-    console.log('InteractiveVideoPlayer mounted');
     initializeVideoPlayer();
-    setupEventListeners();
 
     if (store.activityInfo.quick_checks) {
       quickCheckStore.updateQuickCheckState({
@@ -140,6 +155,28 @@
     initializeDirectionLine();
     document.addEventListener('quickCheckCompleted', handleQuickCheckCompleted);
   });
+
+  /**
+   * Watch for changes in current entry and reinitialize video player
+   * This ensures proper sequential flow when advancing through entries
+   */
+  watch(() => store.currentEntry, (newEntry, oldEntry) => {
+    if (newEntry && /** @type {any} */ (newEntry).type === 'video') {
+      // Show video controls for video entries
+      showControls.value = true;
+      
+      // Clean up previous video player
+      cleanupVideoPlayer();
+      
+      // Initialize new video player for current entry
+      setTimeout(() => {
+        initializeVideoPlayer();
+      }, 100);
+    } else if (newEntry && /** @type {any} */ (newEntry).type === 'quick_check') {
+      // Hide video controls for quick check entries
+      showControls.value = false;
+    }
+  }, { immediate: false });
 
   /**
    * Lifecycle hook: Clean up video player and event listeners on unmount
@@ -161,7 +198,8 @@
    * @return {void}
    */
   const handleQuickCheckCompleted = () => {
-    resumeVideoAfterCheckpoint();
+    // The functional video pattern handles video progression internally
+    // Original logic is preserved - quick check completion doesn't automatically resume video
   };
 
   /**
@@ -210,7 +248,8 @@
   watch(() => activitySettingsStore.useAutoPlay, (newValue) => {
     if (videoPlayer.value) {
       if (newValue) {
-        handleAutoPlay();
+        videoPlayer.value.play();
+        isPlaying.value = true;
       } else {
         videoPlayer.value.pause();
         isPlaying.value = false;
@@ -224,20 +263,10 @@
    */
   watch(() => quickCheckStore.isVisible, (isVisible) => {
     if (!isVisible && quickCheckStore.isComplete) {
-      resumeVideoAfterCheckpoint();
+      // The functional video pattern handles video progression internally
+      // Original logic is preserved - quick check completion doesn't automatically resume video
     }
   });
-
-  /**
-   * Set up event listeners for video player
-   * @return {void}
-   */
-  const setupEventListeners = () => {
-    if (videoPlayer.value) {
-      setupVideoEvents();
-      setupCheckpoints();
-    }
-  };
 
   /**
    * Toggle play/pause state of the video
@@ -286,23 +315,32 @@
   const goToIntro = () => {
     store.sequencer.goToScreen('intro');
   };
+
+  /**
+   * Complete the quick check step
+   * @return {void}
+   */
+  const completeQuickCheck = () => {
+    quickCheckStore.completeQuickCheck();
+    // The completeQuickCheck method already handles advancing to the next entry
+  };
 </script>
 
 <style lang="scss" module>
-@use 'MusicV3/v3/styles/base' as base;
-
 .interactive-video-player {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: base.rpx(16);
+  justify-content: flex-start; /* Changed from center to flex-start */
+  //padding: 16px;
+  min-height: 100vh; /* Ensure full height */
+  overflow: visible; /* Ensure controls are not cut off */
 }
 
 .c-interactive-video {
   width: 100%;
-  max-width: base.rpx(800);
-  margin: base.rpx(16) 0;
+  max-width: 800px;
+  //margin: 16px 0;
 }
 
 .c-interactive-video-video {
@@ -311,27 +349,74 @@
   height: 0;
   padding-bottom: 56.25%;
   background: #000;
-  border-radius: base.rpx(8);
+  border-radius: 8px;
   overflow: hidden;
 }
 
 .video-controls {
   display: flex;
-  gap: base.rpx(16);
-  margin-top: base.rpx(16);
+  gap: 16px;
+  margin-top: 16px;
+  margin-bottom: 16px; /* Added bottom margin */
+  justify-content: center; /* Center the controls */
+  flex-wrap: wrap; /* Allow wrapping on small screens */
+  position: relative; /* Ensure controls stay in view */
+  z-index: 10; /* Ensure controls are above other elements */
 }
 
 .control-btn {
-  padding: base.rpx(8) base.rpx(16);
+  padding: 8px 16px;
   background: #007bff;
   color: white;
   border: none;
-  border-radius: base.rpx(4);
+  border-radius: 4px;
   cursor: pointer;
-  font-size: base.rpx(14);
+  font-size: 14px;
+  min-width: 80px; /* Ensure minimum button width */
 
   &:hover {
     background: #0056b3;
+  }
+}
+
+.quick-check-step {
+  width: 100%;
+  max-width: 800px;
+  margin: 16px 0;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.quick-check-header {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.quick-check-content {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 24px;
+  text-align: justify;
+}
+
+.continue-button {
+  display: block;
+  margin: 0 auto;
+  padding: 12px 24px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+
+  &:hover {
+    background: #218838;
   }
 }
 </style>

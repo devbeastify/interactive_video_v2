@@ -1,7 +1,8 @@
+// @ts-check
+
 import './styles/_utilities.scss';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
-// @ts-expect-error - Vue file
 import InteractiveVideoApp from './views/InteractiveVideoApp.vue';
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -16,10 +16,6 @@
   import InteractiveVideoPlayer from './InteractiveVideoPlayer.vue';
   import DiagnosticScreen from './DiagnosticScreen.vue';
 
-  /**
-   * @typedef {import('../stores/main/main_store').MainStoreState} MainStoreState
-   */
-
   const store = useMainStore();
 
   /**

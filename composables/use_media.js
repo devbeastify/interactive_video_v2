@@ -28,6 +28,12 @@ function createMediaElement(file) {
   const extension = file.split('.').pop()?.toLowerCase() || '';
   const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'm4a'];
   const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
+  const subtitleExtensions = ['vtt', 'srt', 'ass', 'ssa']; // Subtitle files that should be excluded
+
+  // Don't create media elements for subtitle files
+  if (subtitleExtensions.includes(extension)) {
+    throw new Error(`Subtitle files cannot be loaded as media elements: ${file}`);
+  }
 
   if (audioExtensions.includes(extension)) {
     const audio = document.createElement('audio');
@@ -51,7 +57,7 @@ function createMediaElement(file) {
  * Create error info object for consistent error handling.
  * @param {string} file - The media file that failed
  * @param {number} index - The index of the failed file
- * @param {Error|Event|unknown} error - The error that occurred
+ * @param {unknown} error - The error that occurred
  * @return {MediaErrorInfo} The error info object
  */
 function createErrorInfo(file, index, error) {
@@ -75,7 +81,7 @@ function setupMediaElementListeners(element, onSuccess, onError) {
     onSuccess();
   };
 
-  const handleError = (error) => {
+  const handleError = (/** @type {Event} */ error) => {
     element.removeEventListener('canplaythrough', handleSuccess);
     element.removeEventListener('error', handleError);
     onError(error);
@@ -101,7 +107,7 @@ function createLoadPromise(mediaFile, index, errors, timeout) {
       setupMediaElementListeners(
         element,
         () => resolve(),
-        (error) => {
+        (/** @type {Event} */ error) => {
           const errorInfo = createErrorInfo(mediaFile, index, error);
           errors.push(errorInfo);
           reject(new Error(`Failed to load media: ${mediaFile}`));
@@ -119,7 +125,7 @@ function createLoadPromise(mediaFile, index, errors, timeout) {
           reject(new Error('Media loading timeout'));
         }
       }, timeout);
-    } catch (error) {
+    } catch (/** @type {unknown} */ error) {
       const errorInfo = createErrorInfo(mediaFile, index, error);
       errors.push(errorInfo);
       reject(new Error(`Failed to create media element for: ${mediaFile}`));
@@ -146,7 +152,7 @@ function createWhitelistPromise(mediaFile, index, errors, timeout) {
           element.pause();
           resolve();
         },
-        (error) => {
+        (/** @type {Event} */ error) => {
           const errorInfo = createErrorInfo(mediaFile, index, error);
           errors.push(errorInfo);
           reject(new Error(`Failed to whitelist media: ${mediaFile}`));
@@ -160,7 +166,7 @@ function createWhitelistPromise(mediaFile, index, errors, timeout) {
             element.pause();
             resolve();
           })
-          .catch((error) => {
+          .catch((/** @type {Error} */ error) => {
             console.warn(`Autoplay rejected for ${mediaFile}:`, error);
             resolve();
           });
@@ -179,7 +185,7 @@ function createWhitelistPromise(mediaFile, index, errors, timeout) {
           reject(new Error('Media whitelisting timeout'));
         }
       }, timeout);
-    } catch (error) {
+    } catch (/** @type {unknown} */ error) {
       const errorInfo = createErrorInfo(mediaFile, index, error);
       errors.push(errorInfo);
       reject(new Error(`Failed to create media element for whitelisting: ${mediaFile}`));
@@ -190,7 +196,7 @@ function createWhitelistPromise(mediaFile, index, errors, timeout) {
 /**
  * Log media errors for debugging purposes.
  * @param {string} operation - The operation that failed
- * @param {Error} error - The main error
+ * @param {unknown} error - The main error
  * @param {MediaErrorInfo[]} errors - Array of detailed errors
  */
 function logMediaErrors(operation, error, errors) {
