@@ -1,9 +1,10 @@
 // @ts-check
 
 import { ref } from 'vue';
-import { mainStore } from '../stores/main/main_store';
-import { useActivitySettingsStore } from '../stores/main/activity_settings_store';
-import { attachVideo } from '../utils/use_attach_video';
+import { mainStore } from '../stores/main_store';
+import { useActionStore } from '../stores/action_store';
+import { useActivitySettingsStore } from '../stores/activity_settings_store';
+import { attachVideo } from './use_attach_video';
 
 /**
  * @typedef {Object} VideoPlayerAPI
@@ -20,7 +21,7 @@ import { attachVideo } from '../utils/use_attach_video';
  * @param {import('vue').Ref<HTMLElement|null>} videoContainer - The video container ref
  * @return {VideoPlayerAPI} Video player API object
  */
-export function useVideoPlayer(videoContainer) {
+export function useVideoPlayer(videoContainer, onEnded) {
   /** @type {import('vue').Ref<any|null>} */
   const videoPlayer = ref(null);
   /** @type {import('vue').Ref<boolean>} */
@@ -36,16 +37,16 @@ export function useVideoPlayer(videoContainer) {
         return;
       }
 
-      const store = mainStore();
-      const currentEntry = /** @type {any} */ (store.currentEntry);
+      const actionStore = useActionStore();
+      const currentAction = /** @type {any} */ (actionStore.currentAction);
       
-      if (!currentEntry || currentEntry.type !== 'video') {
+      if (!currentAction || currentAction.type !== 'video') {
         return;
       }
 
       // Use functional video pattern directly
-      const entryIndex = store.currentEntryIndex + 1;
-      const selector = `.js-interactive-video-v2-segment-${entryIndex}-video`;
+      const actionIndex = actionStore.currentActionIndex + 1;
+      const selector = `.js-interactive-video-v2-segment-${actionIndex}-video`;
       
       const videoPlayerInstance = attachVideo(selector, videoContainer.value);
       
@@ -66,8 +67,9 @@ export function useVideoPlayer(videoContainer) {
           
           player.on('ended', () => {
             isPlaying.value = false;
-            // Video completion triggers next quick check
-            store.goToNextEntry();
+            if (typeof onEnded === 'function') {
+              onEnded();
+            }
           });
           
           // Auto-play if enabled

@@ -1,166 +1,137 @@
 <template>
-  <div :class="$style['direction-line']">
-    <div
-      v-if="showPlayButton()"
-      :class="$style['direction-line__play-button-wrapper']">
-      <PlayButton
-        :audioBtnState="playButtonState"
-        @click="play" />
+    <div :class="$style['dl-container']" v-if="dlText">
+      <div :class="$style['dl-content']">
+        <div :class="$style['dl-controls']">
+          <PlayButton 
+            :audioBtnState="localIsPlaying ? 'playing' : 'paused'"
+            @click="handlePlayButtonClick" />
+        </div>
+        <div :class="$style['dl-text']" v-html="dlText" />
+      </div>
     </div>
-    <div :class="$style['direction-line__text']">
-      <span v-html="directionLine.text" />
-    </div>
-  </div>
-</template>
-
-<script setup>
-  import { defineExpose, ref, onMounted, watch } from 'vue';
+  </template>
+  
+  <script setup>
+  // @ts-check
+  
+  import { onMounted, onUnmounted, ref } from 'vue';
+  import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher';
+  import { useActionStore } from '../stores/action_store';
+  import { useDLStore } from '../stores/direction_line_store';
+  import { mainStore } from '../stores/main_store';
   import PlayButton from './PlayButton.vue';
-  import { useDirectionLineStore } from '../stores/main/direction_line_store';
-
+  
   /**
-   * @typedef {Object} DirectionLine
-   * @property {string} text - The direction text content
-   * @property {string} audioPath - Path to the audio file
-   * @property {boolean} isNew - Whether this is a new direction line
-   * @property {Function} generateAudioIfNeeded - Function to generate audio if needed
+   * Props for the DL component
    */
-
-  /**
-   * @typedef {'playing' | 'paused'} PlayButtonState
-   */
-
   const props = defineProps({
-    directionLine: {
-      type: Object,
-      required: true,
+    /** @type {string} */
+    dlText: {
+      type: String,
+      default: '',
     },
-    stepIndex: {
-      type: Number,
-      required: true,
+    /** @type {boolean} */
+    isPlaying: {
+      type: Boolean,
+      default: false,
     },
   });
-
-  const emit = defineEmits(['play', 'pause', 'audioEnded']);
-  const playButtonState = ref('paused');
-  const directionLineStore = useDirectionLineStore();
-
+  
+  // Store instances
+  const actionStore = useActionStore();
+  const dlStore = useDLStore();
+  const store = mainStore();
+  
   /**
-   * Checks if the direction line has audio content
-   * @param {DirectionLine} directionLine - The direction line object
-   * @return {boolean} True if audio is available, false otherwise
+   * Local playing state
    */
-  function hasAudioContent(directionLine) {
-    return directionLine.audioPath && directionLine.audioPath.length > 0;
-  }
-
+  const localIsPlaying = ref(false);
+  
   /**
-   * Checks if the direction line has text content
-   * @param {DirectionLine} directionLine - The direction line object
-   * @return {boolean} True if text is available, false otherwise
+   * Handle play button click
    */
-  function hasTextContent(directionLine) {
-    return directionLine.text && directionLine.text.length > 0;
-  }
-
-  /**
-   * Checks if text-to-speech is available in the browser
-   * @return {boolean} True if TTS is available, false otherwise
-   */
-  function hasTextToSpeech() {
-    return 'speechSynthesis' in window;
-  }
-
-  /**
-   * Determines if the play button should be shown.
-   * @return {boolean} True if the play button should be shown, false otherwise
-   */
-  function showPlayButton() {
-    const hasAudio = hasAudioContent(props.directionLine);
-    const hasText = hasTextContent(props.directionLine);
-    const isNew = props.directionLine.isNew;
-    const hasTTS = hasTextToSpeech();
-
-    return isNew && (hasAudio || (hasText && hasTTS));
-  }
-
-  /**
-   * Initialize audio when component mounts
-   */
-  onMounted(async () => {
-    if (props.directionLine && props.directionLine.generateAudioIfNeeded) {
-      try {
-        await props.directionLine.generateAudioIfNeeded();
-      } catch (error) {
-        console.warn('Failed to generate audio for direction line:', error);
-      }
-    }
-  });
-
-  /**
-   * Watch for direction line store playing state changes
-   */
-  watch(() => directionLineStore.isPlaying, (isPlaying) => {
-    playButtonState.value = isPlaying ? 'playing' : 'paused';
-
-    if (isPlaying) {
-      emit('play');
+  const handlePlayButtonClick = () => {
+    if (localIsPlaying.value) {
+      eventDispatcher.dispatch(DL_EVENTS.PAUSE);
     } else {
-      emit('audioEnded');
+      eventDispatcher.dispatch(DL_EVENTS.PLAY);
     }
-  });
-
+  };
+  
   /**
-   * Plays the audio using the store's logic.
+   * Update local playing state
    */
-  async function play() {
-    try {
-      await directionLineStore.playAudioForDirectionLine(props.directionLine);
-    } catch (error) {
-      console.error('Error playing direction line audio:', error);
+  const updatePlayingState = (isPlaying) => {
+    localIsPlaying.value = isPlaying;
+  };
+  
+  /**
+   * Auto-play DL when component is mounted
+   */
+  onMounted(() => {
+    if (props.dlText && props.dlText.trim()) {
+      // Small delay to ensure component is fully rendered
+      setTimeout(() => {
+        eventDispatcher.dispatch(DL_EVENTS.PLAY);
+      }, 100);
     }
-  }
-
-  /**
-   * Plays the audio automatically after a short delay.
-   */
-  function autoPlayAudio() {
-    console.log('Auto-playing direction line audio');
-    const halfSecond = 500;
-
-    setTimeout(() => {
-      if (props.directionLine && props.directionLine.text) {
-        play();
-      } else {
-        console.warn('No direction line text available for auto-play');
-      }
-    }, halfSecond);
-  }
-
-  defineExpose({
-    autoPlayAudio,
+  
+    // Listen for state changes
+    eventDispatcher.on(DL_EVENTS.STARTED, () => {
+      updatePlayingState(true);
+    });
+  
+    eventDispatcher.on(DL_EVENTS.PAUSED, () => {
+      updatePlayingState(false);
+    });
+  
+    eventDispatcher.on(DL_EVENTS.COMPLETED, () => {
+      updatePlayingState(false);
+    });
   });
-</script>
-
-<style lang="scss" module>
-@use 'MusicV3/v3/styles/base' as base;
-
-.direction-line {
-  align-items: center;
-  display: flex;
-  justify-content: center;
-  margin-bottom: base.rpx(16);
-
-  &__play-button-wrapper {
-    margin-right: base.rpx(16);
-    transform: translateY(base.rpx(4));
+  
+  /**
+   * Cleanup event listeners on unmount
+   */
+  onUnmounted(() => {
+    eventDispatcher.off(DL_EVENTS.STARTED, updatePlayingState);
+    eventDispatcher.off(DL_EVENTS.PAUSED, updatePlayingState);
+    eventDispatcher.off(DL_EVENTS.COMPLETED, updatePlayingState);
+  });
+  </script>
+  
+  <style lang="scss" module>
+  @use 'MusicV3/v3/styles/base' as base;
+  
+  .dl-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-
-  &__text {
-    flex-grow: 1;
-    font-size: base.rpx(18);
-    font-weight: 500;
+  
+  .dl-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--global-color-background-primary, #fff);
+    border-radius: base.rpx(12);
+    padding: base.rpx(24);
+    max-width: base.rpx(600);
+    width: 100%;
     text-align: center;
   }
-}
-</style>
+  
+  .dl-text {
+    font-size: base.rpx(18);
+    line-height: base.rpx(18);
+    margin-left: base.rpx(16);
+    color: var(--global-color-text-primary, #333);
+  }
+  
+  .dl-controls {
+    display: flex;
+    justify-content: center;
+    gap: base.rpx(16);
+  }
+  </style>

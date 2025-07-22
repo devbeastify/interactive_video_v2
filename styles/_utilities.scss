@@ -25,13 +25,13 @@
 // Interactive Video V2 Styles
 
 .c-interactive-video-v2 {
-  &__video-step,
-  &__quick-check-step {
+  &__video-action,
+  &__quick-check-action {
     padding: 1rem;
     margin-bottom: 1rem;
   }
 
-  &__step-header {
+  &__action-header {
     font-size: 1.25rem;
     font-weight: bold;
     margin-bottom: 1rem;

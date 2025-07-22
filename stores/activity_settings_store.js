@@ -1,7 +1,7 @@
 // @ts-check
 
 import { defineStore } from 'pinia';
-import { browserIsSafari } from '../../lib/safari_browser_check';
+import { browserIsSafari } from '../lib/safari_browser_check';
 
 /**
  * @typedef ActionSettings
@@ -63,7 +63,7 @@ export const useActivitySettingsStore = defineStore('activitySettings', {
 
     /**
      * Reset the autoplay setting to enabled and persist to localStorage
-     * Called when InteractiveVideoIntro component is mounted
+     * Called when IntroScreen component is mounted
      */
     resetAutoPlayToEnabled() {
       this.actionSettings.useAutoPlay = true;

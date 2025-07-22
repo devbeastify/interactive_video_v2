@@ -1,150 +1,162 @@
 <template>
-  <div v-show="quickCheckStore.isVisible" :class="$style['quick-check']">
-    <div :class="$style['quick-check-content']">
-      <h3>Quick Check</h3>
-      <div v-if="currentQuickCheckData">
-        <DirectionLineComponent
-          v-if="quickCheckDirectionLine && quickCheckDirectionLine.text"
-          :directionLine="quickCheckDirectionLine"
-          :stepIndex="0"
-          @play="handleQuickCheckDirectionLinePlay"
-          @pause="handleQuickCheckDirectionLinePause"
-          @audio-ended="handleQuickCheckDirectionLineAudioEnded" />
-
-        <div v-if="isMultipleChoiceQuestion">
-          <MultipleChoiceQuestion
-            :question="currentQuickCheckData"
-            @answer-selected="handleAnswerSelected" />
+    <div :class="$style['quick-check']">
+      <div :class="$style['quick-check-layout']">
+        <!-- DL Component for quick check - now positioned vertically -->
+        <div :class="$style['dl-section']">
+          <DirectionLine 
+            v-if="dlStore.hasDL"
+            :dl-text="dlStore.currentDLText"
+            :is-playing="dlStore.isPlaying" />
         </div>
-
-        <div v-else-if="isFillInTheBlanksQuestion">
-          <FillInTheBlanksQuestion
-            :question="currentQuickCheckData"
-            @answer-submitted="handleAnswerSubmitted" />
-        </div>
-
-        <div v-else-if="isPronunciationQuestion">
-          <PronunciationQuestion
-            :question="currentQuickCheckData"
-            :pronunciationToggle="pronunciationToggle"
-            @pronunciation-complete="handlePronunciationComplete" />
-        </div>
-
-        <div v-else-if="isDragAndDropQuestion">
-          <DragAndDropQuestion
-            :question="currentQuickCheckData"
-            @answer-submitted="handleAnswerSubmitted" />
-        </div>
-
-        <div>
-          <button
-            :class="$style['quick-check-complete-btn']"
-            @click="handleComplete">
-            Complete
-          </button>
+        
+        <div :class="$style['quick-check-content']">
+          <h3>Quick Check</h3>
+          <div v-if="currentQuickCheckActionData">
+  
+            <div v-if="isMultipleChoiceQuestion">
+              <MultipleChoiceQuestion
+                :question="currentQuickCheckActionData"
+                @answer-selected="handleAnswerSelected" />
+            </div>
+  
+            <div v-else-if="isFillInTheBlanksQuestion">
+              <FillInTheBlanksQuestion
+                :question="currentQuickCheckActionData"
+                @answer-submitted="handleAnswerSubmitted" />
+            </div>
+  
+            <div v-else-if="isPronunciationQuestion">
+              <PronunciationQuestion
+                :question="currentQuickCheckActionData"
+                @pronunciation-complete="handlePronunciationComplete" />
+            </div>
+  
+            <div v-else-if="isDragAndDropQuestion">
+              <DragAndDropQuestion
+                :question="currentQuickCheckActionData"
+                @answer-submitted="handleAnswerSubmitted" />
+            </div>
+  
+            <div>
+              <button
+                :class="$style['quick-check-complete-btn']"
+                @click="handleComplete">
+                Complete
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</template>
-
-<script setup>
-// @ts-check
-
-  import { onMounted, onUnmounted, watch, computed, ref } from 'vue';
-  import { useQuickCheckStore } from '../stores/main/quick_check_store';
-  import { useDirectionLineStore } from '../stores/main/direction_line_store';
-  import { mainStore } from '../stores/main/main_store';
-  import { DirectionLine } from '../stores/main/direction_line';
+  </template>
+  
+  <script setup>
+  // @ts-check
+  
+  import { computed, onMounted, onUnmounted, watch } from 'vue';
+  import { useActionStore } from '../stores/action_store';
+  import { useDLStore } from '../stores/direction_line_store';
+  import { mainStore } from '../stores/main_store';
+  import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher';
   import MultipleChoiceQuestion from './questions/MultipleChoiceQuestion.vue';
   import FillInTheBlanksQuestion from './questions/FillInTheBlanksQuestion.vue';
   import PronunciationQuestion from './questions/PronunciationQuestion.vue';
   import DragAndDropQuestion from './questions/DragAndDropQuestion.vue';
-  import DirectionLineComponent from './DirectionLine.vue';
-
+  import DirectionLine from './DirectionLine.vue';
+  
   /**
    * @typedef {Object} AnswerObject
    * @property {string} id - The answer identifier
    * @property {string} text - The answer text
    * @property {boolean} isCorrect - Whether the answer is correct
    */
-
+  
   /**
    * @typedef {Object} PronunciationResult
    * @property {boolean} isCorrect - Whether pronunciation was correct
    * @property {number} score - Pronunciation score
    * @property {string} feedback - User feedback
    */
-
-  const quickCheckStore = useQuickCheckStore();
-  const directionLineStore = useDirectionLineStore();
-  const mainStoreInstance = mainStore();
-
+  
+  const emit = defineEmits(['quick-check-complete']);
+  
+  // Store instances
+  const actionStore = useActionStore();
+  const dlStore = useDLStore();
+  const store = mainStore();
+  
   /**
-   * Quick check direction line data
+   * Computed property for current quick check data from action store
    */
-  const quickCheckDirectionLine = ref(/** @type {DirectionLine|null} */ (null));
-
-  /**
-   * Computed property for current quick check data from main store
-   */
-  const currentQuickCheckData = computed(() => {
-    const currentEntry = /** @type {any} */ (mainStoreInstance.currentEntry);
-    return currentEntry && currentEntry.type === 'quick_check' ? currentEntry.data : null;
+  const currentQuickCheckActionData = computed(() => {
+    const currentAction = /** @type {any} */ (actionStore.currentAction);
+    return currentAction && currentAction.type === 'quick_check' ? currentAction.data : null;
   });
-
-  /**
-   * Computed property for pronunciation toggle
-   */
-  const pronunciationToggle = computed(() =>
-    quickCheckStore.pronunciationToggle || undefined
-  );
-
+  
   /**
    * Computed properties for question type checking
    */
   const isMultipleChoiceQuestion = computed(() =>
-    currentQuickCheckData.value?.type === 'multiple_choice'
+    currentQuickCheckActionData.value?.type === 'multiple_choice'
   );
-
+  
   const isFillInTheBlanksQuestion = computed(() =>
-    currentQuickCheckData.value?.type === 'fill_in_the_blanks'
+    currentQuickCheckActionData.value?.type === 'fill_in_the_blanks'
   );
-
+  
   const isPronunciationQuestion = computed(() =>
-    currentQuickCheckData.value?.type === 'pronunciation'
+    currentQuickCheckActionData.value?.type === 'pronunciation'
   );
-
+  
   const isDragAndDropQuestion = computed(() =>
-    currentQuickCheckData.value?.type === 'quick_check_drag_and_drop'
+    currentQuickCheckActionData.value?.type === 'quick_check_drag_and_drop'
   );
-
+  
   /**
-   * Checks if quick check has direction line content
-   * @param {Object} quickCheckContent - The quick check content object
-   * @return {boolean} Whether direction line exists
+   * Initialize DL for quick check phase
    */
-  const hasDirectionLineContent = (quickCheckContent) => {
-    return Boolean(quickCheckContent &&
-      typeof quickCheckContent === 'object' &&
-      'dl' in quickCheckContent &&
-      quickCheckContent.dl);
+  const initializeDLForQuickCheck = () => {
+    // Cast activityInfo to the expected type for DL store
+    const activityInfoForDL = /** @type {import('../stores/direction_line_store').ActivityInfo} */ (store.activityInfo);
+    dlStore.initializeDLForPhase('quick_check', activityInfoForDL);
+    
+    // Start DL playback if available
+    if (dlStore.hasDL) {
+      dlStore.playDL();
+    }
   };
-
+  
   /**
-   * Creates direction line configuration for quick check
-   * @param {string} directionLineText - The direction line text
-   * @return {Object} Direction line configuration
+   * Event handlers for DL
    */
-  const createDirectionLineConfig = (directionLineText) => ({
-    text: directionLineText,
-    languageCode: 'en',
-    isNew: true,
-    stepId: `quick_check_${Date.now()}`,
-    stepType: 'quick_check',
-    name: 'quick_check',
-  });
-
+  const handleDLCompleted = () => {
+    // DL completed for quick check - video should remain paused
+    // The VideoPlayer component will check actionStore.isCurrentActionVideo
+    // and won't resume video since we're in quick_check mode
+    console.log('DL completed for quick check - video remains paused');
+  };
+  
+  const handleDLStarted = () => {
+    // DL started playing
+    console.log('DL started for quick check');
+  };
+  
+  /**
+   * Set up event listeners for DL
+   */
+  const setupEventListeners = () => {
+    eventDispatcher.on(DL_EVENTS.COMPLETED, handleDLCompleted);
+    eventDispatcher.on(DL_EVENTS.STARTED, handleDLStarted);
+  };
+  
+  /**
+   * Clean up event listeners
+   */
+  const cleanupEventListeners = () => {
+    eventDispatcher.off(DL_EVENTS.COMPLETED, handleDLCompleted);
+    eventDispatcher.off(DL_EVENTS.STARTED, handleDLStarted);
+  };
+  
   /**
    * Pauses video player if currently playing
    */
@@ -154,73 +166,7 @@
       videoPlayer.pause();
     }
   };
-
-  /**
-   * Initializes quick check direction line
-   */
-  const initializeQuickCheckDirectionLine = () => {
-    const currentQC = currentQuickCheckData.value;
-    if (!currentQC) return;
-
-    if (hasDirectionLineContent(currentQC.quick_check_content)) {
-      const directionLineConfig = createDirectionLineConfig(
-        currentQC.quick_check_content.dl
-      );
-
-      const directionLine = new DirectionLine(directionLineConfig);
-
-      directionLineStore.setQuickCheckDirectionLine(directionLine);
-      quickCheckDirectionLine.value = directionLine;
-
-      console.log('Quick check direction line initialized:', directionLine);
-
-      scheduleDirectionLineAudioPlay();
-    } else {
-      clearQuickCheckDirectionLine();
-    }
-  };
-
-  /**
-   * Schedules direction line audio to play after delay
-   */
-  const scheduleDirectionLineAudioPlay = () => {
-    setTimeout(() => {
-      if (quickCheckDirectionLine.value) {
-        directionLineStore.startQuickCheckDirectionLineAudio();
-      }
-    }, 500);
-  };
-
-  /**
-   * Clears quick check direction line
-   */
-  const clearQuickCheckDirectionLine = () => {
-    directionLineStore.clearQuickCheckDirectionLine();
-    quickCheckDirectionLine.value = null;
-  };
-
-  /**
-   * Handles quick check direction line play event
-   */
-  const handleQuickCheckDirectionLinePlay = () => {
-    console.log('Quick check direction line started playing');
-    pauseVideoIfPlaying();
-  };
-
-  /**
-   * Handles quick check direction line pause event
-   */
-  const handleQuickCheckDirectionLinePause = () => {
-    console.log('Quick check direction line paused');
-  };
-
-  /**
-   * Handles quick check direction line audio ended event
-   */
-  const handleQuickCheckDirectionLineAudioEnded = () => {
-    console.log('Quick check direction line audio ended');
-  };
-
+  
   /**
    * Handles multiple choice answer selection
    * @param {AnswerObject} answer - The selected answer object
@@ -228,7 +174,7 @@
   const handleAnswerSelected = (answer) => {
     handleComplete();
   };
-
+  
   /**
    * Handles fill-in-the-blanks answer submission
    * @param {Array<string>} answers - The submitted answers
@@ -236,7 +182,7 @@
   const handleAnswerSubmitted = (answers) => {
     handleComplete();
   };
-
+  
   /**
    * Handles pronunciation question completion
    * @param {PronunciationResult} result - The pronunciation result
@@ -244,87 +190,95 @@
   const handlePronunciationComplete = (result) => {
     handleComplete();
   };
-
+  
   /**
-   * Marks current quick check as complete
+   * Emits quick check complete event
    */
   const handleComplete = () => {
-    directionLineStore.stopQuickCheckDirectionLineAudio();
-    quickCheckStore.completeQuickCheck();
+    emit('quick-check-complete');
   };
-
-  /**
-   * Emits quick check completion event
-   */
-  const emitQuickCheckCompletion = () => {
-    document.dispatchEvent(new CustomEvent('quickCheckCompleted'));
-  };
-
-  /**
-   * Lifecycle hook: Initialize when component mounts
-   */
-  onMounted(() => {
-    initializeQuickCheckDirectionLine();
-  });
-
-  /**
-   * Lifecycle hook: Clean up when component unmounts
-   */
-  onUnmounted(() => {
-    directionLineStore.stopQuickCheckDirectionLineAudio();
-    clearQuickCheckDirectionLine();
-  });
-
-  /**
-   * Watch for quick check changes and initialize direction line
-   */
-  watch(() => currentQuickCheckData.value, () => {
-    initializeQuickCheckDirectionLine();
-  });
-
-  /**
-   * Watch for quick check completion and emit events
-   */
-  watch(() => quickCheckStore.isComplete, (isComplete) => {
-    if (isComplete) {
-      emitQuickCheckCompletion();
+  
+  // Watchers
+  watch(() => actionStore.currentAction, (newAction) => {
+    if (newAction?.type === 'quick_check') {
+      // Pause video if playing
+      pauseVideoIfPlaying();
+      
+      // Initialize DL for quick check
+      initializeDLForQuickCheck();
     }
   });
-</script>
-
-<style lang="scss" module>
-@use 'MusicV3/v3/styles/base' as base;
-
-.quick-check {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: base.rpx(16);
-}
-
-.quick-check-content {
-  background: white;
-  padding: base.rpx(32);
-  border-radius: base.rpx(8);
-  max-width: base.rpx(600);
-  width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
-  box-shadow: 0 base.rpx(4) base.rpx(12) rgba(0, 0, 0, 0.1);
-}
-
-.quick-check-complete-btn {
-  margin-top: base.rpx(16);
-  padding: base.rpx(12) base.rpx(24);
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: base.rpx(4);
-  cursor: pointer;
-  font-size: base.rpx(16);
-
-  &:hover {
-    background: #0056b3;
+  
+  // Lifecycle hooks
+  onMounted(() => {
+    setupEventListeners();
+    
+    // Initialize DL if we're already on a quick check
+    if (actionStore.currentAction?.type === 'quick_check') {
+      initializeDLForQuickCheck();
+    }
+  });
+  
+  onUnmounted(() => {
+    try {
+      cleanupEventListeners();
+      dlStore.cleanup();
+    } catch (error) {
+      console.warn('Error during QuickCheck component cleanup:', error);
+    }
+  });
+  </script>
+  
+  <style lang="scss" module>
+  @use 'MusicV3/v3/styles/base' as base;
+  
+  .quick-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: base.rpx(16);
+    min-height: 100vh;
   }
-}
-</style>
+  
+  .quick-check-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: base.rpx(24);
+    width: 100%;
+    max-width: base.rpx(800);
+  }
+  
+  .dl-section {
+    width: 100%;
+    max-width: base.rpx(600);
+    margin-bottom: base.rpx(16);
+  }
+  
+  .quick-check-content {
+    background: white;
+    padding: base.rpx(32);
+    border-radius: base.rpx(8);
+    max-width: base.rpx(600);
+    width: 100%;
+    max-height: 60vh;
+    overflow-y: auto;
+    box-shadow: 0 base.rpx(4) base.rpx(12) rgba(0, 0, 0, 0.1);
+  }
+  
+  .quick-check-complete-btn {
+    margin-top: base.rpx(16);
+    padding: base.rpx(12) base.rpx(24);
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: base.rpx(4);
+    cursor: pointer;
+    font-size: base.rpx(16);
+  
+    &:hover {
+      background: #0056b3;
+    }
+  }
+  </style>
+  
