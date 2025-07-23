@@ -4,35 +4,35 @@ import { defineStore } from 'pinia';
 
 /**
  * @typedef Reference
+ * @property {string} dl
  * @property {string} id
  * @property {string} title
  * @property {string} url
- * @property {string} [dl]
  */
 
 /**
  * @typedef QuickCheck
- * @property {string} type
  * @property {Object} quick_check_content
  * @property {string} [prompt]
+ * @property {string} type
  */
 
 /**
  * @typedef ActivityInfo
- * @property {string} topic
+ * @property {Object} diagnostic
+ * @property {string} dl
+ * @property {Array<QuickCheck>} quick_checks
+ * @property {Array<Reference>} reference
  * @property {string} sub_topic
  * @property {string} title
- * @property {string} dl
- * @property {Array<Reference>} reference
- * @property {Array<QuickCheck>} quick_checks
- * @property {Object} diagnostic
+ * @property {string} topic
  */
 
 /**
  * @typedef Action
- * @property {string} type - Either 'video' or 'quick_check'
  * @property {Object} data - The action data
  * @property {number} index - The action index
+ * @property {string} type - Either 'video' or 'quick_check'
  */
 
 /**
@@ -60,23 +60,23 @@ export const useActionStore = defineStore('action', {
     },
 
     /**
-     * Check if current action is a video
-     * @param {ActionStoreState} state - The store state
-     * @return {boolean} True if current action is a video
-     */
-    isCurrentActionVideo: (state) => {
-      const action = state.actions[state.currentActionIndex];
-      return action && action.type === 'video';
-    },
-
-    /**
      * Check if current action is a quick check
      * @param {ActionStoreState} state - The store state
      * @return {boolean} True if current action is a quick check
      */
-    isCurrentActionQuickCheck: (state) => {
+    currentActionIsQuickCheck: (state) => {
       const action = state.actions[state.currentActionIndex];
       return action && action.type === 'quick_check';
+    },
+
+    /**
+     * Check if current action is a video
+     * @param {ActionStoreState} state - The store state
+     * @return {boolean} True if current action is a video
+     */
+    currentActionIsVideo: (state) => {
+      const action = state.actions[state.currentActionIndex];
+      return action && action.type === 'video';
     },
 
     /**
@@ -108,67 +108,39 @@ export const useActionStore = defineStore('action', {
     createActions(activityInfo) {
       const actions = [];
 
-      // Get the maximum length to handle cases where there are more videos or quick checks
       const maxLength = Math.max(
         activityInfo.reference.length,
         activityInfo.quick_checks.length
       );
 
-      // Create actions following the XML order
-      // This matches the Ruby backend's each_excluding_nodes behavior
       for (let i = 0; i < maxLength; i++) {
-        // Add video if available at this position
         if (activityInfo.reference[i]) {
           actions.push({
-            type: 'video',
             data: activityInfo.reference[i],
             index: actions.length,
+            type: 'video',
           });
         }
 
-        // Add quick check if available at this position
         if (activityInfo.quick_checks[i]) {
           actions.push({
-            type: 'quick_check',
             data: activityInfo.quick_checks[i],
             index: actions.length,
+            type: 'quick_check',
           });
         }
       }
 
-      // Handle additional quick checks beyond the video count
-      // This matches the XML structure where there can be extra quick checks
       for (let i = maxLength; i < activityInfo.quick_checks.length; i++) {
         actions.push({
-          type: 'quick_check',
           data: activityInfo.quick_checks[i],
           index: actions.length,
+          type: 'quick_check',
         });
       }
 
       this.actions = actions;
       this.currentActionIndex = 0;
-    },
-
-    /**
-     * Reset the action store to initial state
-     */
-    reset() {
-      this.currentActionIndex = 0;
-    },
-
-    /**
-     * Go to the next action in the sequence
-     * Point 9: Quick check completion triggers next video
-     * Point 10: Video completion triggers next quick check
-     */
-    goToNextAction() {
-      if (this.hasNextAction) {
-        this.currentActionIndex++;
-        
-        // Only go to diagnostic if we've completed the last quick check
-        // Don't go to diagnostic just because we reached the last action
-      }
     },
 
     /**
@@ -179,6 +151,24 @@ export const useActionStore = defineStore('action', {
       if (index >= 0 && index < this.actions.length) {
         this.currentActionIndex = index;
       }
+    },
+
+    /**
+     * Go to the next action in the sequence
+     * Quick check completion triggers next video
+     * Video completion triggers next quick check
+     */
+    goToNextAction() {
+      if (this.hasNextAction) {
+        this.currentActionIndex++;
+      }
+    },
+
+    /**
+     * Reset the action store to initial state
+     */
+    reset() {
+      this.currentActionIndex = 0;
     },
 
     /**

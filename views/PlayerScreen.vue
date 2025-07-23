@@ -1,68 +1,99 @@
 <template>
-    <div>
-      <VideoPlayer 
-        v-show="actionStore.isCurrentActionVideo"
-        @video-ended="handleVideoEnded"
-      />
-   
-      <QuickCheck 
-        v-if="actionStore.isCurrentActionQuickCheck"
-        @quick-check-complete="handleQuickCheckComplete"
-      />
-    </div>
-  </template>
+  <div class="player-screen">
+    <VideoPlayer 
+      v-show="stores.action.currentActionIsVideo"
+      @video-ended="handleVideoEnded" 
+    />
+    <QuickCheck 
+      v-if="stores.action.currentActionIsQuickCheck"
+      @quick-check-complete="handleQuickCheckComplete" 
+    />
+    <DirectionLine />
+  </div>
+</template>
+
+<script setup>
+// @ts-check
+
+import { onMounted } from 'vue';
+import { useActionStore } from '../stores/action_store';
+import { useQuickCheckStore } from '../stores/quick_check_store';
+import { mainStore } from '../stores/main_store';
+import VideoPlayer from '../components/VideoPlayer.vue';
+import QuickCheck from '../components/QuickCheck.vue';
+
+/**
+ * @typedef {Object} StoreInstances
+ * @property {ReturnType<typeof mainStore>} main
+ * @property {ReturnType<typeof useActionStore>} action
+ * @property {ReturnType<typeof useQuickCheckStore>} quickCheck
+ */
+
+/**
+ * Initialize store instances
+ * @type {StoreInstances}
+ */
+const stores = {
+  action: useActionStore(),
+  main: mainStore(),
+  quickCheck: useQuickCheckStore(),
+};
+
+/**
+ * Initialize quick check state from activity info
+ * Sets up the quick check state if quick checks are available
+ * @return {void}
+ */
+function initializeQuickCheckState() {
+  const { activityInfo } = stores.main;
   
-  <script setup>
-  // @ts-check
-  
-  import { onMounted } from 'vue';
-  import { useActionStore } from '../stores/action_store';
-  import { useQuickCheckStore } from '../stores/quick_check_store';
-  import { mainStore } from '../stores/main_store';
-  import VideoPlayer from '../components/VideoPlayer.vue';
-  import QuickCheck from '../components/QuickCheck.vue';
-  
-  const store = mainStore();
-  const actionStore = useActionStore();
-  const quickCheckStore = useQuickCheckStore();
-  
-  /**
-   * Lifecycle hook: Initialize quick check state on mount
-   * Sets up the quick check state from activity info
-   * @return {void}
-   */
-  onMounted(() => {
-    // Reset action store to start from the beginning
-    actionStore.reset();
-    
-    if (store.activityInfo.quick_checks) {
-      quickCheckStore.updateQuickCheckState({
-        quickChecks: store.activityInfo.quick_checks,
-      });
-    }
-  });
-  
-  /**
-   * Handle quick check completion by advancing to the next action
-   */
-  function handleQuickCheckComplete() {
-    if (actionStore.isAtLastAction) {
-      store.sequencer.goToScreen('diagnostic');
-    } else {
-      actionStore.goToNextAction();
-    }
+  if (activityInfo.quick_checks) {
+    stores.quickCheck.updateQuickCheckState({
+      quickChecks: activityInfo.quick_checks,
+    });
   }
-  
-  function handleVideoEnded() {
-    if (actionStore.isAtLastAction) {
-      store.sequencer.goToScreen('diagnostic');
-    } else {
-      actionStore.goToNextAction();
-    }
+}
+
+/**
+ * Navigate to the next screen or action based on current state
+ * @return {void}
+ */
+function navigateToNext() {
+  if (stores.action.isAtLastAction) {
+    stores.main.sequencer.goToScreen('diagnostic');
+  } else {
+    stores.action.goToNextAction();
   }
-  </script>
+}
+
+/**
+ * Handle quick check completion by advancing to the next action
+ * @return {void}
+ */
+function handleQuickCheckComplete() {
+  navigateToNext();
+}
+
+/**
+ * Handle video completion by advancing to the next action
+ * @return {void}
+ */
+function handleVideoEnded() {
+  navigateToNext();
+}
+
+/**
+ * Lifecycle hook: Initialize component state on mount
+ * Resets action store and sets up quick check state
+ * @return {void}
+ */
+onMounted(() => {
+  stores.action.reset();
   
-  <style lang="scss" module>
-  // Styles moved to VideoPlayer component
-  </style>
-  
+  initializeQuickCheckState();
+});
+</script>
+
+<style lang="scss" module>
+
+</style>

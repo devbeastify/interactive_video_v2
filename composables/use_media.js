@@ -4,19 +4,19 @@ import { ref } from 'vue';
 
 /**
  * @typedef {Object} MediaErrorInfo
+ * @property {Error|Event|unknown} error - The error that occurred
  * @property {string} file - The media file that failed
  * @property {number} index - The index of the failed file
- * @property {Error|Event|unknown} error - The error that occurred
  */
 
 /**
- * @typedef {'idle' | 'loading' | 'loaded' | 'error'} MediaState
+ * @typedef {'error' | 'idle' | 'loaded' | 'loading'} MediaState
  */
 
 /**
  * @typedef {Object} MediaElementConfig
- * @property {string} src - The media source URL
  * @property {string} preload - The preload attribute value
+ * @property {string} src - The media source URL
  */
 
 /**
@@ -26,29 +26,30 @@ import { ref } from 'vue';
  */
 function createMediaElement(file) {
   const extension = file.split('.').pop()?.toLowerCase() || '';
-  const audioExtensions = ['mp3', 'wav', 'ogg', 'aac', 'm4a'];
-  const videoExtensions = ['mp4', 'webm', 'ogg', 'mov', 'avi'];
-  const subtitleExtensions = ['vtt', 'srt', 'ass', 'ssa']; // Subtitle files that should be excluded
+  const audioExtensions = ['aac', 'm4a', 'mp3', 'ogg', 'wav'];
+  const subtitleExtensions = ['ass', 'srt', 'ssa', 'vtt'];
+  const videoExtensions = ['avi', 'mov', 'mp4', 'ogg', 'webm'];
 
-  // Don't create media elements for subtitle files
   if (subtitleExtensions.includes(extension)) {
-    throw new Error(`Subtitle files cannot be loaded as media elements: ${file}`);
+    throw new Error(
+      `Subtitle files cannot be loaded as media elements: ${file}`
+    );
   }
 
   if (audioExtensions.includes(extension)) {
     const audio = document.createElement('audio');
-    audio.src = file;
     audio.preload = 'auto';
+    audio.src = file;
     return audio;
   } else if (videoExtensions.includes(extension)) {
     const video = document.createElement('video');
-    video.src = file;
     video.preload = 'auto';
+    video.src = file;
     return video;
   } else {
     const video = document.createElement('video');
-    video.src = file;
     video.preload = 'auto';
+    video.src = file;
     return video;
   }
 }
@@ -62,29 +63,29 @@ function createMediaElement(file) {
  */
 function createErrorInfo(file, index, error) {
   return {
+    error: error,
     file: file,
     index: index,
-    error: error,
   };
 }
 
 /**
  * Handle media element event listeners with proper cleanup.
  * @param {HTMLVideoElement|HTMLAudioElement} element - The media element
- * @param {Function} onSuccess - Success callback
  * @param {Function} onError - Error callback
+ * @param {Function} onSuccess - Success callback
  */
-function setupMediaElementListeners(element, onSuccess, onError) {
-  const handleSuccess = () => {
-    element.removeEventListener('canplaythrough', handleSuccess);
-    element.removeEventListener('error', handleError);
-    onSuccess();
-  };
-
+function setUpMediaElementListeners(element, onError, onSuccess) {
   const handleError = (/** @type {Event} */ error) => {
     element.removeEventListener('canplaythrough', handleSuccess);
     element.removeEventListener('error', handleError);
     onError(error);
+  };
+
+  const handleSuccess = () => {
+    element.removeEventListener('canplaythrough', handleSuccess);
+    element.removeEventListener('error', handleError);
+    onSuccess();
   };
 
   element.addEventListener('canplaythrough', handleSuccess, { once: true });
@@ -104,14 +105,14 @@ function createLoadPromise(mediaFile, index, errors, timeout) {
     try {
       const element = createMediaElement(mediaFile);
 
-      setupMediaElementListeners(
+      setUpMediaElementListeners(
         element,
-        () => resolve(),
         (/** @type {Event} */ error) => {
           const errorInfo = createErrorInfo(mediaFile, index, error);
           errors.push(errorInfo);
           reject(new Error(`Failed to load media: ${mediaFile}`));
-        }
+        },
+        () => resolve()
       );
 
       setTimeout(() => {
@@ -128,7 +129,9 @@ function createLoadPromise(mediaFile, index, errors, timeout) {
     } catch (/** @type {unknown} */ error) {
       const errorInfo = createErrorInfo(mediaFile, index, error);
       errors.push(errorInfo);
-      reject(new Error(`Failed to create media element for: ${mediaFile}`));
+      reject(
+        new Error(`Failed to create media element for: ${mediaFile}`)
+      );
     }
   });
 }
@@ -146,16 +149,16 @@ function createWhitelistPromise(mediaFile, index, errors, timeout) {
     try {
       const element = createMediaElement(mediaFile);
 
-      setupMediaElementListeners(
+      setUpMediaElementListeners(
         element,
-        () => {
-          element.pause();
-          resolve();
-        },
         (/** @type {Event} */ error) => {
           const errorInfo = createErrorInfo(mediaFile, index, error);
           errors.push(errorInfo);
           reject(new Error(`Failed to whitelist media: ${mediaFile}`));
+        },
+        () => {
+          element.pause();
+          resolve();
         }
       );
 
@@ -167,7 +170,6 @@ function createWhitelistPromise(mediaFile, index, errors, timeout) {
             resolve();
           })
           .catch((/** @type {Error} */ error) => {
-            console.warn(`Autoplay rejected for ${mediaFile}:`, error);
             resolve();
           });
       } else {
@@ -188,7 +190,11 @@ function createWhitelistPromise(mediaFile, index, errors, timeout) {
     } catch (/** @type {unknown} */ error) {
       const errorInfo = createErrorInfo(mediaFile, index, error);
       errors.push(errorInfo);
-      reject(new Error(`Failed to create media element for whitelisting: ${mediaFile}`));
+      reject(
+        new Error(
+          `Failed to create media element for whitelisting: ${mediaFile}`
+        )
+      );
     }
   });
 }
@@ -200,21 +206,21 @@ function createWhitelistPromise(mediaFile, index, errors, timeout) {
  * @param {MediaErrorInfo[]} errors - Array of detailed errors
  */
 function logMediaErrors(operation, error, errors) {
-  console.error(`Error ${operation} media:`, error);
-  console.error(`Failed ${operation} files:`, errors);
-
   errors.forEach((errorInfo) => {
-    console.error(`Media ${operation} failed for ${errorInfo.file}:`, errorInfo.error);
+    console.error(
+      `Media ${operation} failed for ${errorInfo.file}:`,
+      errorInfo.error
+    );
   });
 }
 
 /**
  * Composable to manage media loading and whitelisting for interactive video.
  *
- * @param {string[]} mediaFiles - Array of media file URLs to manage (video and audio)
+ * @param {string[]} mediaFiles - Array of media file URLs to manage
  * @return {{
- *   mediaState: import('vue').Ref<MediaState>,
  *   loadMedia: () => Promise<void>,
+ *   mediaState: import('vue').Ref<MediaState>,
  *   whitelistMedia: (e: Event) => Promise<void>
  * }} Object containing mediaState, loadMedia, and whitelistMedia
  */
@@ -244,7 +250,12 @@ export function useMedia(mediaFiles) {
 
     try {
       mediaFiles.forEach((mediaFile, index) => {
-        const loadPromise = createLoadPromise(mediaFile, index, errors, 30000);
+        const loadPromise = createLoadPromise(
+          mediaFile,
+          index,
+          errors,
+          30000
+        );
         loadPromises.push(loadPromise);
       });
 
@@ -259,7 +270,7 @@ export function useMedia(mediaFiles) {
   /**
    * Attempt to play and pause all media files to whitelist them for autoplay.
    * Enhanced with comprehensive error handling.
-   * @param {Event} event - The user event triggering whitelisting (e.g., click)
+   * @param {Event} event - The user event triggering whitelisting
    * @return {Promise<void>}
    */
   const whitelistMedia = async (event) => {
@@ -274,7 +285,12 @@ export function useMedia(mediaFiles) {
 
     try {
       mediaFiles.forEach((mediaFile, index) => {
-        const whitelistPromise = createWhitelistPromise(mediaFile, index, errors, 15000);
+        const whitelistPromise = createWhitelistPromise(
+          mediaFile,
+          index,
+          errors,
+          15000
+        );
         whitelistPromises.push(whitelistPromise);
       });
 
@@ -286,5 +302,5 @@ export function useMedia(mediaFiles) {
     }
   };
 
-  return { mediaState, loadMedia, whitelistMedia };
+  return { loadMedia, mediaState, whitelistMedia };
 }

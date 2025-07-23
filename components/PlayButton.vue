@@ -6,9 +6,9 @@
     <svg
       v-if="audioBtnState === 'paused'"
       :class="$style['speaker-icon']"
-      width="24"
       height="24"
       viewBox="0 0 24 24"
+      width="24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg">
       <path
@@ -18,81 +18,103 @@
     <svg
       v-else
       :class="$style['pause-icon']"
-      width="24"
       height="24"
       viewBox="0 0 24 24"
+      width="24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg">
       <rect
+        height="16"
+        width="4"
         x="6"
         y="4"
-        width="4"
-        height="16"
         fill="currentColor" />
       <rect
+        height="16"
+        width="4"
         x="14"
         y="4"
-        width="4"
-        height="16"
         fill="currentColor" />
     </svg>
   </button>
 </template>
 
 <script setup>
-  import { computed } from 'vue';
+// @ts-check
 
-  const props = defineProps({
-    audioBtnState: {
-      type: String,
-      default: 'paused',
-      validator(val) {
-        return ['', 'playing', 'paused'].includes(val.toLowerCase());
-      },
+import { computed } from 'vue';
+
+/**
+ * @typedef {'playing' | 'paused'} AudioButtonState
+ */
+
+/**
+ * Props for the PlayButton component
+ * @typedef {Object} PlayButtonProps
+ * @property {AudioButtonState} audioBtnState - The current state of the audio button
+ */
+
+const props = defineProps({
+  audioBtnState: {
+    default: 'paused',
+    type: String,
+    validator(val) {
+      return ['', 'playing', 'paused'].includes(val.toLowerCase());
     },
-  });
+  },
+});
 
-  const buttonStateClass = computed(() => {
-    return `is-${props.audioBtnState}`;
-  });
+/**
+ * Computed class name based on the current audio button state
+ * @return {string} The CSS class name for the current state
+ */
+const buttonStateClass = computed(() => {
+  return `is-${props.audioBtnState}`;
+});
 </script>
 
 <style lang="scss" module>
-  @use 'MusicV3/v3/styles/base' as base;
+@use 'MusicV3/v3/styles/base' as base;
 
-  .play-button {
-    width: base.rpx(32);
-    height: base.rpx(32);
-    border: none;
-    border-radius: 50%;
-    background: transparent;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
+.c-no-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
 
-    &:hover {
-      background-color: rgba(0, 0, 0, 0.1);
-    }
+.is-paused {
+  color: #3498db;
+}
 
-    &:focus {
-      outline: base.rpx(2) solid #1f7069;
-      outline-offset: base.rpx(2);
-    }
+.is-playing {
+  color: #e74c3c;
+}
+
+.pause-icon,
+.speaker-icon {
+  height: base.rpx(24);
+  width: base.rpx(24);
+}
+
+.play-button {
+  align-items: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  height: base.rpx(32);
+  justify-content: center;
+  transition: all 0.3s ease;
+  width: base.rpx(32);
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.1);
   }
 
-  .is-playing {
-    color: #e74c3c;
+  &:focus {
+    outline: base.rpx(2) solid #1f7069;
+    outline-offset: base.rpx(2);
   }
-
-  .is-paused {
-    color: #3498db;
-  }
-
-  .speaker-icon,
-  .pause-icon {
-    width: base.rpx(24);
-    height: base.rpx(24);
-  }
+}
 </style>

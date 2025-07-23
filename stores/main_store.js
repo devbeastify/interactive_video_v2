@@ -7,7 +7,30 @@ import { useActivitySettingsStore } from './activity_settings_store';
 import { useActionStore } from './action_store';
 
 /**
- * @typedef VideoReference
+ * @typedef {Object} Diagnostic
+ * @property {string} dl
+ * @property {string} failure_message
+ * @property {Array<Object>} items
+ * @property {string} language
+ * @property {string} number_of_questions
+ * @property {string} threshold
+ */
+
+/**
+ * @typedef {Object} QuickCheck
+ * @property {Object} quick_check_content
+ * @property {string} type
+ */
+
+/**
+ * @typedef {Object} Reference
+ * @property {string} id
+ * @property {string} title
+ * @property {string} url
+ */
+
+/**
+ * @typedef {Object} VideoReference
  * @property {string} video_path
  * @property {string|null} english_subtitles_path
  * @property {string|null} foreign_subtitles_path
@@ -15,31 +38,18 @@ import { useActionStore } from './action_store';
  */
 
 /**
- * @typedef QuickCheck
- * @property {string} type
- * @property {Object} quick_check_content
- */
-
-/**
- * @typedef Reference
- * @property {string} id
- * @property {string} title
- * @property {string} url
- */
-
-/**
- * @typedef ActivityInfo
+ * @typedef {Object} ActivityInfo
  * @property {string} topic
  * @property {string} sub_topic
  * @property {string} title
  * @property {string} dl
  * @property {Array<Reference>} reference
  * @property {Array<QuickCheck>} quick_checks
- * @property {Object} diagnostic
+ * @property {Diagnostic} diagnostic
  */
 
 /**
- * @typedef MainStoreState
+ * @typedef {Object} MainStoreState
  * @property {boolean} isInitialized
  * @property {ActivityInfo} activityInfo
  * @property {Sequencer} sequencer
@@ -47,15 +57,9 @@ import { useActionStore } from './action_store';
 
 export const mainStore = defineStore('interactive_video_v2', {
   state: () => ({
-    isInitialized: false,
     /** @type {ActivityInfo} */
     activityInfo: {
-      topic: '',
-      sub_topic: '',
-      title: '',
       dl: '',
-      reference: [],
-      quick_checks: [],
       diagnostic: {
         dl: '',
         failure_message: '',
@@ -64,13 +68,19 @@ export const mainStore = defineStore('interactive_video_v2', {
         number_of_questions: '',
         threshold: '',
       },
+      quick_checks: [],
+      reference: [],
+      sub_topic: '',
+      title: '',
+      topic: '',
     },
+    isInitialized: false,
     sequencer: new Sequencer(),
   }),
 
   actions: {
     /**
-     * Gets the global that should appear within the activity.
+     * Gets the global element that should appear within the activity
      * @return {Promise<Element | null>}
      */
     getActivityInfo() {
@@ -78,8 +88,8 @@ export const mainStore = defineStore('interactive_video_v2', {
     },
 
     /**
-     * Parses the global that should appear within the activity.
-     * @param {Element} activityInfo
+     * Parses the global element that should appear within the activity
+     * @param {Element} activityInfo - The DOM element containing activity data
      * @return {Promise<ActivityInfo>}
      */
     async parseActivityInfo(activityInfo) {
@@ -96,6 +106,38 @@ export const mainStore = defineStore('interactive_video_v2', {
     },
 
     /**
+     * Creates the default diagnostic configuration
+     * @return {Diagnostic}
+     */
+    createDefaultDiagnostic() {
+      return {
+        dl: '',
+        failure_message: '',
+        items: [],
+        language: '',
+        number_of_questions: '',
+        threshold: '',
+      };
+    },
+
+    /**
+     * Merges parsed activity info with defaults to ensure complete structure
+     * @param {ActivityInfo} parsedActivityInfo - The parsed activity information
+     * @return {ActivityInfo}
+     */
+    mergeActivityInfoWithDefaults(parsedActivityInfo) {
+      return {
+        dl: parsedActivityInfo.dl || '',
+        diagnostic: parsedActivityInfo.diagnostic || this.createDefaultDiagnostic(),
+        quick_checks: parsedActivityInfo.quick_checks || [],
+        reference: parsedActivityInfo.reference || [],
+        sub_topic: parsedActivityInfo.sub_topic || '',
+        title: parsedActivityInfo.title || '',
+        topic: parsedActivityInfo.topic || '',
+      };
+    },
+
+    /**
      * Initialize the store with activity information and build screens
      */
     async init() {
@@ -106,46 +148,20 @@ export const mainStore = defineStore('interactive_video_v2', {
         }
         
         const parsedActivityInfo = await this.parseActivityInfo(activityInfoElement);
-        
-        // Ensure the activity info has the required structure
-        this.activityInfo = {
-          topic: parsedActivityInfo.topic || '',
-          sub_topic: parsedActivityInfo.sub_topic || '',
-          title: parsedActivityInfo.title || '',
-          dl: parsedActivityInfo.dl || '',
-          reference: parsedActivityInfo.reference || [],
-          quick_checks: parsedActivityInfo.quick_checks || [],
-          diagnostic: parsedActivityInfo.diagnostic || {
-            dl: '',
-            failure_message: '',
-            items: [],
-            language: '',
-            number_of_questions: '',
-            threshold: '',
-          },
-        };
+        this.activityInfo = this.mergeActivityInfoWithDefaults(parsedActivityInfo);
 
-        // Create actions from activity info
         const actionStore = useActionStore();
         actionStore.createActions(this.activityInfo);
 
-        console.log('activityInfo', this.activityInfo);
-
-        // Build screens for the activity
         const screens = buildScreensForActivity(this.activityInfo);
         this.sequencer.addScreen(screens);
 
-        // Initialize activity settings
         const activitySettingsStore = useActivitySettingsStore();
         activitySettingsStore.init();
 
-        // Mark as initialized and go to intro screen
         this.isInitialized = true;
         this.sequencer.goToScreen('intro');
-
-        console.log('Main store initialized successfully');
       } catch (error) {
-        console.error('Failed to initialize main store:', error);
         throw error;
       }
     },

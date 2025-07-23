@@ -1,5 +1,4 @@
 <template>
-  <!-- @ts-ignore -->
   <button
     class="interactive-video-primary-button"
     :disabled="mediaState !== 'loaded'"
@@ -8,15 +7,25 @@
   </button>
 </template>
 
-<script setup>
+<script>
+// @ts-check
+
 /**
- * Props for the BeginAction button.
- * @property {string} mediaState - The current state of the media
- *   ("loaded" enables the button).
- * @property {(event: MouseEvent) => void} startButtonClickHandler - The function
- *   to call when the button is clicked.
+ * BeginAction component for starting interactive video content.
+ * 
+ * @typedef {Object} BeginActionProps
+ * @property {string} mediaState - The current state of the media ("loaded" enables the button)
+ * @property {(event: MouseEvent) => void} startButtonClickHandler - Function to call when button is clicked
  */
-  defineProps({
+
+export default {
+  name: 'BeginAction',
+  
+  /**
+   * Component props for BeginAction
+   * @type {BeginActionProps}
+   */
+  props: {
     mediaState: {
       type: String,
       required: true,
@@ -25,5 +34,6 @@
       type: Function,
       required: true,
     },
-  });
+  },
+};
 </script>

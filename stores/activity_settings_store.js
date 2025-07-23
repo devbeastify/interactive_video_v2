@@ -4,12 +4,12 @@ import { defineStore } from 'pinia';
 import { browserIsSafari } from '../lib/safari_browser_check';
 
 /**
- * @typedef ActionSettings
+ * @typedef {Object} ActionSettings
  * @property {boolean} useAutoPlay
  */
 
 /**
- * @typedef StoreState
+ * @typedef {Object} StoreState
  * @property {ActionSettings} actionSettings
  * @property {boolean} isInitialized
  */
@@ -34,8 +34,18 @@ export const useActivitySettingsStore = defineStore('activitySettings', {
 
   actions: {
     /**
+     * Initialize the settings store
+     * @return {void}
+     */
+    init() {
+      this.initializeAutoPlaySetting();
+      this.isInitialized = true;
+    },
+
+    /**
      * Initialize the autoplay setting based on browser type and stored
      * preference
+     * @return {void}
      */
     initializeAutoPlaySetting() {
       const storedAutoPlay = localStorage.getItem(
@@ -50,20 +60,9 @@ export const useActivitySettingsStore = defineStore('activitySettings', {
     },
 
     /**
-     * Update the autoplay setting and persist to localStorage
-     * @param {boolean} useAutoPlay - Whether to enable autoplay
-     */
-    updateAutoPlaySetting(useAutoPlay) {
-      this.actionSettings.useAutoPlay = useAutoPlay;
-      localStorage.setItem(
-        'interactive_video_autoplay',
-        useAutoPlay.toString()
-      );
-    },
-
-    /**
      * Reset the autoplay setting to enabled and persist to localStorage
      * Called when IntroScreen component is mounted
+     * @return {void}
      */
     resetAutoPlayToEnabled() {
       this.actionSettings.useAutoPlay = true;
@@ -71,12 +70,16 @@ export const useActivitySettingsStore = defineStore('activitySettings', {
     },
 
     /**
-     * Initialize the settings store
+     * Update the autoplay setting and persist to localStorage
+     * @param {boolean} useAutoPlay - Whether to enable autoplay
      * @return {void}
      */
-    init() {
-      this.initializeAutoPlaySetting();
-      this.isInitialized = true;
+    updateAutoPlaySetting(useAutoPlay) {
+      this.actionSettings.useAutoPlay = useAutoPlay;
+      localStorage.setItem(
+        'interactive_video_autoplay',
+        useAutoPlay.toString()
+      );
     },
   },
 });
