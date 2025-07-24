@@ -84,6 +84,16 @@
 
   const emit = defineEmits(['quick-check-complete']);
 
+  /**
+   * Props for the component
+   */
+  const props = defineProps({
+    preventInitialization: {
+      type: Boolean,
+      default: false,
+    },
+  });
+
   const actionStore = useActionStore();
   const dlStore = useDLStore();
   const store = mainStore();
@@ -200,6 +210,12 @@
    * Emits quick check complete event
    */
   const handleComplete = () => {
+    document.dispatchEvent(
+      new CustomEvent(
+        'progressBarElementEnabled',
+        { detail: { elementIndex: actionStore.currentActionIndex }}
+      )
+    );
     emit('quick-check-complete');
   };
 
@@ -207,7 +223,7 @@
    * Watches for action changes and initializes quick check
    */
   watch(() => actionStore.currentAction, (newAction) => {
-    if (newAction?.type === 'quick_check') {
+    if (newAction?.type === 'quick_check' && !props.preventInitialization) {
       pauseVideoIfPlaying();
       initializeDLForQuickCheck();
     }

@@ -3,15 +3,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { setActivePinia, createPinia } from 'pinia';
-import PlayerScreen from './PlayerScreen.vue';
 
 vi.mock('../stores/main_store', () => ({
   mainStore: () => ({
     activityInfo: {
-      topic: 'Test Topic',
-      sub_topic: 'Test Sub Topic',
-      title: 'Test Title',
-      dl: 'Test Direction Line',
       quick_checks: [
         {
           type: 'multiple_choice',
@@ -22,15 +17,6 @@ vi.mock('../stores/main_store', () => ({
           },
         },
       ],
-      reference: [],
-      diagnostic: {
-        dl: '',
-        failure_message: '',
-        items: [],
-        language: '',
-        number_of_questions: '',
-        threshold: '',
-      },
     },
     sequencer: {
       goToScreen: vi.fn(),
@@ -40,14 +26,6 @@ vi.mock('../stores/main_store', () => ({
 
 vi.mock('../stores/action_store', () => ({
   useActionStore: () => ({
-    currentActionIndex: 0,
-    actions: [
-      {
-        type: 'video',
-        data: { video_path: 'test-video.mp4' },
-        index: 0,
-      },
-    ],
     currentActionIsVideo: true,
     currentActionIsQuickCheck: false,
     isAtLastAction: false,
@@ -58,7 +36,6 @@ vi.mock('../stores/action_store', () => ({
 
 vi.mock('../stores/quick_check_store', () => ({
   useQuickCheckStore: () => ({
-    quickChecks: [],
     updateQuickCheckState: vi.fn(),
   }),
 }));
@@ -86,9 +63,8 @@ vi.mock('../components/DirectionLine.vue', () => ({
   },
 }));
 
-/**
- * @description Test suite for PlayerScreen component
- */
+import PlayerScreen from './PlayerScreen.vue';
+
 describe('PlayerScreen', () => {
   beforeEach(() => {
     setActivePinia(createPinia());
@@ -99,10 +75,7 @@ describe('PlayerScreen', () => {
     vi.restoreAllMocks();
   });
 
-  /**
-   * @description Tests component rendering
-   */
-  describe('rendering', () => {
+  describe('component rendering', () => {
     it('displays the main player screen container', () => {
       const wrapper = mount(PlayerScreen);
 
@@ -111,19 +84,6 @@ describe('PlayerScreen', () => {
       expect(container.exists()).toBe(true);
     });
 
-    it('displays VideoPlayer component when current action is video', () => {
-      const wrapper = mount(PlayerScreen);
-
-      const videoPlayer = wrapper.findComponent({ name: 'VideoPlayer' });
-
-      expect(videoPlayer.exists()).toBe(true);
-    });
-  });
-
-  /**
-   * @description Tests component visibility logic
-   */
-  describe('visibility logic', () => {
     it('shows VideoPlayer when current action is video', () => {
       const wrapper = mount(PlayerScreen);
 
@@ -141,21 +101,23 @@ describe('PlayerScreen', () => {
     });
   });
 
-  /**
-   * @description Tests component initialization
-   */
-  describe('initialization', () => {
+  describe('initialization behavior', () => {
     it('initializes with default store values', () => {
       const wrapper = mount(PlayerScreen);
 
       expect(wrapper.exists()).toBe(true);
     });
+
+    it('skips initialization when preventInitialization prop is true', () => {
+      const wrapper = mount(PlayerScreen, {
+        props: { preventInitialization: true },
+      });
+
+      expect(wrapper.exists()).toBe(true);
+    });
   });
 
-  /**
-   * @description Tests video completion handling
-   */
-  describe('video completion', () => {
+  describe('video completion handling', () => {
     it('emits video-ended event when video player emits', async () => {
       const wrapper = mount(PlayerScreen);
 
@@ -167,10 +129,7 @@ describe('PlayerScreen', () => {
     });
   });
 
-  /**
-   * @description Tests quick check completion handling
-   */
-  describe('quick check completion', () => {
+  describe('quick check completion handling', () => {
     it('handles quick check component when present', () => {
       const wrapper = mount(PlayerScreen);
 
@@ -179,4 +138,23 @@ describe('PlayerScreen', () => {
       expect(quickCheck.exists()).toBe(false);
     });
   });
+
+  describe('component visibility logic', () => {
+    it('shows VideoPlayer when current action is video', () => {
+      const wrapper = mount(PlayerScreen);
+
+      const videoPlayer = wrapper.findComponent({ name: 'VideoPlayer' });
+
+      expect(videoPlayer.isVisible()).toBe(true);
+    });
+
+    it('hides QuickCheck when current action is not quick check', () => {
+      const wrapper = mount(PlayerScreen);
+
+      const quickCheck = wrapper.findComponent({ name: 'QuickCheck' });
+
+      expect(quickCheck.exists()).toBe(false);
+    });
+  });
 });
+

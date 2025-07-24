@@ -8,6 +8,7 @@ import QuickCheck from './QuickCheck.vue';
 vi.mock('../stores/action_store', () => ({
   useActionStore: vi.fn(() => ({
     currentAction: null,
+    currentActionIndex: 0,
   })),
 }));
 
@@ -78,9 +79,6 @@ vi.mock('./DirectionLine.vue', () => ({
   },
 }));
 
-/**
- * @description Test suite for QuickCheck component
- */
 describe('QuickCheck', () => {
   /** @type {import('pinia').Pinia} */
   let pinia;
@@ -104,22 +102,8 @@ describe('QuickCheck', () => {
     vi.restoreAllMocks();
   });
 
-  /**
-   * @description Tests component rendering
-   */
   describe('rendering', () => {
-    it('renders the quick check container', () => {
-      const wrapper = mount(QuickCheck, {
-        global: {
-          plugins: [pinia],
-        },
-      });
-
-      expect(wrapper.text()).toContain('Quick Check');
-      expect(wrapper.exists()).toBe(true);
-    });
-
-    it('displays the quick check title', () => {
+    it('displays quick check title', () => {
       const wrapper = mount(QuickCheck, {
         global: {
           plugins: [pinia],
@@ -129,7 +113,7 @@ describe('QuickCheck', () => {
       expect(wrapper.text()).toContain('Quick Check');
     });
 
-    it('renders the complete button when action data is available', () => {
+    it('shows complete button when action data is available', () => {
       useActionStore.mockReturnValue({
         currentAction: {
           type: 'quick_check',
@@ -138,6 +122,7 @@ describe('QuickCheck', () => {
             quick_check_content: {},
           },
         },
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -147,13 +132,15 @@ describe('QuickCheck', () => {
       });
 
       const completeButton = wrapper.find('button');
+
       expect(completeButton.exists()).toBe(true);
       expect(completeButton.text()).toBe('Complete');
     });
 
-    it('does not render the complete button when no action data is available', () => {
+    it('hides complete button when no action data is available', () => {
       useActionStore.mockReturnValue({
         currentAction: null,
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -163,15 +150,13 @@ describe('QuickCheck', () => {
       });
 
       const completeButton = wrapper.find('button');
+
       expect(completeButton.exists()).toBe(false);
     });
   });
 
-  /**
-   * @description Tests question type rendering
-   */
   describe('question type rendering', () => {
-    it('renders multiple choice question when type is multiple_choice', () => {
+    it('renders multiple choice question', () => {
       useActionStore.mockReturnValue({
         currentAction: {
           type: 'quick_check',
@@ -180,6 +165,7 @@ describe('QuickCheck', () => {
             quick_check_content: {},
           },
         },
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -191,7 +177,7 @@ describe('QuickCheck', () => {
       expect(wrapper.find('.multiple-choice-question').exists()).toBe(true);
     });
 
-    it('renders fill in the blanks question when type is fill_in_the_blanks', () => {
+    it('renders fill in the blanks question', () => {
       useActionStore.mockReturnValue({
         currentAction: {
           type: 'quick_check',
@@ -200,6 +186,7 @@ describe('QuickCheck', () => {
             quick_check_content: {},
           },
         },
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -211,7 +198,7 @@ describe('QuickCheck', () => {
       expect(wrapper.find('.fill-in-the-blanks-question').exists()).toBe(true);
     });
 
-    it('renders pronunciation question when type is pronunciation', () => {
+    it('renders pronunciation question', () => {
       useActionStore.mockReturnValue({
         currentAction: {
           type: 'quick_check',
@@ -220,6 +207,7 @@ describe('QuickCheck', () => {
             quick_check_content: {},
           },
         },
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -231,7 +219,7 @@ describe('QuickCheck', () => {
       expect(wrapper.find('.pronunciation-question').exists()).toBe(true);
     });
 
-    it('renders drag and drop question when type is quick_check_drag_and_drop', () => {
+    it('renders drag and drop question', () => {
       useActionStore.mockReturnValue({
         currentAction: {
           type: 'quick_check',
@@ -240,6 +228,7 @@ describe('QuickCheck', () => {
             quick_check_content: {},
           },
         },
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -252,11 +241,8 @@ describe('QuickCheck', () => {
     });
   });
 
-  /**
-   * @description Tests direction line rendering
-   */
   describe('direction line rendering', () => {
-    it('renders direction line when hasDL is true', () => {
+    it('shows direction line when hasDL is true', () => {
       useDLStore.mockReturnValue({
         hasDL: true,
         currentDLText: 'Test direction line',
@@ -275,7 +261,7 @@ describe('QuickCheck', () => {
       expect(wrapper.find('.direction-line').exists()).toBe(true);
     });
 
-    it('does not render direction line when hasDL is false', () => {
+    it('hides direction line when hasDL is false', () => {
       useDLStore.mockReturnValue({
         hasDL: false,
         currentDLText: '',
@@ -295,9 +281,6 @@ describe('QuickCheck', () => {
     });
   });
 
-  /**
-   * @description Tests user interactions
-   */
   describe('user interactions', () => {
     it('emits quick-check-complete when complete button is clicked', async () => {
       useActionStore.mockReturnValue({
@@ -308,6 +291,7 @@ describe('QuickCheck', () => {
             quick_check_content: {},
           },
         },
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -331,6 +315,7 @@ describe('QuickCheck', () => {
             quick_check_content: {},
           },
         },
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -360,6 +345,7 @@ describe('QuickCheck', () => {
             quick_check_content: {},
           },
         },
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -368,7 +354,9 @@ describe('QuickCheck', () => {
         },
       });
 
-      const fillInTheBlanksQuestion = wrapper.findComponent({ name: 'FillInTheBlanksQuestion' });
+      const fillInTheBlanksQuestion = wrapper.findComponent({
+        name: 'FillInTheBlanksQuestion',
+      });
       fillInTheBlanksQuestion.vm.$emit('answer-submitted', ['answer1', 'answer2']);
 
       expect(wrapper.emitted('quick-check-complete')).toBeTruthy();
@@ -383,6 +371,7 @@ describe('QuickCheck', () => {
             quick_check_content: {},
           },
         },
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -412,6 +401,7 @@ describe('QuickCheck', () => {
             quick_check_content: {},
           },
         },
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -420,16 +410,15 @@ describe('QuickCheck', () => {
         },
       });
 
-      const dragAndDropQuestion = wrapper.findComponent({ name: 'DragAndDropQuestion' });
+      const dragAndDropQuestion = wrapper.findComponent({
+        name: 'DragAndDropQuestion',
+      });
       dragAndDropQuestion.vm.$emit('answer-submitted', ['word1', 'word2']);
 
       expect(wrapper.emitted('quick-check-complete')).toBeTruthy();
     });
   });
 
-  /**
-   * @description Tests component lifecycle
-   */
   describe('component lifecycle', () => {
     it('sets up event listeners on mount', async () => {
       const { eventDispatcher } = await import('../lib/event_dispatcher.js');
@@ -440,8 +429,10 @@ describe('QuickCheck', () => {
         },
       });
 
-      expect(eventDispatcher.on).toHaveBeenCalledWith('dl:completed', expect.any(Function));
-      expect(eventDispatcher.on).toHaveBeenCalledWith('dl:started', expect.any(Function));
+      expect(eventDispatcher.on).toHaveBeenCalledWith('dl:completed',
+        expect.any(Function));
+      expect(eventDispatcher.on).toHaveBeenCalledWith('dl:started',
+        expect.any(Function));
     });
 
     it('cleans up event listeners on unmount', async () => {
@@ -455,18 +446,18 @@ describe('QuickCheck', () => {
 
       await wrapper.unmount();
 
-      expect(eventDispatcher.off).toHaveBeenCalledWith('dl:completed', expect.any(Function));
-      expect(eventDispatcher.off).toHaveBeenCalledWith('dl:started', expect.any(Function));
+      expect(eventDispatcher.off).toHaveBeenCalledWith('dl:completed',
+        expect.any(Function));
+      expect(eventDispatcher.off).toHaveBeenCalledWith('dl:started',
+        expect.any(Function));
     });
   });
 
-  /**
-   * @description Tests edge cases
-   */
   describe('edge cases', () => {
-    it('handles null currentAction gracefully', () => {
+    it('handles null currentAction gracefully - multiple choice', () => {
       useActionStore.mockReturnValue({
         currentAction: null,
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -476,17 +467,60 @@ describe('QuickCheck', () => {
       });
 
       expect(wrapper.find('.multiple-choice-question').exists()).toBe(false);
+    });
+
+    it('handles null currentAction gracefully - fill in the blanks', () => {
+      useActionStore.mockReturnValue({
+        currentAction: null,
+        currentActionIndex: 0,
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
       expect(wrapper.find('.fill-in-the-blanks-question').exists()).toBe(false);
+    });
+
+    it('handles null currentAction gracefully - pronunciation', () => {
+      useActionStore.mockReturnValue({
+        currentAction: null,
+        currentActionIndex: 0,
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
       expect(wrapper.find('.pronunciation-question').exists()).toBe(false);
+    });
+
+    it('handles null currentAction gracefully - drag and drop', () => {
+      useActionStore.mockReturnValue({
+        currentAction: null,
+        currentActionIndex: 0,
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
       expect(wrapper.find('.drag-and-drop-question').exists()).toBe(false);
     });
 
-    it('handles non-quick_check action type gracefully', () => {
+    it('handles non-quick_check action type gracefully - multiple choice', () => {
       useActionStore.mockReturnValue({
         currentAction: {
           type: 'video',
           data: {},
         },
+        currentActionIndex: 0,
       });
 
       const wrapper = mount(QuickCheck, {
@@ -496,8 +530,59 @@ describe('QuickCheck', () => {
       });
 
       expect(wrapper.find('.multiple-choice-question').exists()).toBe(false);
+    });
+
+    it('handles non-quick_check action type gracefully - fill in the blanks', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'video',
+          data: {},
+        },
+        currentActionIndex: 0,
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
       expect(wrapper.find('.fill-in-the-blanks-question').exists()).toBe(false);
+    });
+
+    it('handles non-quick_check action type gracefully - pronunciation', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'video',
+          data: {},
+        },
+        currentActionIndex: 0,
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
       expect(wrapper.find('.pronunciation-question').exists()).toBe(false);
+    });
+
+    it('handles non-quick_check action type gracefully - drag and drop', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'video',
+          data: {},
+        },
+        currentActionIndex: 0,
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
       expect(wrapper.find('.drag-and-drop-question').exists()).toBe(false);
     });
   });

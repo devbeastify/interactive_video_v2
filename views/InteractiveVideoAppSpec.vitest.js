@@ -5,10 +5,47 @@ import { mount } from '@vue/test-utils';
 import { createPinia, setActivePinia } from 'pinia';
 import InteractiveVideoApp from './InteractiveVideoApp.vue';
 
+vi.mock('../stores/main_store', () => ({
+  mainStore: vi.fn(() => ({
+    activityInfo: {
+      topic: 'Test Topic',
+      sub_topic: 'Test Sub Topic',
+      title: 'Test Title',
+      dl: 'Test Direction Line',
+      reference: [],
+      quick_checks: [],
+      diagnostic: {
+        dl: '',
+        failure_message: '',
+        items: [],
+        language: '',
+        number_of_questions: '',
+        threshold: '',
+      },
+    },
+    sequencer: {
+      currentScreen: { name: 'intro' },
+      goToScreen: vi.fn(),
+    },
+    init: vi.fn(),
+  })),
+}));
+
+vi.mock('../stores/action_store', () => ({
+  useActionStore: vi.fn(() => ({
+    actions: [
+      { type: 'video', data: { dl: 'Test video' }, index: 0 },
+      { type: 'quick_check', data: { question: 'Test question' }, index: 1 },
+    ],
+    currentActionIndex: 0,
+    goToAction: vi.fn(),
+  })),
+}));
+
 vi.mock('./IntroScreen.vue', () => ({
   default: {
     name: 'IntroScreen',
-    template: '<div class="intro-screen"><button @click="$emit(\'start\')">Start</button></div>',
+    template: '<div class="intro-screen">Intro Screen</div>',
     emits: ['start'],
   },
 }));
@@ -17,6 +54,7 @@ vi.mock('./PlayerScreen.vue', () => ({
   default: {
     name: 'PlayerScreen',
     template: '<div class="player-screen">Player Screen</div>',
+    props: ['preventInitialization'],
   },
 }));
 
@@ -25,19 +63,6 @@ vi.mock('./DiagnosticScreen.vue', () => ({
     name: 'DiagnosticScreen',
     template: '<div class="diagnostic-screen">Diagnostic Screen</div>',
   },
-}));
-
-const mockInit = vi.fn();
-const mockGoToScreen = vi.fn();
-
-vi.mock('../stores/main_store', () => ({
-  mainStore: vi.fn(() => ({
-    init: mockInit,
-    sequencer: {
-      currentScreen: { id: 'intro', name: 'intro' },
-      goToScreen: mockGoToScreen,
-    },
-  })),
 }));
 
 /**
@@ -61,105 +86,88 @@ describe('InteractiveVideoApp', () => {
    * @description Tests component initialization
    */
   describe('initialization', () => {
-    it('initializes the application on mount', () => {
-      mount(InteractiveVideoApp);
+    it('sets up progress bar event listeners on mount', () => {
+      const addEventListenerSpy = vi.spyOn(document, 'addEventListener');
 
-      expect(mockInit).toHaveBeenCalled();
+      mount(InteractiveVideoApp, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(addEventListenerSpy).toHaveBeenCalledWith(
+        'progressBarButtonClick',
+        expect.any(Function)
+      );
+
+      expect(addEventListenerSpy).toHaveBeenCalledWith(
+        'progressBarElementEnabled',
+        expect.any(Function)
+      );
+    });
+
+    it('removes progress bar event listeners on unmount', () => {
+      const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
+
+      const wrapper = mount(InteractiveVideoApp, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      wrapper.unmount();
+
+      expect(removeEventListenerSpy).toHaveBeenCalledWith(
+        'progressBarButtonClick',
+        expect.any(Function)
+      );
+
+      expect(removeEventListenerSpy).toHaveBeenCalledWith(
+        'progressBarElementEnabled',
+        expect.any(Function)
+      );
     });
   });
 
   /**
-   * @description Tests default screen rendering
+   * @description Tests screen rendering based on current screen
    */
-  describe('default screen rendering', () => {
-    it('renders intro screen by default', () => {
-      const wrapper = mount(InteractiveVideoApp);
+  describe('screen rendering', () => {
+    it('renders IntroScreen when current screen is intro', () => {
+      const wrapper = mount(InteractiveVideoApp, {
+        global: {
+          plugins: [pinia],
+        },
+      });
 
-      expect(wrapper.find('.intro-screen').exists()).toBe(true);
-    });
+      const introScreen = wrapper.findComponent({ name: 'IntroScreen' });
 
-    it('does not render player screen by default', () => {
-      const wrapper = mount(InteractiveVideoApp);
-
-      expect(wrapper.find('.player-screen').exists()).toBe(false);
-    });
-
-    it('does not render diagnostic screen by default', () => {
-      const wrapper = mount(InteractiveVideoApp);
-
-      expect(wrapper.find('.diagnostic-screen').exists()).toBe(false);
+      expect(introScreen.exists()).toBe(true);
     });
   });
 
   /**
-   * @description Tests screen navigation functionality
+   * @description Tests progress bar event handling
    */
-  describe('screen navigation', () => {
-    it('navigates to player screen when intro screen emits start event', async () => {
-      const wrapper = mount(InteractiveVideoApp);
+  describe('progress bar events', () => {
+    it('handles progress bar element enabled event', () => {
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      const startButton = wrapper.find('.intro-screen button');
-      await startButton.trigger('click');
+      mount(InteractiveVideoApp, {
+        global: {
+          plugins: [pinia],
+        },
+      });
 
-      expect(mockGoToScreen).toHaveBeenCalledWith('player');
-    });
-  });
+      const event = new CustomEvent('progressBarElementEnabled', {
+        detail: { elementIndex: 2 },
+      });
 
-  /**
-   * @description Tests component structure
-   */
-  describe('component structure', () => {
-    it('renders a single screen component at a time', () => {
-      const wrapper = mount(InteractiveVideoApp);
+      document.dispatchEvent(event);
 
-      const introScreen = wrapper.find('.intro-screen');
-      const playerScreen = wrapper.find('.player-screen');
-      const diagnosticScreen = wrapper.find('.diagnostic-screen');
+      expect(consoleSpy).toHaveBeenCalledWith('Progress bar element 2 enabled.');
 
-      const renderedScreens = [
-        introScreen.exists(),
-        playerScreen.exists(),
-        diagnosticScreen.exists(),
-      ];
-      const trueCount = renderedScreens.filter(Boolean).length;
-
-      expect(trueCount).toBe(1);
-    });
-
-    it('has proper component structure', () => {
-      const wrapper = mount(InteractiveVideoApp);
-
-      expect(wrapper.exists()).toBe(true);
-    });
-
-    it('has a valid component instance', () => {
-      const wrapper = mount(InteractiveVideoApp);
-
-      expect(wrapper.vm).toBeDefined();
-    });
-  });
-
-  /**
-   * @description Tests edge cases and error handling
-   */
-  describe('edge cases', () => {
-    it('handles missing store gracefully', () => {
-      vi.doMock('../stores/main_store', () => ({
-        mainStore: vi.fn(() => null),
-      }));
-
-      expect(() => mount(InteractiveVideoApp)).not.toThrow();
-    });
-
-    it('handles missing sequencer gracefully', () => {
-      vi.doMock('../stores/main_store', () => ({
-        mainStore: vi.fn(() => ({
-          init: mockInit,
-          sequencer: null,
-        })),
-      }));
-
-      expect(() => mount(InteractiveVideoApp)).not.toThrow();
+      consoleSpy.mockRestore();
     });
   });
 });

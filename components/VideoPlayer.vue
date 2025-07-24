@@ -43,6 +43,16 @@
 
   const emit = defineEmits(['video-ended']);
 
+  /**
+   * Props for the component
+   */
+  const props = defineProps({
+    preventInitialization: {
+      type: Boolean,
+      default: false,
+    },
+  });
+
   const store = mainStore();
   const actionStore = useActionStore();
   const activitySettingsStore = useActivitySettingsStore();
@@ -55,6 +65,12 @@
    * Handles video ended event
    */
   const onVideoEnded = () => {
+    document.dispatchEvent(
+      new CustomEvent(
+        'progressBarElementEnabled',
+        { detail: { elementIndex: actionStore.currentActionIndex }}
+      )
+    );
     emit('video-ended');
   };
 
@@ -296,9 +312,11 @@
   watch(() => activitySettingsStore.useAutoPlay, handleAutoPlayChange);
 
   onMounted(() => {
-    initializeVideoPlayer();
-    initializeVideoSystem();
-    setUpEventListeners();
+    if (!props.preventInitialization) {
+      initializeVideoPlayer();
+      initializeVideoSystem();
+      setUpEventListeners();
+    }
   });
 
   onUnmounted(() => {

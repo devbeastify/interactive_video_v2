@@ -1,77 +1,17 @@
-<%= render 'maestro_activity_engine/activities/progress_bar' %>
 <% content_for(:js_head, vite_javascript_tag('interactive_video_v2')) %>
+<%# Progress bar for interactive video v2 %>
+<%= render 'maestro_activity_engine/activities/progress_bar', elements: content_object.progress_bar_elements %>
 
-<% content_for(:css_head, stylesheet_link_tag('maestro_activity_engine/interactive_video/main')) %>
-<% content_for(:js_head, javascript_include_tag('maestro_activity_engine/web_components/vhl_thumbs_feedback')) %>
-<% content_for(:js_head, javascript_include_tag('maestro_activity_engine/interactive_video/bootstrap')) %>
-
-<% video_settings = @video_settings || MaestroActivityEngine::VideoSettings.new %>
-<input type="hidden" id="enableClosedCaptions" value="<%= video_settings.closed_captions? %>" />
-<input type="hidden" id="allowForeign" value="<%= video_settings.allow_foreign_subtitles? %>" />
-<input type="hidden" id="allowEnglish" value="<%= video_settings.allow_english_subtitles? %>" />
-
-<div id="interactive_video_v2" class="ns-music-v1"></div>
+<div id="interactive_video_v2" class="ns-music-v1" data-activity="<%= content_object.serialize.to_json %>"></div>
+<%# Video templates for each video segment %>
+<% content_object.mixed_entries.each_with_index do |entry, index| %>
+  <% if entry.is_a?(MaestroActivityEngine::ActivityContent::Reference::Video) %>
+    <template class="js-interactive-video-v2-segment-<%= index + 1 %>-video">
+      <%= format_reference(entry) %>
+    </template>
+  <% end %>
+<% end %>
 
 <div class="u-hidden js-action-data js-program-tutorial" data-action="tutorial">
   [ <%= content_object.serialize %> ]
-</div>
-
-<%= render 'maestro_activity_engine/activities/interactive_video/tutorial/finished' %>
-
-<% if content_object.diagnostic.present? %>
-  <div class="u-hidden js-action-data" data-action="diagnostic">
-    [ <%= content_object.serialize %> ]
-  </div>
-  <%= render 'maestro_activity_engine/activities/interactive_video/diagnostic/intro' %>
-  <%= render('maestro_activity_engine/activities/interactive_video/diagnostic/preview', content_object: content_object.diagnostic) %>
-  <%= render 'maestro_activity_engine/activities/interactive_video/diagnostic/review_donut' %>
-<% end %>
-
-<div class="ns-music-v1 ns-interactive-video">
-  <div class="js-jr-program u-hidden" data-program="<%= supersite_junior? %>"></div>
-  <div class="js-interactive-video-activity">
-    <section class="c-tutorial-action flex-justify-str">
-      <div class="l-line l-line--wrap c-tutorial-action__toolbar">
-        <div class="l-line__splitter">
-          <%
-            if content_object.diagnostic.present?
-              @diagnostic = {
-                name: 'diagnostic',
-                label: 'Diagnostic',
-                state: 'disabled'
-              }
-            end
-            @intranav_config = {
-              icon_path: 'maestro_activity_engine/features/interactive_video/icons',
-              items: {
-                interactive_video: {
-                  name: 'interactive-video',
-                  label: 'Video',
-                  state: 'current'
-                },
-                diagnostic: @diagnostic ? @diagnostic : {}
-              }
-            }
-          %>
-          <%= render('maestro_activity_engine/activities/partials/intranav_shared/intranav', intranav_config: @intranav_config) %>
-        </div>
-      </div>
-    </section>
-
-    <div class="l-stack l-stack--md u-txt-ctr">
-      <div class="js-interactive-video-main"></div>
-
-      <div class="u-hidden js-tutorial-main">
-        <input
-          type="hidden"
-          class="js-foreign-subtitles-lang"
-          value="<%= MaestroActivityEngine::Languages.language_code(content_object.language) %>" />
-        <div class="c-interactive-video">
-          <div class="c-interactive-video__video">
-              <div class="js-tutorial-container"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 </div>

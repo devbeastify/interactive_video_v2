@@ -2,9 +2,11 @@
   <div class="player-screen">
     <VideoPlayer
       v-show="stores.action.currentActionIsVideo"
+      :preventInitialization="preventInitialization"
       @video-ended="handleVideoEnded" />
     <QuickCheck
       v-if="stores.action.currentActionIsQuickCheck"
+      :preventInitialization="preventInitialization"
       @quick-check-complete="handleQuickCheckComplete" />
     <DirectionLine />
   </div>
@@ -19,6 +21,16 @@
   import { mainStore } from '../stores/main_store';
   import VideoPlayer from '../components/VideoPlayer.vue';
   import QuickCheck from '../components/QuickCheck.vue';
+
+  /**
+   * Props for the component
+   */
+  const props = defineProps({
+    preventInitialization: {
+      type: Boolean,
+      default: false,
+    },
+  });
 
   /**
    * @typedef {Object} StoreInstances
@@ -86,9 +98,10 @@
    * @return {void}
    */
   onMounted(() => {
-    stores.action.reset();
-
-    initializeQuickCheckState();
+    if (!props.preventInitialization) {
+      stores.action.reset();
+      initializeQuickCheckState();
+    }
   });
 </script>
 
