@@ -1,10 +1,10 @@
 <template>
   <div :class="$style['video-player']">
-    <DirectionLine 
+    <DirectionLine
       v-if="dlStore.hasDL"
-      :dl-text="dlStore.currentDLText"
-      :is-playing="dlStore.isPlaying" />
-    
+      :dlText="dlStore.currentDLText"
+      :isPlaying="dlStore.isPlaying" />
+
     <div :class="$style['c-interactive-video']">
       <div :class="$style['c-interactive-video-video']">
         <div ref="videoContainer" class="js-tutorial-container" />
@@ -28,279 +28,288 @@
 <script setup>
 // @ts-check
 
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
-import { mainStore } from '../stores/main_store';
-import { useActionStore } from '../stores/action_store';
-import { useActivitySettingsStore } from '../stores/activity_settings_store';
-import { useDLStore } from '../stores/direction_line_store';
-import { useVideoPlayer } from '../composables/use_video_player';
-import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher';
-import DirectionLine from './DirectionLine.vue';
+  import { ref, onMounted, onUnmounted, watch, computed } from 'vue';
+  import { mainStore } from '../stores/main_store';
+  import { useActionStore } from '../stores/action_store';
+  import { useActivitySettingsStore } from '../stores/activity_settings_store';
+  import { useDLStore } from '../stores/direction_line_store';
+  import { useVideoPlayer } from '../composables/use_video_player';
+  import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher.js';
+  import DirectionLine from './DirectionLine.vue';
 
-/**
- * @typedef {import('../composables/use_video_player').VideoPlayerAPI} VideoPlayerAPI
- */
+  /**
+   * @typedef {import('../composables/use_video_player').VideoPlayerAPI} VideoPlayerAPI
+   */
 
-const emit = defineEmits(['video-ended']);
+  const emit = defineEmits(['video-ended']);
 
-const store = mainStore();
-const actionStore = useActionStore();
-const activitySettingsStore = useActivitySettingsStore();
-const dlStore = useDLStore();
+  const store = mainStore();
+  const actionStore = useActionStore();
+  const activitySettingsStore = useActivitySettingsStore();
+  const dlStore = useDLStore();
 
-const videoContainer = ref(null);
-const showControls = ref(true);
+  const videoContainer = ref(null);
+  const showControls = ref(true);
 
-/**
- * Handles video ended event
- */
-const onVideoEnded = () => {
-  emit('video-ended');
-};
+  /**
+   * Handles video ended event
+   */
+  const onVideoEnded = () => {
+    emit('video-ended');
+  };
 
-const {
-  videoPlayer,
-  isPlaying,
-  initializeVideoPlayer,
-  cleanupVideoPlayer,
-} = useVideoPlayer(videoContainer, onVideoEnded);
+  const {
+    videoPlayer,
+    isPlaying,
+    initializeVideoPlayer,
+    cleanupVideoPlayer,
+  } = useVideoPlayer(videoContainer, onVideoEnded);
 
-const shouldAutoPlay = computed(() => activitySettingsStore.useAutoPlay);
-const isVideoAction = computed(() => 
-  /** @type {import('../stores/action_store').Action} */ 
-  (actionStore.currentAction)?.type === 'video'
-);
+  const shouldAutoPlay = computed(() => activitySettingsStore.useAutoPlay);
+  const isVideoAction = computed(() =>
+    /** @type {import('../stores/action_store').Action} */
+    (actionStore.currentAction)?.type === 'video'
+  );
 
-/**
- * Checks if video can be controlled
- * @return {boolean} Whether video controls are available
- */
-const canControlVideo = () => {
-  if (!videoPlayer.value) return false;
-  if (dlStore.isPlaying) return false;
-  return true;
-};
+  /**
+   * Checks if video can be controlled
+   * @return {boolean} Whether video controls are available
+   */
+  const canControlVideo = () => {
+    if (!videoPlayer.value) return false;
+    if (dlStore.isPlaying) return false;
+    return true;
+  };
 
-/**
- * Plays video using videojs player if available, otherwise falls back to direct play
- * @param {boolean} shouldSetPlayingState - Whether to update the playing state
- */
-const playVideo = (shouldSetPlayingState = true) => {
-  if (!videoPlayer.value) return;
+  /**
+   * Plays video using videojs player if available, otherwise falls back to direct play
+   * @param {boolean} shouldSetPlayingState - Whether to update the playing state
+   */
+  const playVideo = (shouldSetPlayingState = true) => {
+    if (!videoPlayer.value) return;
 
-  if (videoPlayer.value.videojs_player) {
-    videoPlayer.value.videojs_player.play()
-      .then(() => {
+    if (videoPlayer.value.videojs_player) {
+      videoPlayer.value.videojs_player.play()
+        .then(() => {
+          if (shouldSetPlayingState) {
+            isPlaying.value = true;
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to play video:', error);
+        });
+    } else {
+      try {
+        videoPlayer.value.play();
         if (shouldSetPlayingState) {
           isPlaying.value = true;
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('Failed to play video:', error);
-      });
-  } else {
-    try {
-      videoPlayer.value.play();
-      if (shouldSetPlayingState) {
-        isPlaying.value = true;
       }
-    } catch (error) {
-      console.error('Failed to play video:', error);
     }
-  }
-};
+  };
 
-/**
- * Pauses video using videojs player if available, otherwise falls back to direct pause
- * @param {boolean} shouldSetPlayingState - Whether to update the playing state
- */
-const pauseVideo = (shouldSetPlayingState = true) => {
-  if (!videoPlayer.value) return;
+  /**
+   * Pauses video using videojs player if available, otherwise falls back to direct pause
+   * @param {boolean} shouldSetPlayingState - Whether to update the playing state
+   */
+  const pauseVideo = (shouldSetPlayingState = true) => {
+    if (!videoPlayer.value) return;
 
-  if (videoPlayer.value.videojs_player) {
-    videoPlayer.value.videojs_player.pause();
-  } else {
-    videoPlayer.value.pause();
-  }
+    if (videoPlayer.value.videojs_player) {
+      videoPlayer.value.videojs_player.pause();
+    } else {
+      videoPlayer.value.pause();
+    }
 
-  if (shouldSetPlayingState) {
-    isPlaying.value = false;
-  }
-};
+    if (shouldSetPlayingState) {
+      isPlaying.value = false;
+    }
+  };
 
-/**
- * Starts video playback if autoplay is enabled
- */
-const startVideoPlayback = () => {
-  if (videoPlayer.value && shouldAutoPlay.value) {
-    playVideo();
-  }
-};
+  /**
+   * Starts video playback if autoplay is enabled
+   */
+  const startVideoPlayback = () => {
+    if (videoPlayer.value && shouldAutoPlay.value) {
+      playVideo();
+    }
+  };
 
-/**
- * Handles DL completion event
- */
-const handleDLCompleted = () => {
-  if (actionStore.currentActionIsVideo) {
-    startVideoPlayback();
-  }
-};
+  /**
+   * Handles DL completion event
+   */
+  const handleDLCompleted = () => {
+    if (actionStore.currentActionIsVideo) {
+      startVideoPlayback();
+    }
+  };
 
-/**
- * Handles DL start event
- */
-const handleDLStarted = () => {
-  pauseVideo();
-};
-
-/**
- * Sets up event listeners for video and DL events
- */
-const setUpEventListeners = () => {
-  eventDispatcher.on(DL_EVENTS.COMPLETED, handleDLCompleted);
-  eventDispatcher.on(DL_EVENTS.STARTED, handleDLStarted);
-};
-
-/**
- * Cleans up event listeners
- */
-const cleanupEventListeners = () => {
-  eventDispatcher.off(DL_EVENTS.COMPLETED, handleDLCompleted);
-  eventDispatcher.off(DL_EVENTS.STARTED, handleDLStarted);
-};
-
-/**
- * Waits for video element to be ready and starts playback
- */
-const waitForVideoElement = () => {
-  if (videoPlayer.value) {
-    startVideoPlayback();
-  } else {
-    setTimeout(waitForVideoElement, 100);
-  }
-};
-
-/**
- * Starts the playback sequence based on current action and DL availability
- */
-const startPlaybackSequence = () => {
-  if (!actionStore.currentActionIsVideo) return;
-
-  if (dlStore.hasDL) {
+  /**
+   * Handles DL start event
+   */
+  const handleDLStarted = () => {
     pauseVideo();
-    dlStore.playDL();
-  } else {
-    setTimeout(waitForVideoElement, 200);
-  }
-};
+  };
 
-/**
- * Initializes the video system for the current action
- */
-const initializeVideoSystem = () => {
-  if (!isVideoAction.value) return;
-  
-  dlStore.initializeDLForPhase('video', store.activityInfo);
-  startPlaybackSequence();
-};
+  /**
+   * Sets up event listeners for video and DL events
+   */
+  const setUpEventListeners = () => {
+    eventDispatcher.on(DL_EVENTS.COMPLETED, handleDLCompleted);
+    eventDispatcher.on(DL_EVENTS.STARTED, handleDLStarted);
+  };
 
-/**
- * Toggles video play/pause state
- */
-const togglePlayPause = () => {
-  if (!canControlVideo()) return;
+  /**
+   * Cleans up event listeners
+   */
+  const cleanupEventListeners = () => {
+    eventDispatcher.off(DL_EVENTS.COMPLETED, handleDLCompleted);
+    eventDispatcher.off(DL_EVENTS.STARTED, handleDLStarted);
+  };
 
-  if (isPlaying.value) {
-    pauseVideo();
-  } else {
-    playVideo();
-  }
-};
+  /**
+   * Waits for video element to be ready and starts playback
+   */
+  const waitForVideoElement = () => {
+    if (videoPlayer.value) {
+      startVideoPlayback();
+    } else {
+      setTimeout(waitForVideoElement, 100);
+    }
+  };
 
-/**
- * Restarts video playback
- */
-const restart = () => {
-  if (!canControlVideo()) return;
+  /**
+   * Starts the playback sequence based on current action and DL availability
+   */
+  const startPlaybackSequence = () => {
+    if (!actionStore.currentActionIsVideo) return;
 
-  if (videoPlayer.value.videojs_player) {
-    videoPlayer.value.videojs_player.currentTime(0);
-    videoPlayer.value.videojs_player.play();
-    isPlaying.value = true;
-  } else {
-    videoPlayer.value.destroy();
-    setTimeout(initializeVideoPlayer, 100);
-  }
-};
+    if (dlStore.hasDL) {
+      pauseVideo();
+      dlStore.playDL();
+    } else {
+      setTimeout(waitForVideoElement, 200);
+    }
+  };
 
-/**
- * Navigates back to intro screen
- */
-const goToIntro = () => {
-  store.sequencer.goToScreen('intro');
-};
+  /**
+   * Initializes the video system for the current action
+   */
+  const initializeVideoSystem = () => {
+    if (!isVideoAction.value) return;
 
-/**
- * Handles action changes and reinitializes video system
- */
-const handleActionChange = (newAction) => {
-  if (newAction?.type === 'video') {
-    showControls.value = true;
-    
-    cleanupVideoPlayer();
-    cleanupEventListeners();
-    
-    setTimeout(() => {
-      initializeVideoPlayer();
-      initializeVideoSystem();
-      setUpEventListeners();
-    }, 100);
-  } else if (newAction?.type === 'quick_check') {
-    showControls.value = false;
-  }
-};
+    dlStore.initializeDLForPhase('video', store.activityInfo);
+    startPlaybackSequence();
+  };
 
-/**
- * Handles autoplay setting changes
- */
-const handleAutoPlayChange = (newValue) => {
-  if (!videoPlayer.value) return;
-  
-  if (newValue) {
-    playVideo();
-  } else {
-    pauseVideo();
-  }
-};
+  /**
+   * Toggles video play/pause state
+   */
+  const togglePlayPause = () => {
+    if (!canControlVideo()) return;
 
-/**
- * Handles DL playing state changes
- */
-const handleDLPlayingChange = (isDLPlaying) => {
-  if (isDLPlaying) {
-    pauseVideo(false);
-  }
-};
+    if (isPlaying.value) {
+      pauseVideo();
+    } else {
+      playVideo();
+    }
+  };
 
-watch(() => dlStore.isPlaying, handleDLPlayingChange);
-watch(() => actionStore.currentAction, handleActionChange);
-watch(() => activitySettingsStore.useAutoPlay, handleAutoPlayChange);
+  /**
+   * Restarts video playback
+   */
+  const restart = () => {
+    if (!canControlVideo()) return;
 
-onMounted(() => {
-  initializeVideoPlayer();
-  initializeVideoSystem();
-  setUpEventListeners();
-});
+    if (videoPlayer.value.videojs_player) {
+      videoPlayer.value.videojs_player.currentTime(0);
+      videoPlayer.value.videojs_player.play();
+      isPlaying.value = true;
+    } else {
+      videoPlayer.value.destroy();
+      setTimeout(initializeVideoPlayer, 100);
+    }
+  };
 
-onUnmounted(() => {
-  try {
-    cleanupVideoPlayer();
-    cleanupEventListeners();
-    dlStore.cleanup();
-  } catch (error) {
-    console.warn('Error during component cleanup:', error);
-  }
-});
+  /**
+   * Navigates back to intro screen
+   */
+  const goToIntro = () => {
+    store.sequencer.goToScreen('intro');
+  };
+
+  /**
+   * Handles action changes and reinitializes video system
+   * @param {any} newAction - The new action object
+   */
+  const handleActionChange = (newAction) => {
+    if (newAction?.type === 'video') {
+      showControls.value = true;
+
+      cleanupVideoPlayer();
+      cleanupEventListeners();
+
+      setTimeout(() => {
+        initializeVideoPlayer();
+        initializeVideoSystem();
+        setUpEventListeners();
+      }, 100);
+    } else if (newAction?.type === 'quick_check') {
+      showControls.value = false;
+    }
+  };
+
+  /**
+   * Handles autoplay setting changes
+   * @param {boolean} newValue - The new autoplay value
+   */
+  const handleAutoPlayChange = (newValue) => {
+    if (!videoPlayer.value) return;
+
+    if (dlStore.isPlaying) return;
+
+    if (newValue) {
+      playVideo();
+    } else {
+      pauseVideo();
+    }
+  };
+
+  /**
+   * Handles DL playing state changes
+   * @param {boolean} isDLPlaying - Whether DL is currently playing
+   */
+  const handleDLPlayingChange = (isDLPlaying) => {
+    if (isDLPlaying) {
+      pauseVideo(false);
+    } else {
+      if (shouldAutoPlay.value && actionStore.currentActionIsVideo) {
+        startVideoPlayback();
+      }
+    }
+  };
+
+  watch(() => dlStore.isPlaying, handleDLPlayingChange);
+  watch(() => actionStore.currentAction, handleActionChange);
+  watch(() => activitySettingsStore.useAutoPlay, handleAutoPlayChange);
+
+  onMounted(() => {
+    initializeVideoPlayer();
+    initializeVideoSystem();
+    setUpEventListeners();
+  });
+
+  onUnmounted(() => {
+    try {
+      cleanupVideoPlayer();
+      cleanupEventListeners();
+      dlStore.cleanup();
+    } catch (error) {
+      console.warn('Error during component cleanup:', error);
+    }
+  });
 </script>
 
 <style lang="scss" module>
@@ -352,4 +361,4 @@ onUnmounted(() => {
     background: #0056b3;
   }
 }
-</style> 
+</style>

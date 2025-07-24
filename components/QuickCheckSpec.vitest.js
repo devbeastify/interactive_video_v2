@@ -1,0 +1,504 @@
+// @ts-check
+
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { mount } from '@vue/test-utils';
+import { createPinia, setActivePinia } from 'pinia';
+import QuickCheck from './QuickCheck.vue';
+
+vi.mock('../stores/action_store', () => ({
+  useActionStore: vi.fn(() => ({
+    currentAction: null,
+  })),
+}));
+
+vi.mock('../stores/direction_line_store', () => ({
+  useDLStore: vi.fn(() => ({
+    hasDL: false,
+    currentDLText: '',
+    isPlaying: false,
+    initializeDLForPhase: vi.fn(),
+    playDL: vi.fn(),
+    cleanup: vi.fn(),
+  })),
+}));
+
+vi.mock('../stores/main_store', () => ({
+  mainStore: vi.fn(() => ({
+    activityInfo: {},
+  })),
+}));
+
+vi.mock('../lib/event_dispatcher.js', () => ({
+  eventDispatcher: {
+    on: vi.fn(),
+    off: vi.fn(),
+  },
+  DL_EVENTS: {
+    COMPLETED: 'dl:completed',
+    STARTED: 'dl:started',
+  },
+}));
+
+vi.mock('./questions/MultipleChoiceQuestion.vue', () => ({
+  default: {
+    name: 'MultipleChoiceQuestion',
+    template: '<div class="multiple-choice-question">Multiple Choice</div>',
+    emits: ['answer-selected'],
+  },
+}));
+
+vi.mock('./questions/FillInTheBlanksQuestion.vue', () => ({
+  default: {
+    name: 'FillInTheBlanksQuestion',
+    template: '<div class="fill-in-the-blanks-question">Fill in the Blanks</div>',
+    emits: ['answer-submitted'],
+  },
+}));
+
+vi.mock('./questions/PronunciationQuestion.vue', () => ({
+  default: {
+    name: 'PronunciationQuestion',
+    template: '<div class="pronunciation-question">Pronunciation</div>',
+    emits: ['pronunciation-complete'],
+  },
+}));
+
+vi.mock('./questions/DragAndDropQuestion.vue', () => ({
+  default: {
+    name: 'DragAndDropQuestion',
+    template: '<div class="drag-and-drop-question">Drag and Drop</div>',
+    emits: ['answer-submitted'],
+  },
+}));
+
+vi.mock('./DirectionLine.vue', () => ({
+  default: {
+    name: 'DirectionLine',
+    template: '<div class="direction-line">Direction Line</div>',
+  },
+}));
+
+/**
+ * @description Test suite for QuickCheck component
+ */
+describe('QuickCheck', () => {
+  /** @type {import('pinia').Pinia} */
+  let pinia;
+  /** @type {any} */
+  let useActionStore;
+  /** @type {any} */
+  let useDLStore;
+
+  beforeEach(async () => {
+    pinia = createPinia();
+    setActivePinia(pinia);
+    vi.clearAllMocks();
+
+    const actionStoreModule = await import('../stores/action_store');
+    const dlStoreModule = await import('../stores/direction_line_store');
+    useActionStore = actionStoreModule.useActionStore;
+    useDLStore = dlStoreModule.useDLStore;
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  /**
+   * @description Tests component rendering
+   */
+  describe('rendering', () => {
+    it('renders the quick check container', () => {
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(wrapper.text()).toContain('Quick Check');
+      expect(wrapper.exists()).toBe(true);
+    });
+
+    it('displays the quick check title', () => {
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(wrapper.text()).toContain('Quick Check');
+    });
+
+    it('renders the complete button when action data is available', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'quick_check',
+          data: {
+            type: 'multiple_choice',
+            quick_check_content: {},
+          },
+        },
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      const completeButton = wrapper.find('button');
+      expect(completeButton.exists()).toBe(true);
+      expect(completeButton.text()).toBe('Complete');
+    });
+
+    it('does not render the complete button when no action data is available', () => {
+      useActionStore.mockReturnValue({
+        currentAction: null,
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      const completeButton = wrapper.find('button');
+      expect(completeButton.exists()).toBe(false);
+    });
+  });
+
+  /**
+   * @description Tests question type rendering
+   */
+  describe('question type rendering', () => {
+    it('renders multiple choice question when type is multiple_choice', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'quick_check',
+          data: {
+            type: 'multiple_choice',
+            quick_check_content: {},
+          },
+        },
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(wrapper.find('.multiple-choice-question').exists()).toBe(true);
+    });
+
+    it('renders fill in the blanks question when type is fill_in_the_blanks', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'quick_check',
+          data: {
+            type: 'fill_in_the_blanks',
+            quick_check_content: {},
+          },
+        },
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(wrapper.find('.fill-in-the-blanks-question').exists()).toBe(true);
+    });
+
+    it('renders pronunciation question when type is pronunciation', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'quick_check',
+          data: {
+            type: 'pronunciation',
+            quick_check_content: {},
+          },
+        },
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(wrapper.find('.pronunciation-question').exists()).toBe(true);
+    });
+
+    it('renders drag and drop question when type is quick_check_drag_and_drop', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'quick_check',
+          data: {
+            type: 'quick_check_drag_and_drop',
+            quick_check_content: {},
+          },
+        },
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(wrapper.find('.drag-and-drop-question').exists()).toBe(true);
+    });
+  });
+
+  /**
+   * @description Tests direction line rendering
+   */
+  describe('direction line rendering', () => {
+    it('renders direction line when hasDL is true', () => {
+      useDLStore.mockReturnValue({
+        hasDL: true,
+        currentDLText: 'Test direction line',
+        isPlaying: false,
+        initializeDLForPhase: vi.fn(),
+        playDL: vi.fn(),
+        cleanup: vi.fn(),
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(wrapper.find('.direction-line').exists()).toBe(true);
+    });
+
+    it('does not render direction line when hasDL is false', () => {
+      useDLStore.mockReturnValue({
+        hasDL: false,
+        currentDLText: '',
+        isPlaying: false,
+        initializeDLForPhase: vi.fn(),
+        playDL: vi.fn(),
+        cleanup: vi.fn(),
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(wrapper.find('.direction-line').exists()).toBe(false);
+    });
+  });
+
+  /**
+   * @description Tests user interactions
+   */
+  describe('user interactions', () => {
+    it('emits quick-check-complete when complete button is clicked', async () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'quick_check',
+          data: {
+            type: 'multiple_choice',
+            quick_check_content: {},
+          },
+        },
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      const completeButton = wrapper.find('button');
+      await completeButton.trigger('click');
+
+      expect(wrapper.emitted('quick-check-complete')).toBeTruthy();
+    });
+
+    it('emits quick-check-complete when multiple choice answer is selected', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'quick_check',
+          data: {
+            type: 'multiple_choice',
+            quick_check_content: {},
+          },
+        },
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      const multipleChoiceQuestion = wrapper.findComponent({
+        name: 'MultipleChoiceQuestion',
+      });
+      multipleChoiceQuestion.vm.$emit('answer-selected', {
+        id: '1',
+        text: 'Answer',
+        isCorrect: true,
+      });
+
+      expect(wrapper.emitted('quick-check-complete')).toBeTruthy();
+    });
+
+    it('emits quick-check-complete when fill in the blanks answer is submitted', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'quick_check',
+          data: {
+            type: 'fill_in_the_blanks',
+            quick_check_content: {},
+          },
+        },
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      const fillInTheBlanksQuestion = wrapper.findComponent({ name: 'FillInTheBlanksQuestion' });
+      fillInTheBlanksQuestion.vm.$emit('answer-submitted', ['answer1', 'answer2']);
+
+      expect(wrapper.emitted('quick-check-complete')).toBeTruthy();
+    });
+
+    it('emits quick-check-complete when pronunciation is completed', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'quick_check',
+          data: {
+            type: 'pronunciation',
+            quick_check_content: {},
+          },
+        },
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      const pronunciationQuestion = wrapper.findComponent({
+        name: 'PronunciationQuestion',
+      });
+      pronunciationQuestion.vm.$emit('pronunciation-complete', {
+        isCorrect: true,
+        score: 85,
+        feedback: 'Good',
+      });
+
+      expect(wrapper.emitted('quick-check-complete')).toBeTruthy();
+    });
+
+    it('emits quick-check-complete when drag and drop answer is submitted', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'quick_check',
+          data: {
+            type: 'quick_check_drag_and_drop',
+            quick_check_content: {},
+          },
+        },
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      const dragAndDropQuestion = wrapper.findComponent({ name: 'DragAndDropQuestion' });
+      dragAndDropQuestion.vm.$emit('answer-submitted', ['word1', 'word2']);
+
+      expect(wrapper.emitted('quick-check-complete')).toBeTruthy();
+    });
+  });
+
+  /**
+   * @description Tests component lifecycle
+   */
+  describe('component lifecycle', () => {
+    it('sets up event listeners on mount', async () => {
+      const { eventDispatcher } = await import('../lib/event_dispatcher.js');
+
+      mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(eventDispatcher.on).toHaveBeenCalledWith('dl:completed', expect.any(Function));
+      expect(eventDispatcher.on).toHaveBeenCalledWith('dl:started', expect.any(Function));
+    });
+
+    it('cleans up event listeners on unmount', async () => {
+      const { eventDispatcher } = await import('../lib/event_dispatcher.js');
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      await wrapper.unmount();
+
+      expect(eventDispatcher.off).toHaveBeenCalledWith('dl:completed', expect.any(Function));
+      expect(eventDispatcher.off).toHaveBeenCalledWith('dl:started', expect.any(Function));
+    });
+  });
+
+  /**
+   * @description Tests edge cases
+   */
+  describe('edge cases', () => {
+    it('handles null currentAction gracefully', () => {
+      useActionStore.mockReturnValue({
+        currentAction: null,
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(wrapper.find('.multiple-choice-question').exists()).toBe(false);
+      expect(wrapper.find('.fill-in-the-blanks-question').exists()).toBe(false);
+      expect(wrapper.find('.pronunciation-question').exists()).toBe(false);
+      expect(wrapper.find('.drag-and-drop-question').exists()).toBe(false);
+    });
+
+    it('handles non-quick_check action type gracefully', () => {
+      useActionStore.mockReturnValue({
+        currentAction: {
+          type: 'video',
+          data: {},
+        },
+      });
+
+      const wrapper = mount(QuickCheck, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(wrapper.find('.multiple-choice-question').exists()).toBe(false);
+      expect(wrapper.find('.fill-in-the-blanks-question').exists()).toBe(false);
+      expect(wrapper.find('.pronunciation-question').exists()).toBe(false);
+      expect(wrapper.find('.drag-and-drop-question').exists()).toBe(false);
+    });
+  });
+});

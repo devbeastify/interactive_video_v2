@@ -11,28 +11,28 @@
 <script setup>
 // @ts-check
 
-import DiagnosticScreen from './DiagnosticScreen.vue';
-import IntroScreen from './IntroScreen.vue';
-import PlayerScreen from './PlayerScreen.vue';
-import { mainStore } from '../stores/main_store';
+  import DiagnosticScreen from './DiagnosticScreen.vue';
+  import IntroScreen from './IntroScreen.vue';
+  import PlayerScreen from './PlayerScreen.vue';
+  import { mainStore } from '../stores/main_store';
 
-const store = mainStore();
+  const store = mainStore();
 
-/**
- * Initialize the application by calling the store's init method
- * @return {void}
- */
-function initializeApp() {
-  store.init();
-}
+  /**
+   * Initialize the application by calling the store's init method
+   * @return {void}
+   */
+  function initializeApp() {
+    store.init();
+  }
 
-/**
- * Switch to the player screen when intro is finished
- * @return {void}
- */
-function goToPlayer() {
-  store.sequencer.goToScreen('player');
-}
+  /**
+   * Switch to the player screen when intro is finished
+   * @return {void}
+   */
+  function goToPlayer() {
+    store.sequencer.goToScreen('player');
+  }
 
-initializeApp();
+  initializeApp();
 </script>

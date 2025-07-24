@@ -1,8 +1,8 @@
 // @ts-check
 
 import { defineStore } from 'pinia';
-import { Sequencer } from '../lib/sequencer';
-import { buildScreensForActivity } from '../lib/screens';
+import { Sequencer } from '../lib/sequencer.js';
+import { buildScreensForActivity } from '../lib/screens.js';
 import { useActivitySettingsStore } from './activity_settings_store';
 import { useActionStore } from './action_store';
 
@@ -27,6 +27,7 @@ import { useActionStore } from './action_store';
  * @property {string} id
  * @property {string} title
  * @property {string} url
+ * @property {string} dl - Direction line text
  */
 
 /**
@@ -77,6 +78,64 @@ export const mainStore = defineStore('interactive_video_v2', {
     isInitialized: false,
     sequencer: new Sequencer(),
   }),
+
+  getters: {
+    /**
+     * Returns the topic from activityInfo
+     * @return {string}
+     */
+    topic() {
+      return this.activityInfo.topic;
+    },
+
+    /**
+     * Returns the sub_topic from activityInfo
+     * @return {string}
+     */
+    sub_topic() {
+      return this.activityInfo.sub_topic;
+    },
+
+    /**
+     * Returns the title from activityInfo
+     * @return {string}
+     */
+    title() {
+      return this.activityInfo.title;
+    },
+
+    /**
+     * Returns the dl from activityInfo
+     * @return {string}
+     */
+    dl() {
+      return this.activityInfo.dl;
+    },
+
+    /**
+     * Returns the reference from activityInfo
+     * @return {Array<Reference>}
+     */
+    reference() {
+      return this.activityInfo.reference;
+    },
+
+    /**
+     * Returns the quick_checks from activityInfo
+     * @return {Array<QuickCheck>}
+     */
+    quick_checks() {
+      return this.activityInfo.quick_checks;
+    },
+
+    /**
+     * Returns the diagnostic from activityInfo
+     * @return {Diagnostic}
+     */
+    diagnostic() {
+      return this.activityInfo.diagnostic;
+    },
+  },
 
   actions: {
     /**
@@ -140,13 +199,13 @@ export const mainStore = defineStore('interactive_video_v2', {
     /**
      * Initialize the store with activity information and build screens
      */
-    async init() {
+    async initialize() {
       try {
         const activityInfoElement = await this.getActivityInfo();
         if (!activityInfoElement) {
-          throw new Error('Activity info element not found');
+          return;
         }
-        
+
         const parsedActivityInfo = await this.parseActivityInfo(activityInfoElement);
         this.activityInfo = this.mergeActivityInfoWithDefaults(parsedActivityInfo);
 
@@ -162,8 +221,39 @@ export const mainStore = defineStore('interactive_video_v2', {
         this.isInitialized = true;
         this.sequencer.goToScreen('intro');
       } catch (error) {
-        throw error;
+        console.error('Failed to initialize store:', error);
       }
+    },
+
+    /**
+     * Initialize the store with activity information and build screens
+     */
+    async init() {
+      return this.initialize();
+    },
+
+    /**
+     * Reset the store to its initial state
+     */
+    reset() {
+      this.isInitialized = false;
+      this.activityInfo = {
+        dl: '',
+        diagnostic: {
+          dl: '',
+          failure_message: '',
+          items: [],
+          language: '',
+          number_of_questions: '',
+          threshold: '',
+        },
+        quick_checks: [],
+        reference: [],
+        sub_topic: '',
+        title: '',
+        topic: '',
+      };
+      this.sequencer = new Sequencer();
     },
   },
 });

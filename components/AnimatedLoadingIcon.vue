@@ -6,11 +6,7 @@
     preserveAspectRatio="xMidYMid"
     width="50"
     height="50"
-    style="
-      shape-rendering: auto;
-      display: block;
-      background: rgb(255, 255, 255);
-    ">
+    :class="$style['animated-loading-icon']">
     <g>
       <circle
         stroke-dasharray="164.93361431346415 56.97787143782138"
@@ -35,7 +31,19 @@
 <script>
 // @ts-check
 
+/**
+ * Animated loading icon component that displays a spinning circle
+ * @component AnimatedLoadingIcon
+ */
   export default {
     name: 'AnimatedLoadingIcon',
   };
 </script>
+
+<style module>
+.animated-loading-icon {
+  shape-rendering: auto;
+  display: block;
+  background: rgb(255, 255, 255);
+}
+</style>

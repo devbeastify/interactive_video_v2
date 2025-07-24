@@ -12,28 +12,30 @@
 
 /**
  * BeginAction component for starting interactive video content.
- * 
+ *
  * @typedef {Object} BeginActionProps
- * @property {string} mediaState - The current state of the media ("loaded" enables the button)
- * @property {(event: MouseEvent) => void} startButtonClickHandler - Function to call when button is clicked
+ * @property {string} mediaState - The current state of the media
+ *   ("loaded" enables the button)
+ * @property {(event: MouseEvent) => void} startButtonClickHandler -
+ *   Function to call when button is clicked
  */
 
-export default {
-  name: 'BeginAction',
-  
-  /**
-   * Component props for BeginAction
-   * @type {BeginActionProps}
-   */
-  props: {
-    mediaState: {
-      type: String,
-      required: true,
+  export default {
+    name: 'BeginAction',
+
+    /**
+     * Component props for BeginAction
+     * @type {BeginActionProps}
+     */
+    props: {
+      mediaState: {
+        type: String,
+        required: true,
+      },
+      startButtonClickHandler: {
+        type: Function,
+        required: true,
+      },
     },
-    startButtonClickHandler: {
-      type: Function,
-      required: true,
-    },
-  },
-};
+  };
 </script>

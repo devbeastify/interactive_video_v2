@@ -218,11 +218,7 @@ function logMediaErrors(operation, error, errors) {
  * Composable to manage media loading and whitelisting for interactive video.
  *
  * @param {string[]} mediaFiles - Array of media file URLs to manage
- * @return {{
- *   loadMedia: () => Promise<void>,
- *   mediaState: import('vue').Ref<MediaState>,
- *   whitelistMedia: (e: Event) => Promise<void>
- * }} Object containing mediaState, loadMedia, and whitelistMedia
+ * @return {Object} Object containing mediaState, loadMedia, and whitelistMedia
  */
 export function useMedia(mediaFiles) {
   /**

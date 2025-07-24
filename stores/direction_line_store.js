@@ -1,8 +1,8 @@
 // @ts-check
 
 import { defineStore } from 'pinia';
-import { AudioService } from '../lib/audio_service';
-import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher';
+import { AudioService } from '../lib/audio_service.js';
+import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher.js';
 import { useActionStore } from './action_store';
 
 /**
@@ -149,20 +149,20 @@ export const useDLStore = defineStore('dl', {
       const currentAction = actionStore.currentAction;
 
       switch (phaseType) {
-        case 'intro':
-          return this._getIntroDL(activityInfo);
+      case 'intro':
+        return this._getIntroDL(activityInfo);
 
-        case 'video':
-          return this._getVideoDL(currentAction);
+      case 'video':
+        return this._getVideoDL(currentAction);
 
-        case 'quick_check':
-          return this._getQuickCheckDL(currentAction);
+      case 'quick_check':
+        return this._getQuickCheckDL(currentAction);
 
-        case 'diagnostic':
-          return this._getDiagnosticDL(activityInfo);
+      case 'diagnostic':
+        return this._getDiagnosticDL(activityInfo);
 
-        default:
-          return null;
+      default:
+        return null;
       }
     },
 
@@ -208,7 +208,7 @@ export const useDLStore = defineStore('dl', {
     _getQuickCheckDL(currentAction) {
       if (currentAction && currentAction.type === 'quick_check') {
         const currentQC = /** @type {QuickCheckActionData} */ (currentAction.data);
-        if (currentQC && currentQC.quick_check_content.dl && 
+        if (currentQC && currentQC.quick_check_content.dl &&
             currentQC.quick_check_content.dl.trim()) {
           return {
             dl: currentQC.quick_check_content.dl,
@@ -225,7 +225,7 @@ export const useDLStore = defineStore('dl', {
      * @return {DLItem|null} DL item or null if not found
      */
     _getDiagnosticDL(activityInfo) {
-      if (activityInfo.diagnostic && activityInfo.diagnostic.dl && 
+      if (activityInfo.diagnostic && activityInfo.diagnostic.dl &&
           activityInfo.diagnostic.dl.trim()) {
         return {
           dl: activityInfo.diagnostic.dl,
@@ -270,7 +270,14 @@ export const useDLStore = defineStore('dl', {
           await this._playTTS();
         }
       } catch (error) {
-        await this._playTTS();
+        console.warn('DL playback failed, trying TTS fallback:', error);
+        try {
+          await this._playTTS();
+        } catch (ttsError) {
+          console.error('TTS fallback also failed:', ttsError);
+          this.isPlaying = false;
+          eventDispatcher.dispatch(DL_EVENTS.ERROR, ttsError);
+        }
       }
     },
 
@@ -303,7 +310,11 @@ export const useDLStore = defineStore('dl', {
           reject(error);
         }, { once: true });
 
-        audio.play().catch(reject);
+        audio.play().catch((playError) => {
+          this.isPlaying = false;
+          eventDispatcher.dispatch(DL_EVENTS.ERROR, playError);
+          reject(playError);
+        });
       });
     },
 
@@ -312,23 +323,29 @@ export const useDLStore = defineStore('dl', {
      * @return {Promise<void>}
      */
     async _playTTS() {
-      return AudioService.playTTS(
-        this.currentDLText,
-        this.currentLanguage,
-        {
-          onStart: () => {
-            // TTS started playing
-          },
-          onEnd: () => {
-            this.isPlaying = false;
-            eventDispatcher.dispatch(DL_EVENTS.COMPLETED);
-          },
-          onError: (error) => {
-            this.isPlaying = false;
-            eventDispatcher.dispatch(DL_EVENTS.ERROR, error);
-          },
-        }
-      );
+      return new Promise((resolve, reject) => {
+        this.isPlaying = true;
+
+        AudioService.playTTS(
+          this.currentDLText,
+          this.currentLanguage,
+          {
+            onStart: () => {
+              this.isPlaying = true;
+            },
+            onEnd: () => {
+              this.isPlaying = false;
+              eventDispatcher.dispatch(DL_EVENTS.COMPLETED);
+              resolve();
+            },
+            onError: (error) => {
+              this.isPlaying = false;
+              eventDispatcher.dispatch(DL_EVENTS.ERROR, error);
+              reject(error);
+            },
+          }
+        );
+      });
     },
 
     /**

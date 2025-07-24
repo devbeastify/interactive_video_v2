@@ -1,14 +1,14 @@
 <template>
   <div :class="$style['diagnostic-layout']">
-    <DirectionLine 
+    <DirectionLine
       v-if="dlStore.hasDL"
-      :dl-text="dlStore.currentDLText"
-      :is-playing="dlStore.isPlaying" />
-    
+      :dlText="dlStore.currentDLText"
+      :isPlaying="dlStore.isPlaying" />
+
     <div :class="$style['diagnostic-content']">
       <h2>Diagnostic</h2>
       <div :class="$style['diagnostic-controls']">
-        <button 
+        <button
           :class="$style['back-btn']"
           @click="goToIntro">
           Back to Intro
@@ -21,93 +21,95 @@
 <script setup>
 // @ts-check
 
-import { onMounted, onUnmounted } from 'vue';
-import { mainStore } from '../stores/main_store';
-import { useDLStore } from '../stores/direction_line_store';
-import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher';
-import DirectionLine from '../components/DirectionLine.vue';
+  import { onMounted, onUnmounted } from 'vue';
+  import { mainStore } from '../stores/main_store';
+  import { useDLStore } from '../stores/direction_line_store';
+  import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher.js';
+  import DirectionLine from '../components/DirectionLine.vue';
 
-/**
- * @typedef {Object} DiagnosticScreenProps
- * @property {ReturnType<typeof mainStore>} store - Main application store
- * @property {ReturnType<typeof useDLStore>} dlStore - Direction line store
- */
+  /**
+   * @typedef {Object} DiagnosticScreenProps
+   * @property {ReturnType<typeof mainStore>} store - Main application store
+   * @property {ReturnType<typeof useDLStore>} dlStore - Direction line store
+   */
 
-const store = mainStore();
-const dlStore = useDLStore();
+  const store = mainStore();
+  const dlStore = useDLStore();
 
-/**
- * Handles direction line completion event
- * @return {void}
- */
-const handleDLCompleted = () => {
-  console.log('Direction line completed');
-};
+  /**
+   * Handles direction line completion event
+   * @return {void}
+   */
+  const handleDLCompleted = () => {
+    console.log('Direction line completed');
+  };
 
-/**
- * Handles direction line start event
- * @return {void}
- */
-const handleDLStarted = () => {
-  console.log('Direction line started');
-};
+  /**
+   * Handles direction line start event
+   * @return {void}
+   */
+  const handleDLStarted = () => {
+    console.log('Direction line started');
+  };
 
-/**
- * Sets up event listeners for direction line events
- * @return {void}
- */
-const setUpEventListeners = () => {
-  eventDispatcher.on(DL_EVENTS.COMPLETED, handleDLCompleted);
-  eventDispatcher.on(DL_EVENTS.STARTED, handleDLStarted);
-};
+  /**
+   * Sets up event listeners for direction line events
+   * @return {void}
+   */
+  const setUpEventListeners = () => {
+    eventDispatcher.on(DL_EVENTS.COMPLETED, handleDLCompleted);
+    eventDispatcher.on(DL_EVENTS.STARTED, handleDLStarted);
+  };
 
-/**
- * Cleans up event listeners
- * @return {void}
- */
-const cleanupEventListeners = () => {
-  eventDispatcher.off(DL_EVENTS.COMPLETED, handleDLCompleted);
-  eventDispatcher.off(DL_EVENTS.STARTED, handleDLStarted);
-};
+  /**
+   * Cleans up event listeners
+   * @return {void}
+   */
+  const cleanupEventListeners = () => {
+    eventDispatcher.off(DL_EVENTS.COMPLETED, handleDLCompleted);
+    eventDispatcher.off(DL_EVENTS.STARTED, handleDLStarted);
+  };
 
-/**
- * Navigates back to the intro screen
- * @return {void}
- */
-const goToIntro = () => {
-  store.sequencer.goToScreen('intro');
-};
+  /**
+   * Navigates back to the intro screen
+   * @return {void}
+   */
+  const goToIntro = () => {
+    store.sequencer.goToScreen('intro');
+  };
 
-/**
- * Initializes the diagnostic screen with direction line
- * @return {void}
- */
-const initializeDiagnostic = () => {
-  const activityInfoForDL = /** @type {import('../stores/direction_line_store').ActivityInfo} */ (store.activityInfo);
-  dlStore.initializeDLForPhase('diagnostic', activityInfoForDL);
-};
+  /**
+   * Initializes the diagnostic screen with direction line
+   * @return {void}
+   */
+  const initializeDiagnostic = () => {
+    const activityInfoForDL = /** @type {import('../stores/direction_line_store').ActivityInfo} */ (
+      store.activityInfo
+    );
+    dlStore.initializeDLForPhase('diagnostic', activityInfoForDL);
+  };
 
-/**
- * Performs cleanup operations for the component
- * @return {void}
- */
-const performCleanup = () => {
-  try {
-    cleanupEventListeners();
-    dlStore.cleanup();
-  } catch (error) {
-    console.warn('Error during DiagnosticScreen component cleanup:', error);
-  }
-};
+  /**
+   * Performs cleanup operations for the component
+   * @return {void}
+   */
+  const performCleanup = () => {
+    try {
+      cleanupEventListeners();
+      dlStore.cleanup();
+    } catch (error) {
+      console.warn('Error during DiagnosticScreen component cleanup:', error);
+    }
+  };
 
-onMounted(() => {
-  setUpEventListeners();
-  initializeDiagnostic();
-});
+  onMounted(() => {
+    setUpEventListeners();
+    initializeDiagnostic();
+  });
 
-onUnmounted(() => {
-  performCleanup();
-});
+  onUnmounted(() => {
+    performCleanup();
+  });
 </script>
 
 <style lang="scss" module>

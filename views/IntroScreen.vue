@@ -1,12 +1,12 @@
 <template>
   <div :class="$style['interstitial-layout']">
     <div :class="$style['dl-container']">
-      <DirectionLine 
+      <DirectionLine
         v-if="dlStore.hasDL"
-        :dl-text="dlStore.currentDLText"
-        :is-playing="dlStore.isPlaying" />
+        :dlText="dlStore.currentDLText"
+        :isPlaying="dlStore.isPlaying" />
     </div>
-    
+
     <div :class="$style['interstitial-layout__main']">
       <div :class="$style['l-stack']">
         <h1 :class="$style['page-topic']" v-html="topic" />
@@ -35,161 +35,161 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
-import AnimatedLoadingIcon from '../components/AnimatedLoadingIcon.vue';
-import BeginAction from '../components/BeginAction.vue';
-import DirectionLine from '../components/DirectionLine.vue';
-import { useActivitySettingsStore } from '../stores/activity_settings_store';
-import { useActionStore } from '../stores/action_store';
-import { useDLStore } from '../stores/direction_line_store';
-import { mainStore } from '../stores/main_store';
-import { useMedia } from '../composables/use_media';
-// @ts-expect-error - Music doesn't have types, tsconfig needs new path aliases
-import BasicCheckbox from 'MusicV3/components/basic_checkbox/v2.0/BasicCheckbox.vue';
+  import { onMounted, onUnmounted } from 'vue';
+  import AnimatedLoadingIcon from '../components/AnimatedLoadingIcon.vue';
+  import BeginAction from '../components/BeginAction.vue';
+  import DirectionLine from '../components/DirectionLine.vue';
+  import { useActivitySettingsStore } from '../stores/activity_settings_store';
+  import { useActionStore } from '../stores/action_store';
+  import { useDLStore } from '../stores/direction_line_store';
+  import { mainStore } from '../stores/main_store';
+  import { useMedia } from '../composables/use_media';
+  // @ts-expect-error - Music doesn't have types, tsconfig needs new path aliases
+  import BasicCheckbox from 'MusicV3/components/basic_checkbox/v2.0/BasicCheckbox.vue';
 
-/**
- * @typedef {Object} ActionData
- * @property {string} video_path - Path to the video file
- */
+  /**
+   * @typedef {Object} ActionData
+   * @property {string} video_path - Path to the video file
+   */
 
-/**
- * @typedef {Object} Action
- * @property {string} type - Type of action
- * @property {ActionData} data - Action data
- */
+  /**
+   * @typedef {Object} Action
+   * @property {string} type - Type of action
+   * @property {ActionData} data - Action data
+   */
 
-/**
- * @typedef {Object} ReferenceItem
- * @property {string} audio_path - Path to the audio file
- * @property {string} video_path - Path to the video file
- */
+  /**
+   * @typedef {Object} ReferenceItem
+   * @property {string} audio_path - Path to the audio file
+   * @property {string} video_path - Path to the video file
+   */
 
-/**
- * @typedef {Object} ActivityInfo
- * @property {string} topic - Activity topic
- * @property {string} sub_topic - Activity sub-topic
- * @property {string} title - Activity title
- * @property {ReferenceItem[]} reference - Reference items
- */
+  /**
+   * @typedef {Object} ActivityInfo
+   * @property {string} topic - Activity topic
+   * @property {string} sub_topic - Activity sub-topic
+   * @property {string} title - Activity title
+   * @property {ReferenceItem[]} reference - Reference items
+   */
 
-const emit = defineEmits(['start']);
+  const emit = defineEmits(['start']);
 
-const store = mainStore();
-const actionStore = useActionStore();
-const activitySettingsStore = useActivitySettingsStore();
-const dlStore = useDLStore();
+  const store = mainStore();
+  const actionStore = useActionStore();
+  const activitySettingsStore = useActivitySettingsStore();
+  const dlStore = useDLStore();
 
-const topic = store.activityInfo.topic;
-const subTopic = store.activityInfo.sub_topic;
-const title = store.activityInfo.title;
+  const topic = store.activityInfo.topic;
+  const subTopic = store.activityInfo.sub_topic;
+  const title = store.activityInfo.title;
 
-/**
- * Checks if a file is a subtitle file based on its extension
- * @param {string} filePath - The file path to check
- * @return {boolean} Whether the file is a subtitle
- */
-function isSubtitleFile(filePath) {
-  const extension = filePath.split('.').pop()?.toLowerCase() || '';
-  return ['vtt', 'srt', 'ass', 'ssa'].includes(extension);
-}
-
-/**
- * Extracts video paths from action data
- * @param {ActionData} videoData - The video action data
- * @return {string[]} Array of valid video paths
- */
-function extractVideoPathsFromAction(videoData) {
-  const sources = [];
-  if (videoData.video_path && !isSubtitleFile(videoData.video_path)) {
-    sources.push(videoData.video_path);
+  /**
+   * Checks if a file is a subtitle file based on its extension
+   * @param {string} filePath - The file path to check
+   * @return {boolean} Whether the file is a subtitle
+   */
+  function isSubtitleFile(filePath) {
+    const extension = filePath.split('.').pop()?.toLowerCase() || '';
+    return ['vtt', 'srt', 'ass', 'ssa'].includes(extension);
   }
-  return sources;
-}
 
-/**
- * Extracts media paths from reference items
- * @param {ReferenceItem} reference - The reference item
- * @return {string[]} Array of valid media paths
- */
-function extractMediaPathsFromReference(reference) {
-  const sources = [];
-  if (reference.video_path && !isSubtitleFile(reference.video_path)) {
-    sources.push(reference.video_path);
+  /**
+   * Extracts video paths from action data
+   * @param {ActionData} videoData - The video action data
+   * @return {string[]} Array of valid video paths
+   */
+  function extractVideoPathsFromAction(videoData) {
+    const sources = [];
+    if (videoData.video_path && !isSubtitleFile(videoData.video_path)) {
+      sources.push(videoData.video_path);
+    }
+    return sources;
   }
-  if (reference.audio_path && !isSubtitleFile(reference.audio_path)) {
-    sources.push(reference.audio_path);
+
+  /**
+   * Extracts media paths from reference items
+   * @param {ReferenceItem} reference - The reference item
+   * @return {string[]} Array of valid media paths
+   */
+  function extractMediaPathsFromReference(reference) {
+    const sources = [];
+    if (reference.video_path && !isSubtitleFile(reference.video_path)) {
+      sources.push(reference.video_path);
+    }
+    if (reference.audio_path && !isSubtitleFile(reference.audio_path)) {
+      sources.push(reference.audio_path);
+    }
+    return sources;
   }
-  return sources;
-}
 
-/**
- * Gets all media sources from actions or fallback to references
- * @return {string[]} Array of all media sources
- */
-function getAllMediaSources() {
-  const sources = [];
-  
-  if (actionStore.actions && actionStore.actions.length > 0) {
-    actionStore.actions.forEach((action) => {
-      if (action.type === 'video' && action.data) {
-        const videoPaths = extractVideoPathsFromAction(action.data);
-        sources.push(...videoPaths);
-      }
-    });
-  } else {
-    store.activityInfo.reference.forEach((reference) => {
-      const mediaPaths = extractMediaPathsFromReference(reference);
-      sources.push(...mediaPaths);
-    });
+  /**
+   * Gets all media sources from actions or fallback to references
+   * @return {string[]} Array of all media sources
+   */
+  function getAllMediaSources() {
+    const sources = [];
+
+    if (actionStore.actions && actionStore.actions.length > 0) {
+      actionStore.actions.forEach((action) => {
+        if (action.type === 'video' && action.data) {
+          const videoPaths = extractVideoPathsFromAction(action.data);
+          sources.push(...videoPaths);
+        }
+      });
+    } else {
+      store.activityInfo.reference.forEach((reference) => {
+        const mediaPaths = extractMediaPathsFromReference(reference);
+        sources.push(...mediaPaths);
+      });
+    }
+
+    return sources;
   }
-  
-  return sources;
-}
 
-const allMediaSources = getAllMediaSources();
+  const allMediaSources = getAllMediaSources();
 
-const { mediaState, loadMedia, whitelistMedia } = useMedia(allMediaSources);
+  const { mediaState, loadMedia, whitelistMedia } = useMedia(allMediaSources);
 
-/**
- * Updates the autoplay setting in the store
- * @param {Event} evt - The change event from the checkbox
- * @return {void}
- */
-function updateSettings(evt) {
-  const target = evt.target;
-  const useAutoPlay = target.checked;
-  activitySettingsStore.updateAutoPlaySetting(useAutoPlay);
-}
-
-/**
- * Starts the activity by moving to the player screen
- * @param {Event} e - The event that triggered the start action
- * @return {Promise<void>}
- */
-async function startActivity(e) {
-  try {
-    await whitelistMedia(e);
-    emit('start');
-  } catch (error) {
-    console.error('Failed to start activity:', error);
+  /**
+   * Updates the autoplay setting in the store
+   * @param {Event} evt - The change event from the checkbox
+   * @return {void}
+   */
+  function updateSettings(evt) {
+    const target = evt.target;
+    const useAutoPlay = target.checked;
+    activitySettingsStore.updateAutoPlaySetting(useAutoPlay);
   }
-}
 
-/**
- * Initializes the component when mounted
- * @return {void}
- */
-function initializeComponent() {
-  activitySettingsStore.resetAutoPlayToEnabled();
-  loadMedia();
-  dlStore.initializeDLForPhase('intro', store.activityInfo);
-}
+  /**
+   * Starts the activity by moving to the player screen
+   * @param {Event} e - The event that triggered the start action
+   * @return {Promise<void>}
+   */
+  async function startActivity(e) {
+    try {
+      await whitelistMedia(e);
+      emit('start');
+    } catch (error) {
+      console.error('Failed to start activity:', error);
+    }
+  }
 
-onMounted(initializeComponent);
+  /**
+   * Initializes the component when mounted
+   * @return {void}
+   */
+  function initializeComponent() {
+    activitySettingsStore.resetAutoPlayToEnabled();
+    loadMedia();
+    dlStore.initializeDLForPhase('intro', store.activityInfo);
+  }
 
-onUnmounted(() => {
-  dlStore.cleanup();
-});
+  onMounted(initializeComponent);
+
+  onUnmounted(() => {
+    dlStore.cleanup();
+  });
 </script>
 
 <style lang="scss" module>

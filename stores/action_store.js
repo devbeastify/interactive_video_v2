@@ -66,7 +66,7 @@ export const useActionStore = defineStore('action', {
      */
     currentActionIsQuickCheck: (state) => {
       const action = state.actions[state.currentActionIndex];
-      return action && action.type === 'quick_check';
+      return action ? action.type === 'quick_check' : false;
     },
 
     /**
@@ -76,7 +76,7 @@ export const useActionStore = defineStore('action', {
      */
     currentActionIsVideo: (state) => {
       const action = state.actions[state.currentActionIndex];
-      return action && action.type === 'video';
+      return action ? action.type === 'video' : false;
     },
 
     /**
@@ -94,7 +94,7 @@ export const useActionStore = defineStore('action', {
      * @return {boolean} True if at last action
      */
     isAtLastAction: (state) => {
-      return state.currentActionIndex === state.actions.length - 1;
+      return state.actions.length === 0 || state.currentActionIndex === state.actions.length - 1;
     },
   },
 
@@ -178,4 +178,4 @@ export const useActionStore = defineStore('action', {
       this.currentActionIndex = 0;
     },
   },
-}); 
+});

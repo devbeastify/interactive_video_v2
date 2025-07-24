@@ -3,6 +3,7 @@
 import { ref } from 'vue';
 import { useActionStore } from '../stores/action_store';
 import { useActivitySettingsStore } from '../stores/activity_settings_store';
+import { useDLStore } from '../stores/direction_line_store';
 import { attachVideo } from './use_attach_video';
 
 /**
@@ -31,7 +32,7 @@ import { attachVideo } from './use_attach_video';
  * @property {Function} cleanupVideoPlayer - Clean up video player resources
  * @property {Function} initializeVideoPlayer - Initialize the video player
  * @property {import('vue').Ref<boolean>} isPlaying - Current playing state
- * @property {import('vue').Ref<VHLVideoFile|null>} videoPlayer - Video player instance
+ * @property {import('vue').Ref<Object|null>} videoPlayer - Video player instance
  */
 
 /**
@@ -40,22 +41,25 @@ import { attachVideo } from './use_attach_video';
  *
  * @param {import('vue').Ref<HTMLElement|null>} videoContainer - The video container ref
  * @param {Function} onEnded - Callback function when video ends
- * @return {VideoPlayerAPI} Video player API object
+ * @return {Object} Video player API object
  */
 export function useVideoPlayer(videoContainer, onEnded) {
-  /** @type {import('vue').Ref<VHLVideoFile|null>} */
+  /** @type {import('vue').Ref<Object|null>} */
   const videoPlayer = ref(null);
   /** @type {import('vue').Ref<boolean>} */
   const isPlaying = ref(false);
 
   /**
    * Attempts to start autoplay if enabled
-   * @param {VHLVideoFile} playerInstance - The video player instance
+   * @param {Object} playerInstance - The video player instance
    */
   const attemptAutoPlay = (playerInstance) => {
     if (!useActivitySettingsStore().useAutoPlay) return;
 
-    if (playerInstance.videojs_player && 
+    const dlStore = useDLStore();
+    if (dlStore.isPlaying) return;
+
+    if (playerInstance.videojs_player &&
         typeof playerInstance.videojs_player.play === 'function') {
       const playResult = playerInstance.videojs_player.play();
       if (playResult && typeof playResult.catch === 'function') {
@@ -104,21 +108,21 @@ export function useVideoPlayer(videoContainer, onEnded) {
 
       const actionStore = useActionStore();
       const currentAction = actionStore.currentAction;
-      
+
       if (!currentAction || currentAction.type !== 'video') {
         return;
       }
 
       const actionIndex = actionStore.currentActionIndex + 1;
       const selector = `.js-interactive-video-v2-segment-${actionIndex}-video`;
-      
+
       const videoPlayerInstance = attachVideo(selector, videoContainer.value);
-      
+
       if (videoPlayerInstance) {
         videoPlayer.value = /** @type {VHLVideoFile} */ (
           /** @type {unknown} */ (videoPlayerInstance)
         );
-        
+
         setUpPlayerEvents(videoPlayerInstance);
         attemptAutoPlay(videoPlayerInstance);
       }
@@ -137,7 +141,7 @@ export function useVideoPlayer(videoContainer, onEnded) {
     if (!playerInstance.videojs_player) return;
 
     const player = playerInstance.videojs_player;
-    
+
     if (typeof player.on === 'function') {
       player.on('ended', () => {
         isPlaying.value = false;
@@ -145,11 +149,11 @@ export function useVideoPlayer(videoContainer, onEnded) {
           onEnded();
         }
       });
-      
+
       player.on('pause', () => {
         isPlaying.value = false;
       });
-      
+
       player.on('play', () => {
         isPlaying.value = true;
       });

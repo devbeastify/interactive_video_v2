@@ -1,7 +1,7 @@
 // @ts-check
 
 import { defineStore } from 'pinia';
-import { browserIsSafari } from '../lib/safari_browser_check';
+import { browserIsSafari } from '../lib/safari_browser_check.js';
 
 /**
  * @typedef {Object} ActionSettings

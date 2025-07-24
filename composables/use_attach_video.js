@@ -28,9 +28,6 @@
  * @property {Function} initVideoPlayer - Function to initialize video player
  */
 
-/** @type {CustomWindow} */
-const customWindow = window;
-
 /**
  * Cleans up existing video elements in the target container
  * @param {HTMLElement} targetElm - The target container element
@@ -39,8 +36,8 @@ function cleanupExistingVideos(targetElm) {
   const existingVideos = targetElm.querySelectorAll(
     '.js-video-reference, .reference_model'
   );
-  
-  existingVideos.forEach(video => {
+
+  existingVideos.forEach((video) => {
     try {
       const videojsPlayer = video.querySelector('.video-js');
       if (videojsPlayer && videojsPlayer.player) {
@@ -128,7 +125,7 @@ function initializeVideoPlayer(referenceElm, templateSelector) {
  */
 export function attachVideo(templateSelector, targetElm) {
   cleanupExistingVideos(targetElm);
-  
+
   const templateElm = findTemplateElement(templateSelector);
   if (!templateElm) {
     return;
@@ -140,6 +137,6 @@ export function attachVideo(templateSelector, targetElm) {
   }
 
   cloneAndAppendVideo(referenceElm, targetElm);
-  
+
   return initializeVideoPlayer(referenceElm, templateSelector);
-} 
+}

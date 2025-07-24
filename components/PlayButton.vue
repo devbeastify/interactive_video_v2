@@ -42,35 +42,35 @@
 <script setup>
 // @ts-check
 
-import { computed } from 'vue';
+  import { computed } from 'vue';
 
-/**
- * @typedef {'playing' | 'paused'} AudioButtonState
- */
+  /**
+   * @typedef {'playing' | 'paused'} AudioButtonState
+   */
 
-/**
- * Props for the PlayButton component
- * @typedef {Object} PlayButtonProps
- * @property {AudioButtonState} audioBtnState - The current state of the audio button
- */
+  /**
+   * Props for the PlayButton component
+   * @typedef {Object} PlayButtonProps
+   * @property {AudioButtonState} audioBtnState - The current state of the audio button
+   */
 
-const props = defineProps({
-  audioBtnState: {
-    default: 'paused',
-    type: String,
-    validator(val) {
-      return ['', 'playing', 'paused'].includes(val.toLowerCase());
+  const props = defineProps({
+    audioBtnState: {
+      default: 'paused',
+      type: String,
+      validator(val) {
+        return ['', 'playing', 'paused'].includes(val.toLowerCase());
+      },
     },
-  },
-});
+  });
 
-/**
- * Computed class name based on the current audio button state
- * @return {string} The CSS class name for the current state
- */
-const buttonStateClass = computed(() => {
-  return `is-${props.audioBtnState}`;
-});
+  /**
+   * Computed class name based on the current audio button state
+   * @return {string} The CSS class name for the current state
+   */
+  const buttonStateClass = computed(() => {
+    return `is-${props.audioBtnState}`;
+  });
 </script>
 
 <style lang="scss" module>

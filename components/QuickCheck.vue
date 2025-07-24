@@ -2,12 +2,12 @@
   <div :class="$style['quick-check']">
     <div :class="$style['quick-check-layout']">
       <div :class="$style['dl-section']">
-        <DirectionLine 
+        <DirectionLine
           v-if="dlStore.hasDL"
-          :dl-text="dlStore.currentDLText"
-          :is-playing="dlStore.isPlaying" />
+          :dlText="dlStore.currentDLText"
+          :isPlaying="dlStore.isPlaying" />
       </div>
-      
+
       <div :class="$style['quick-check-content']">
         <h3>Quick Check</h3>
         <div v-if="currentQuickCheckActionData">
@@ -51,182 +51,184 @@
 <script setup>
 // @ts-check
 
-import { computed, onMounted, onUnmounted, watch } from 'vue';
-import { useActionStore } from '../stores/action_store';
-import { useDLStore } from '../stores/direction_line_store';
-import { mainStore } from '../stores/main_store';
-import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher';
-import MultipleChoiceQuestion from './questions/MultipleChoiceQuestion.vue';
-import FillInTheBlanksQuestion from './questions/FillInTheBlanksQuestion.vue';
-import PronunciationQuestion from './questions/PronunciationQuestion.vue';
-import DragAndDropQuestion from './questions/DragAndDropQuestion.vue';
-import DirectionLine from './DirectionLine.vue';
+  import { computed, onMounted, onUnmounted, watch } from 'vue';
+  import { useActionStore } from '../stores/action_store';
+  import { useDLStore } from '../stores/direction_line_store';
+  import { mainStore } from '../stores/main_store';
+  import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher.js';
+  import MultipleChoiceQuestion from './questions/MultipleChoiceQuestion.vue';
+  import FillInTheBlanksQuestion from './questions/FillInTheBlanksQuestion.vue';
+  import PronunciationQuestion from './questions/PronunciationQuestion.vue';
+  import DragAndDropQuestion from './questions/DragAndDropQuestion.vue';
+  import DirectionLine from './DirectionLine.vue';
 
-/**
- * @typedef {Object} AnswerObject
- * @property {string} id - The answer identifier
- * @property {string} text - The answer text
- * @property {boolean} isCorrect - Whether the answer is correct
- */
+  /**
+   * @typedef {Object} AnswerObject
+   * @property {string} id - The answer identifier
+   * @property {string} text - The answer text
+   * @property {boolean} isCorrect - Whether the answer is correct
+   */
 
-/**
- * @typedef {Object} PronunciationResult
- * @property {boolean} isCorrect - Whether pronunciation was correct
- * @property {number} score - Pronunciation score
- * @property {string} feedback - User feedback
- */
+  /**
+   * @typedef {Object} PronunciationResult
+   * @property {boolean} isCorrect - Whether pronunciation was correct
+   * @property {number} score - Pronunciation score
+   * @property {string} feedback - User feedback
+   */
 
-/**
- * @typedef {Object} QuickCheckAction
- * @property {string} type - The action type
- * @property {Object} data - The action data
- */
+  /**
+   * @typedef {Object} QuickCheckAction
+   * @property {string} type - The action type
+   * @property {Object} data - The action data
+   */
 
-const emit = defineEmits(['quick-check-complete']);
+  const emit = defineEmits(['quick-check-complete']);
 
-const actionStore = useActionStore();
-const dlStore = useDLStore();
-const store = mainStore();
+  const actionStore = useActionStore();
+  const dlStore = useDLStore();
+  const store = mainStore();
 
-/**
- * Computed property for current quick check data from action store
- * @return {QuickCheckAction | null} Current quick check action data
- */
-const currentQuickCheckActionData = computed(() => {
-  const currentAction = /** @type {QuickCheckAction} */ (actionStore.currentAction);
-  return currentAction && currentAction.type === 'quick_check' 
-    ? currentAction.data 
-    : null;
-});
+  /**
+   * Computed property for current quick check data from action store
+   * @return {QuickCheckAction | null} Current quick check action data
+   */
+  const currentQuickCheckActionData = computed(() => {
+    const currentAction = /** @type {QuickCheckAction} */ (actionStore.currentAction);
+    return currentAction && currentAction.type === 'quick_check' ?
+      currentAction.data :
+      null;
+  });
 
-/**
- * Computed properties for question type checking
- */
-const isMultipleChoiceQuestion = computed(() =>
-  currentQuickCheckActionData.value?.type === 'multiple_choice'
-);
+  /**
+   * Computed properties for question type checking
+   */
+  const isMultipleChoiceQuestion = computed(() =>
+    currentQuickCheckActionData.value?.type === 'multiple_choice'
+  );
 
-const isFillInTheBlanksQuestion = computed(() =>
-  currentQuickCheckActionData.value?.type === 'fill_in_the_blanks'
-);
+  const isFillInTheBlanksQuestion = computed(() =>
+    currentQuickCheckActionData.value?.type === 'fill_in_the_blanks'
+  );
 
-const isPronunciationQuestion = computed(() =>
-  currentQuickCheckActionData.value?.type === 'pronunciation'
-);
+  const isPronunciationQuestion = computed(() =>
+    currentQuickCheckActionData.value?.type === 'pronunciation'
+  );
 
-const isDragAndDropQuestion = computed(() =>
-  currentQuickCheckActionData.value?.type === 'quick_check_drag_and_drop'
-);
+  const isDragAndDropQuestion = computed(() =>
+    currentQuickCheckActionData.value?.type === 'quick_check_drag_and_drop'
+  );
 
-/**
- * Initializes DL for quick check phase
- */
-const initializeDLForQuickCheck = () => {
-  const activityInfoForDL = /** @type {import('../stores/direction_line_store').ActivityInfo} */ (store.activityInfo);
-  dlStore.initializeDLForPhase('quick_check', activityInfoForDL);
-  
-  if (dlStore.hasDL) {
-    dlStore.playDL();
-  }
-};
+  /**
+   * Initializes DL for quick check phase
+   */
+  const initializeDLForQuickCheck = () => {
+    const activityInfoForDL = /** @type {import('../stores/direction_line_store').ActivityInfo} */ (
+      store.activityInfo
+    );
+    dlStore.initializeDLForPhase('quick_check', activityInfoForDL);
 
-/**
- * Handles DL completion event
- */
-const handleDLCompleted = () => {
-  // Video remains paused during quick check
-};
+    if (dlStore.hasDL) {
+      dlStore.playDL();
+    }
+  };
 
-/**
- * Handles DL start event
- */
-const handleDLStarted = () => {
-  // DL started playing for quick check
-};
+  /**
+   * Handles DL completion event
+   */
+  const handleDLCompleted = () => {
+    console.log('DL completed');
+  };
 
-/**
- * Sets up event listeners for DL
- */
-const setUpEventListeners = () => {
-  eventDispatcher.on(DL_EVENTS.COMPLETED, handleDLCompleted);
-  eventDispatcher.on(DL_EVENTS.STARTED, handleDLStarted);
-};
+  /**
+   * Handles DL start event
+   */
+  const handleDLStarted = () => {
+    console.log('DL started');
+  };
 
-/**
- * Cleans up event listeners
- */
-const cleanupEventListeners = () => {
-  eventDispatcher.off(DL_EVENTS.COMPLETED, handleDLCompleted);
-  eventDispatcher.off(DL_EVENTS.STARTED, handleDLStarted);
-};
+  /**
+   * Sets up event listeners for DL
+   */
+  const setUpEventListeners = () => {
+    eventDispatcher.on(DL_EVENTS.COMPLETED, handleDLCompleted);
+    eventDispatcher.on(DL_EVENTS.STARTED, handleDLStarted);
+  };
 
-/**
- * Pauses video player if currently playing
- */
-const pauseVideoIfPlaying = () => {
-  const videoPlayer = document.querySelector('video');
-  if (videoPlayer && !videoPlayer.paused) {
-    videoPlayer.pause();
-  }
-};
+  /**
+   * Cleans up event listeners
+   */
+  const cleanupEventListeners = () => {
+    eventDispatcher.off(DL_EVENTS.COMPLETED, handleDLCompleted);
+    eventDispatcher.off(DL_EVENTS.STARTED, handleDLStarted);
+  };
 
-/**
- * Handles multiple choice answer selection
- * @param {AnswerObject} answer - The selected answer object
- */
-const handleAnswerSelected = (answer) => {
-  handleComplete();
-};
+  /**
+   * Pauses video player if currently playing
+   */
+  const pauseVideoIfPlaying = () => {
+    const videoPlayer = document.querySelector('video');
+    if (videoPlayer && !videoPlayer.paused) {
+      videoPlayer.pause();
+    }
+  };
 
-/**
- * Handles fill-in-the-blanks answer submission
- * @param {Array<string>} answers - The submitted answers
- */
-const handleAnswerSubmitted = (answers) => {
-  handleComplete();
-};
+  /**
+   * Handles multiple choice answer selection
+   * @param {AnswerObject} answer - The selected answer object
+   */
+  const handleAnswerSelected = (answer) => {
+    handleComplete();
+  };
 
-/**
- * Handles pronunciation question completion
- * @param {PronunciationResult} result - The pronunciation result
- */
-const handlePronunciationComplete = (result) => {
-  handleComplete();
-};
+  /**
+   * Handles fill-in-the-blanks answer submission
+   * @param {Array<string>} answers - The submitted answers
+   */
+  const handleAnswerSubmitted = (answers) => {
+    handleComplete();
+  };
 
-/**
- * Emits quick check complete event
- */
-const handleComplete = () => {
-  emit('quick-check-complete');
-};
+  /**
+   * Handles pronunciation question completion
+   * @param {PronunciationResult} result - The pronunciation result
+   */
+  const handlePronunciationComplete = (result) => {
+    handleComplete();
+  };
 
-/**
- * Watches for action changes and initializes quick check
- */
-watch(() => actionStore.currentAction, (newAction) => {
-  if (newAction?.type === 'quick_check') {
-    pauseVideoIfPlaying();
-    initializeDLForQuickCheck();
-  }
-});
+  /**
+   * Emits quick check complete event
+   */
+  const handleComplete = () => {
+    emit('quick-check-complete');
+  };
 
-onMounted(() => {
-  setUpEventListeners();
-  
-  if (actionStore.currentAction?.type === 'quick_check') {
-    initializeDLForQuickCheck();
-  }
-});
+  /**
+   * Watches for action changes and initializes quick check
+   */
+  watch(() => actionStore.currentAction, (newAction) => {
+    if (newAction?.type === 'quick_check') {
+      pauseVideoIfPlaying();
+      initializeDLForQuickCheck();
+    }
+  });
 
-onUnmounted(() => {
-  try {
-    cleanupEventListeners();
-    dlStore.cleanup();
-  } catch (error) {
-    console.warn('Error during QuickCheck component cleanup:', error);
-  }
-});
+  onMounted(() => {
+    setUpEventListeners();
+
+    if (actionStore.currentAction?.type === 'quick_check') {
+      initializeDLForQuickCheck();
+    }
+  });
+
+  onUnmounted(() => {
+    try {
+      cleanupEventListeners();
+      dlStore.cleanup();
+    } catch (error) {
+      console.warn('Error during QuickCheck component cleanup:', error);
+    }
+  });
 </script>
 
 <style lang="scss" module>
