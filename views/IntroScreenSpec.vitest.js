@@ -48,6 +48,10 @@ vi.mock('../composables/use_media', () => ({
   }),
 }));
 
+vi.mock('../lib/safari_browser_check', () => ({
+  browserIsSafari: vi.fn(() => true),
+}));
+
 vi.mock('../components/DirectionLine.vue', () => ({
   default: {
     name: 'DirectionLine',

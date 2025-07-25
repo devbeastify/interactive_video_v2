@@ -16,7 +16,7 @@
         </div>
         <div :class="$style['interstitial-controls']">
           <BasicCheckbox
-            v-if="false"
+            v-if="!browserIsSafari()"
             id="autoplay-media"
             :modelValue="activitySettingsStore.useAutoPlay"
             size="lg"
@@ -44,6 +44,7 @@
   import { useDLStore } from '../stores/direction_line_store';
   import { mainStore } from '../stores/main_store';
   import { useMedia } from '../composables/use_media';
+  import { browserIsSafari } from '../lib/safari_browser_check';
   // @ts-expect-error - Music doesn't have types, tsconfig needs new path aliases
   import BasicCheckbox from 'MusicV3/components/basic_checkbox/v2.0/BasicCheckbox.vue';
 
