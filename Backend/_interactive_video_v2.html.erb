@@ -3,7 +3,9 @@
 <%= render 'maestro_activity_engine/activities/progress_bar', elements: content_object.progress_bar_elements %>
 
 <div id="interactive_video_v2" class="ns-music-v1" data-activity="<%= content_object.serialize.to_json %>"></div>
+
 <%# Video templates for each video segment %>
+
 <% content_object.mixed_entries.each_with_index do |entry, index| %>
   <% if entry.is_a?(MaestroActivityEngine::ActivityContent::Reference::Video) %>
     <template class="js-interactive-video-v2-segment-<%= index + 1 %>-video">
