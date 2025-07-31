@@ -79,7 +79,7 @@
     isPlaying,
     initializeVideoPlayer,
     cleanupVideoPlayer,
-  } = useVideoPlayer(videoContainer, onVideoEnded);
+  } = /** @type {VideoPlayerAPI} */ (useVideoPlayer(videoContainer, onVideoEnded));
 
   const shouldAutoPlay = computed(() => activitySettingsStore.useAutoPlay);
   const isVideoAction = computed(() =>
@@ -103,9 +103,11 @@
    */
   const playVideo = (shouldSetPlayingState = true) => {
     if (!videoPlayer.value) return;
-
-    if (videoPlayer.value.videojs_player) {
-      videoPlayer.value.videojs_player.play()
+    if ('videojs_player' in videoPlayer.value) {
+      const player =
+        /** @type {{ play: () => Promise<void> }} */
+        (videoPlayer.value.videojs_player);
+      player.play()
         .then(() => {
           if (shouldSetPlayingState) {
             isPlaying.value = true;
@@ -116,10 +118,16 @@
         });
     } else {
       try {
-        videoPlayer.value.play();
-        if (shouldSetPlayingState) {
-          isPlaying.value = true;
-        }
+        const player = /** @type {{ play: () => Promise<void> }} */ (videoPlayer.value);
+        player.play()
+          .then(() => {
+            if (shouldSetPlayingState) {
+              isPlaying.value = true;
+            }
+          })
+          .catch((error) => {
+            throw error;
+          });
       } catch (error) {
         console.error('Failed to play video:', error);
       }
@@ -132,11 +140,12 @@
    */
   const pauseVideo = (shouldSetPlayingState = true) => {
     if (!videoPlayer.value) return;
-
-    if (videoPlayer.value.videojs_player) {
-      videoPlayer.value.videojs_player.pause();
+    if ('videojs_player' in videoPlayer.value) {
+      const player = /** @type {{ videojs_player: { pause: () => void } }} */ (videoPlayer.value);
+      player.videojs_player.pause();
     } else {
-      videoPlayer.value.pause();
+      const player = /** @type {{ pause: () => void }} */ (videoPlayer.value);
+      player.pause();
     }
 
     if (shouldSetPlayingState) {
@@ -239,11 +248,11 @@
   const restart = () => {
     if (!canControlVideo()) return;
 
-    if (videoPlayer.value.videojs_player) {
+    if (videoPlayer.value && 'videojs_player' in videoPlayer.value) {
       videoPlayer.value.videojs_player.currentTime(0);
       videoPlayer.value.videojs_player.play();
       isPlaying.value = true;
-    } else {
+    } else if (videoPlayer.value && 'destroy' in videoPlayer.value) {
       videoPlayer.value.destroy();
       setTimeout(initializeVideoPlayer, 100);
     }
