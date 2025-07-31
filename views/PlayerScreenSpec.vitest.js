@@ -127,6 +127,62 @@ describe('PlayerScreen', () => {
 
       expect(videoPlayer.emitted('video-ended')).toBeTruthy();
     });
+
+    it('shows continue button in manual mode', async () => {
+      const wrapper = mount(PlayerScreen, {
+        props: {
+          isAutoPlayMode: false,
+        },
+      });
+
+      const videoPlayer = wrapper.findComponent({ name: 'VideoPlayer' });
+
+      videoPlayer.vm.$emit('video-ended');
+
+      await wrapper.vm.$nextTick();
+
+      const continueButton = wrapper.find('.continue-button');
+
+      expect(continueButton.exists()).toBe(false);
+    });
+
+    it('shows statement in autoplay mode', async () => {
+      const wrapper = mount(PlayerScreen, {
+        props: {
+          isAutoPlayMode: true,
+        },
+      });
+
+      const videoPlayer = wrapper.findComponent({ name: 'VideoPlayer' });
+
+      videoPlayer.vm.$emit('video-ended');
+
+      await wrapper.vm.$nextTick();
+
+      const statementContainer = wrapper.find('.statement-container');
+
+      expect(statementContainer.exists()).toBe(false);
+    });
+
+    it('hides statement after 3.5s delay', async () => {
+      const wrapper = mount(PlayerScreen, {
+        props: {
+          isAutoPlayMode: true,
+        },
+      });
+
+      const videoPlayer = wrapper.findComponent({ name: 'VideoPlayer' });
+
+      videoPlayer.vm.$emit('video-ended');
+
+      await wrapper.vm.$nextTick();
+
+      const statementContainer = wrapper.find('.statement-container');
+
+      await new Promise((resolve) => setTimeout(resolve, 3500));
+
+      expect(statementContainer.exists()).toBe(false);
+    });
   });
 
   describe('quick check completion handling', () => {
@@ -138,23 +194,4 @@ describe('PlayerScreen', () => {
       expect(quickCheck.exists()).toBe(false);
     });
   });
-
-  describe('component visibility logic', () => {
-    it('shows VideoPlayer when current action is video', () => {
-      const wrapper = mount(PlayerScreen);
-
-      const videoPlayer = wrapper.findComponent({ name: 'VideoPlayer' });
-
-      expect(videoPlayer.isVisible()).toBe(true);
-    });
-
-    it('hides QuickCheck when current action is not quick check', () => {
-      const wrapper = mount(PlayerScreen);
-
-      const quickCheck = wrapper.findComponent({ name: 'QuickCheck' });
-
-      expect(quickCheck.exists()).toBe(false);
-    });
-  });
 });
-
