@@ -40,7 +40,11 @@
   };
 </script>
 
-<style module>
+<style module> 
+
+
+
+
 .animated-loading-icon {
   shape-rendering: auto;
   display: block;
