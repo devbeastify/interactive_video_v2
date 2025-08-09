@@ -27,10 +27,17 @@ vi.mock('./use_attach_video', () => ({
   attachVideo: vi.fn(() => null),
 }));
 
+Object.defineProperty(global, 'videojs', {
+  value: {
+    getComponent: vi.fn(),
+  },
+  writable: true,
+});
+
 describe('useVideoPlayer', () => {
   /** @type {import('vue').Ref<HTMLElement|null>} */
   let videoContainer;
-  /** @type {import('vitest').Mock} */
+  /** @type {Function} */
   let onEndedCallback;
 
   beforeEach(() => {
@@ -44,47 +51,57 @@ describe('useVideoPlayer', () => {
 
   describe('initialization', () => {
     it('returns cleanupVideoPlayer function', () => {
-      const { cleanupVideoPlayer } = useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      expect(typeof cleanupVideoPlayer).toBe('function');
+      expect(typeof result.cleanupVideoPlayer).toBe('function');
     });
 
     it('returns initializeVideoPlayer function', () => {
-      const { initializeVideoPlayer } = useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      expect(typeof initializeVideoPlayer).toBe('function');
+      expect(typeof result.initializeVideoPlayer).toBe('function');
     });
 
     it('initializes isPlaying as false', () => {
-      const { isPlaying } = useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      expect(isPlaying.value).toBe(false);
+      expect(result.isPlaying.value).toBe(false);
     });
 
     it('initializes videoPlayer as null', () => {
-      const { videoPlayer } = useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      expect(videoPlayer.value).toBe(null);
+      expect(result.videoPlayer.value).toBe(null);
     });
   });
 
   describe('cleanupVideoPlayer', () => {
     it('resets isPlaying to false when no video player exists', () => {
-      const { cleanupVideoPlayer, isPlaying } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      cleanupVideoPlayer();
+      result.cleanupVideoPlayer();
 
-      expect(isPlaying.value).toBe(false);
+      expect(result.isPlaying.value).toBe(false);
     });
 
     it('resets videoPlayer to null when no video player exists', () => {
-      const { cleanupVideoPlayer, videoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      cleanupVideoPlayer();
+      result.cleanupVideoPlayer();
 
-      expect(videoPlayer.value).toBe(null);
+      expect(result.videoPlayer.value).toBe(null);
     });
 
     it('calls destroy method on video player with destroy function', () => {
@@ -99,12 +116,13 @@ describe('useVideoPlayer', () => {
         },
       };
 
-      const { cleanupVideoPlayer, videoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      videoPlayer.value = mockVideoPlayer;
+      result.videoPlayer.value = mockVideoPlayer;
 
-      cleanupVideoPlayer();
+      result.cleanupVideoPlayer();
 
       expect(mockDestroy).toHaveBeenCalledOnce();
     });
@@ -121,14 +139,15 @@ describe('useVideoPlayer', () => {
         },
       };
 
-      const { cleanupVideoPlayer, videoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      videoPlayer.value = mockVideoPlayer;
+      result.videoPlayer.value = mockVideoPlayer;
 
-      cleanupVideoPlayer();
+      result.cleanupVideoPlayer();
 
-      expect(videoPlayer.value).toBe(null);
+      expect(result.videoPlayer.value).toBe(null);
     });
 
     it('calls dispose method on videojs player when destroy not available', () => {
@@ -143,12 +162,13 @@ describe('useVideoPlayer', () => {
         video: {},
       };
 
-      const { cleanupVideoPlayer, videoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      videoPlayer.value = mockVideoPlayer;
+      result.videoPlayer.value = mockVideoPlayer;
 
-      cleanupVideoPlayer();
+      result.cleanupVideoPlayer();
 
       expect(mockDispose).toHaveBeenCalledOnce();
     });
@@ -165,14 +185,15 @@ describe('useVideoPlayer', () => {
         video: {},
       };
 
-      const { cleanupVideoPlayer, videoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      videoPlayer.value = mockVideoPlayer;
+      result.videoPlayer.value = mockVideoPlayer;
 
-      cleanupVideoPlayer();
+      result.cleanupVideoPlayer();
 
-      expect(videoPlayer.value).toBe(null);
+      expect(result.videoPlayer.value).toBe(null);
     });
 
     it('handles errors during cleanup gracefully', () => {
@@ -189,12 +210,13 @@ describe('useVideoPlayer', () => {
         },
       };
 
-      const { cleanupVideoPlayer, videoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      videoPlayer.value = mockVideoPlayer;
+      result.videoPlayer.value = mockVideoPlayer;
 
-      expect(() => cleanupVideoPlayer()).not.toThrow();
+      expect(() => result.cleanupVideoPlayer()).not.toThrow();
 
       expect(consoleSpy).toHaveBeenCalledWith(
         'Error destroying video player:',
@@ -207,12 +229,13 @@ describe('useVideoPlayer', () => {
 
   describe('initializeVideoPlayer', () => {
     it('returns early when video container is null', () => {
-      const { initializeVideoPlayer, videoPlayer } =
-        useVideoPlayer(ref(null), onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(ref(null), onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
-      expect(videoPlayer.value).toBe(null);
+      expect(result.videoPlayer.value).toBe(null);
     });
 
     it('returns early when current action is not video type', async () => {
@@ -222,12 +245,13 @@ describe('useVideoPlayer', () => {
         currentActionIndex: 0,
       });
 
-      const { initializeVideoPlayer, videoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
-      expect(videoPlayer.value).toBe(null);
+      expect(result.videoPlayer.value).toBe(null);
     });
 
     it('returns early when no current action exists', async () => {
@@ -237,12 +261,13 @@ describe('useVideoPlayer', () => {
         currentActionIndex: 0,
       });
 
-      const { initializeVideoPlayer, videoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
-      expect(videoPlayer.value).toBe(null);
+      expect(result.videoPlayer.value).toBe(null);
     });
 
     it('calls attachVideo with correct selector', async () => {
@@ -259,6 +284,12 @@ describe('useVideoPlayer', () => {
           on: vi.fn(),
           play: vi.fn(() => Promise.resolve()),
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -266,10 +297,11 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
       expect(attachVideo).toHaveBeenCalledWith(
         '.js-interactive-video-v2-segment-1-video',
@@ -291,6 +323,12 @@ describe('useVideoPlayer', () => {
           on: vi.fn(),
           play: vi.fn(() => Promise.resolve()),
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -298,12 +336,13 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer, videoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
-      expect(videoPlayer.value).toStrictEqual(mockVideoPlayer);
+      expect(result.videoPlayer.value).toStrictEqual(mockVideoPlayer);
     });
 
     it('logs error when initialization fails', async () => {
@@ -321,9 +360,11 @@ describe('useVideoPlayer', () => {
         throw new Error('Initialization error');
       });
 
-      const { initializeVideoPlayer } = useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
       expect(consoleSpy).toHaveBeenCalledWith(
         'Error initializing video player:',
@@ -346,12 +387,13 @@ describe('useVideoPlayer', () => {
         throw new Error('Initialization error');
       });
 
-      const { initializeVideoPlayer, videoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
-      expect(videoPlayer.value).toBe(null);
+      expect(result.videoPlayer.value).toBe(null);
     });
 
     it('resets isPlaying to false on initialization error', async () => {
@@ -367,12 +409,237 @@ describe('useVideoPlayer', () => {
         throw new Error('Initialization error');
       });
 
-      const { initializeVideoPlayer, isPlaying } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
-      expect(isPlaying.value).toBe(false);
+      expect(result.isPlaying.value).toBe(false);
+    });
+  });
+
+  describe('VideoJS control bar configuration', () => {
+    it('configures playback rate menu when VideoJS components are available', async () => {
+      const { useActionStore } = await import('../stores/action_store');
+      const { attachVideo } = await import('./use_attach_video');
+
+      useActionStore.mockReturnValue({
+        currentAction: { type: 'video' },
+        currentActionIndex: 0,
+      });
+
+      const mockPlaybackRateMenuButton = vi.fn();
+      const mockFullscreenToggle = vi.fn();
+      const mockControlBar = {
+        addChild: vi.fn(),
+        getChild: vi.fn(() => null),
+        children: vi.fn(() => []),
+      };
+
+      global.videojs.getComponent
+        .mockReturnValueOnce(mockPlaybackRateMenuButton)
+        .mockReturnValueOnce(mockFullscreenToggle);
+
+      const mockVideoPlayer = {
+        videojs_player: {
+          on: vi.fn(),
+          play: vi.fn(() => Promise.resolve()),
+          el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: mockControlBar,
+        },
+        show_controls: false,
+        video: {},
+      };
+
+      attachVideo.mockReturnValue(mockVideoPlayer);
+
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
+
+      result.initializeVideoPlayer();
+
+      expect(global.videojs.getComponent).toHaveBeenCalledWith('PlaybackRateMenuButton');
+    });
+
+    it('adds fullscreen toggle when not present in control bar', async () => {
+      const { useActionStore } = await import('../stores/action_store');
+      const { attachVideo } = await import('./use_attach_video');
+
+      useActionStore.mockReturnValue({
+        currentAction: { type: 'video' },
+        currentActionIndex: 0,
+      });
+
+      const mockPlaybackRateMenuButton = vi.fn();
+      const mockFullscreenToggle = vi.fn();
+      const mockControlBar = {
+        addChild: vi.fn(),
+        getChild: vi.fn((name) => name === 'FullscreenToggle' ? null : {}),
+        children: vi.fn(() => []),
+      };
+
+      global.videojs.getComponent
+        .mockReturnValueOnce(mockPlaybackRateMenuButton)
+        .mockReturnValueOnce(mockFullscreenToggle);
+
+      const mockVideoPlayer = {
+        videojs_player: {
+          on: vi.fn(),
+          play: vi.fn(() => Promise.resolve()),
+          el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: mockControlBar,
+        },
+        show_controls: false,
+        video: {},
+      };
+
+      attachVideo.mockReturnValue(mockVideoPlayer);
+
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
+
+      result.initializeVideoPlayer();
+
+      expect(global.videojs.getComponent).toHaveBeenCalledWith('FullscreenToggle');
+    });
+
+    it('shows existing fullscreen toggle when present in control bar', async () => {
+      const { useActionStore } = await import('../stores/action_store');
+      const { attachVideo } = await import('./use_attach_video');
+
+      useActionStore.mockReturnValue({
+        currentAction: { type: 'video' },
+        currentActionIndex: 0,
+      });
+
+      const mockPlaybackRateMenuButton = vi.fn();
+      const mockFullscreenToggle = vi.fn();
+      const mockExistingFullscreenToggle = {
+        show: vi.fn(),
+      };
+      const mockControlBar = {
+        addChild: vi.fn(),
+        getChild: vi.fn((name) => name === 'FullscreenToggle' ? mockExistingFullscreenToggle : {}),
+        children: vi.fn(() => []),
+      };
+
+      global.videojs.getComponent
+        .mockReturnValueOnce(mockPlaybackRateMenuButton)
+        .mockReturnValueOnce(mockFullscreenToggle);
+
+      const mockVideoPlayer = {
+        videojs_player: {
+          on: vi.fn(),
+          play: vi.fn(() => Promise.resolve()),
+          el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: mockControlBar,
+        },
+        show_controls: false,
+        video: {},
+      };
+
+      attachVideo.mockReturnValue(mockVideoPlayer);
+
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
+
+      result.initializeVideoPlayer();
+
+      expect(mockExistingFullscreenToggle.show).toHaveBeenCalled();
+    });
+
+    it('handles missing VideoJS components gracefully', async () => {
+      const { useActionStore } = await import('../stores/action_store');
+      const { attachVideo } = await import('./use_attach_video');
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      useActionStore.mockReturnValue({
+        currentAction: { type: 'video' },
+        currentActionIndex: 0,
+      });
+
+      global.videojs.getComponent.mockReturnValue(null);
+
+      const mockVideoPlayer = {
+        videojs_player: {
+          on: vi.fn(),
+          play: vi.fn(() => Promise.resolve()),
+          el_: {},
+          ready: vi.fn((callback) => {
+            callback();
+          }),
+          controlBar: null,
+        },
+        show_controls: false,
+        video: {},
+      };
+
+      attachVideo.mockReturnValue(mockVideoPlayer);
+
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
+
+      result.initializeVideoPlayer();
+
+      expect(consoleSpy).toHaveBeenCalledWith('VideoJS control bar not available');
+
+      consoleSpy.mockRestore();
+    });
+
+    it('handles errors during control bar configuration', async () => {
+      const { useActionStore } = await import('../stores/action_store');
+      const { attachVideo } = await import('./use_attach_video');
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      useActionStore.mockReturnValue({
+        currentAction: { type: 'video' },
+        currentActionIndex: 0,
+      });
+
+      const mockVideoPlayer = {
+        videojs_player: {
+          on: vi.fn(),
+          play: vi.fn(() => Promise.resolve()),
+          el_: {},
+          ready: vi.fn((callback) => {
+            callback();
+          }),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
+        },
+        show_controls: false,
+        video: {},
+      };
+
+      global.videojs.getComponent.mockImplementation(() => {
+        throw new Error('Configuration error');
+      });
+
+      attachVideo.mockReturnValue(mockVideoPlayer);
+
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
+
+      result.initializeVideoPlayer();
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Error configuring VideoJS controls:',
+        expect.any(Error)
+      );
+
+      consoleSpy.mockRestore();
     });
   });
 
@@ -396,6 +663,12 @@ describe('useVideoPlayer', () => {
           on: vi.fn(),
           play: mockPlay,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -403,9 +676,11 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer } = useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
       expect(mockPlay).toHaveBeenCalledOnce();
     });
@@ -429,6 +704,12 @@ describe('useVideoPlayer', () => {
           on: vi.fn(),
           play: mockPlay,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -436,9 +717,11 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer } = useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
       expect(mockPlay).not.toHaveBeenCalled();
     });
@@ -460,6 +743,12 @@ describe('useVideoPlayer', () => {
           on: vi.fn(),
           play: mockPlay,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -467,9 +756,11 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer } = useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
       expect(mockPlay).not.toHaveBeenCalled();
     });
@@ -492,6 +783,12 @@ describe('useVideoPlayer', () => {
           on: vi.fn(),
           play: mockPlay,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -499,9 +796,11 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer } = useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
       expect(attachVideo).toHaveBeenCalledWith(
         '.js-interactive-video-v2-segment-1-video',
@@ -527,6 +826,12 @@ describe('useVideoPlayer', () => {
         videojs_player: {
           on: mockOn,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -534,10 +839,11 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
       expect(mockOn).toHaveBeenCalledWith('ended', expect.any(Function));
     });
@@ -556,6 +862,12 @@ describe('useVideoPlayer', () => {
         videojs_player: {
           on: mockOn,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -563,10 +875,11 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
       expect(mockOn).toHaveBeenCalledWith('pause', expect.any(Function));
     });
@@ -585,6 +898,12 @@ describe('useVideoPlayer', () => {
         videojs_player: {
           on: mockOn,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -592,12 +911,85 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
       expect(mockOn).toHaveBeenCalledWith('play', expect.any(Function));
+    });
+
+    it('sets up ratechange event listener', async () => {
+      const { useActionStore } = await import('../stores/action_store');
+      const { attachVideo } = await import('./use_attach_video');
+
+      useActionStore.mockReturnValue({
+        currentAction: { type: 'video' },
+        currentActionIndex: 0,
+      });
+
+      const mockOn = vi.fn();
+      const mockVideoPlayer = {
+        videojs_player: {
+          on: mockOn,
+          el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
+        },
+        show_controls: false,
+        video: {},
+      };
+
+      attachVideo.mockReturnValue(mockVideoPlayer);
+
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
+
+      result.initializeVideoPlayer();
+
+      expect(mockOn).toHaveBeenCalledWith('ratechange', expect.any(Function));
+    });
+
+    it('sets up fullscreenchange event listener', async () => {
+      const { useActionStore } = await import('../stores/action_store');
+      const { attachVideo } = await import('./use_attach_video');
+
+      useActionStore.mockReturnValue({
+        currentAction: { type: 'video' },
+        currentActionIndex: 0,
+      });
+
+      const mockOn = vi.fn();
+      const mockVideoPlayer = {
+        videojs_player: {
+          on: mockOn,
+          el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
+        },
+        show_controls: false,
+        video: {},
+      };
+
+      attachVideo.mockReturnValue(mockVideoPlayer);
+
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
+
+      result.initializeVideoPlayer();
+
+      expect(mockOn).toHaveBeenCalledWith('fullscreenchange', expect.any(Function));
     });
 
     it('updates isPlaying state on play event', async () => {
@@ -620,6 +1012,12 @@ describe('useVideoPlayer', () => {
         videojs_player: {
           on: mockOn,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -627,14 +1025,17 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer, isPlaying } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
-      playCallback();
+      if (playCallback) {
+        playCallback();
+      }
 
-      expect(isPlaying.value).toBe(true);
+      expect(result.isPlaying.value).toBe(true);
     });
 
     it('updates isPlaying state on pause event', async () => {
@@ -657,6 +1058,12 @@ describe('useVideoPlayer', () => {
         videojs_player: {
           on: mockOn,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -664,15 +1071,18 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer, isPlaying } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
-      isPlaying.value = true;
-      pauseCallback();
+      result.isPlaying.value = true;
+      if (pauseCallback) {
+        pauseCallback();
+      }
 
-      expect(isPlaying.value).toBe(false);
+      expect(result.isPlaying.value).toBe(false);
     });
 
     it('calls onEnded callback when video ends', async () => {
@@ -695,6 +1105,12 @@ describe('useVideoPlayer', () => {
         videojs_player: {
           on: mockOn,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -702,15 +1118,18 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer, isPlaying } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
-      isPlaying.value = true;
-      endedCallback();
+      result.isPlaying.value = true;
+      if (endedCallback) {
+        endedCallback();
+      }
 
-      expect(isPlaying.value).toBe(false);
+      expect(result.isPlaying.value).toBe(false);
     });
 
     it('calls onEnded callback function when video ends', async () => {
@@ -733,6 +1152,12 @@ describe('useVideoPlayer', () => {
         videojs_player: {
           on: mockOn,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -740,12 +1165,15 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer } =
-        useVideoPlayer(videoContainer, onEndedCallback);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
-      endedCallback();
+      if (endedCallback) {
+        endedCallback();
+      }
 
       expect(onEndedCallback).toHaveBeenCalledOnce();
     });
@@ -770,6 +1198,12 @@ describe('useVideoPlayer', () => {
         videojs_player: {
           on: mockOn,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -777,14 +1211,17 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer, isPlaying } =
-        useVideoPlayer(videoContainer, null);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, null)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
-      isPlaying.value = true;
+      result.isPlaying.value = true;
 
-      expect(() => endedCallback()).not.toThrow();
+      if (endedCallback) {
+        expect(() => endedCallback()).not.toThrow();
+      }
     });
 
     it('resets isPlaying to false when video ends with no callback', async () => {
@@ -807,6 +1244,12 @@ describe('useVideoPlayer', () => {
         videojs_player: {
           on: mockOn,
           el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
         },
         show_controls: false,
         video: {},
@@ -814,15 +1257,118 @@ describe('useVideoPlayer', () => {
 
       attachVideo.mockReturnValue(mockVideoPlayer);
 
-      const { initializeVideoPlayer, isPlaying } =
-        useVideoPlayer(videoContainer, null);
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, null)
+      );
 
-      initializeVideoPlayer();
+      result.initializeVideoPlayer();
 
-      isPlaying.value = true;
-      endedCallback();
+      result.isPlaying.value = true;
+      if (endedCallback) {
+        endedCallback();
+      }
 
-      expect(isPlaying.value).toBe(false);
+      expect(result.isPlaying.value).toBe(false);
+    });
+
+    it('logs playback rate changes', async () => {
+      const { useActionStore } = await import('../stores/action_store');
+      const { attachVideo } = await import('./use_attach_video');
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      useActionStore.mockReturnValue({
+        currentAction: { type: 'video' },
+        currentActionIndex: 0,
+      });
+
+      let ratechangeCallback;
+      const mockOn = vi.fn((event, callback) => {
+        if (event === 'ratechange') {
+          ratechangeCallback = callback;
+        }
+      });
+
+      const mockVideoPlayer = {
+        videojs_player: {
+          on: mockOn,
+          el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
+          playbackRate: vi.fn(() => 1.5),
+        },
+        show_controls: false,
+        video: {},
+      };
+
+      attachVideo.mockReturnValue(mockVideoPlayer);
+
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
+
+      result.initializeVideoPlayer();
+
+      if (ratechangeCallback) {
+        ratechangeCallback();
+      }
+
+      expect(consoleSpy).toHaveBeenCalledWith('Playback rate changed to:', 1.5);
+
+      consoleSpy.mockRestore();
+    });
+
+    it('logs fullscreen state changes', async () => {
+      const { useActionStore } = await import('../stores/action_store');
+      const { attachVideo } = await import('./use_attach_video');
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      useActionStore.mockReturnValue({
+        currentAction: { type: 'video' },
+        currentActionIndex: 0,
+      });
+
+      let fullscreenchangeCallback;
+      const mockOn = vi.fn((event, callback) => {
+        if (event === 'fullscreenchange') {
+          fullscreenchangeCallback = callback;
+        }
+      });
+
+      const mockVideoPlayer = {
+        videojs_player: {
+          on: mockOn,
+          el_: {},
+          ready: vi.fn((callback) => callback()),
+          controlBar: {
+            addChild: vi.fn(),
+            getChild: vi.fn(),
+            children: vi.fn(() => []),
+          },
+          isFullscreen: vi.fn(() => true),
+        },
+        show_controls: false,
+        video: {},
+      };
+
+      attachVideo.mockReturnValue(mockVideoPlayer);
+
+      const result = /** @type {any} */ (
+        useVideoPlayer(videoContainer, onEndedCallback)
+      );
+
+      result.initializeVideoPlayer();
+
+      if (fullscreenchangeCallback) {
+        fullscreenchangeCallback();
+      }
+
+      expect(consoleSpy).toHaveBeenCalledWith('Fullscreen state changed:', true);
+
+      consoleSpy.mockRestore();
     });
   });
 });

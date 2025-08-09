@@ -6,6 +6,9 @@ import { useActivitySettingsStore } from '../stores/activity_settings_store';
 import { useDLStore } from '../stores/direction_line_store';
 import { attachVideo } from './use_attach_video';
 
+// Global videojs variable declaration
+/* global videojs */
+
 /**
  * @typedef {Object} VideoJSPlayer
  * @property {Function} [dispose] - Optional dispose method
@@ -13,6 +16,19 @@ import { attachVideo } from './use_attach_video';
  * @property {Function} on - Event listener method
  * @property {Function} [pause] - Optional pause method
  * @property {Function} [play] - Optional play method that returns a Promise
+ * @property {Function} [controlBar] - Control bar access method
+ * @property {Function} [playbackRate] - Playback rate method
+ * @property {Function} [requestFullscreen] - Fullscreen request method
+ * @property {Function} [exitFullscreen] - Fullscreen exit method
+ * @property {Function} [isFullscreen] - Fullscreen check method
+ * @property {Function} [ready] - Ready method for player initialization
+ */
+
+/**
+ * @typedef {Object} VideoJSControlBar
+ * @property {Function} addChild - Add child component method
+ * @property {Function} getChild - Get child component method
+ * @property {Function} children - Get all children method
  */
 
 /**
@@ -44,14 +60,89 @@ import { attachVideo } from './use_attach_video';
  * @return {Object} Video player API object
  */
 export function useVideoPlayer(videoContainer, onEnded) {
-  /** @type {import('vue').Ref<Object|null>} */
+  /** @type {import('vue').Ref<VHLVideoFile|null>} */
   const videoPlayer = ref(null);
   /** @type {import('vue').Ref<boolean>} */
   const isPlaying = ref(false);
 
   /**
+   * Configures VideoJS control bar with fullscreen and playback rate controls
+   * @param {VideoJSPlayer} player - The VideoJS player instance
+   */
+  const configureVideoJSControls = (player) => {
+    if (!player || typeof player.ready !== 'function') return;
+
+    player.ready(() => {
+      try {
+        const controlBar = /** @type {VideoJSControlBar} */ (player.controlBar);
+        if (!isValidControlBar(controlBar)) return;
+
+        addPlaybackRateControl(controlBar, player);
+        addFullscreenControl(controlBar, player);
+
+        console.log('VideoJS control bar configured with fullscreen and playback rate controls');
+      } catch (error) {
+        console.warn('Error configuring VideoJS controls:', error);
+      }
+    });
+  };
+
+  /**
+   * Validates if the control bar is available and has required methods
+   * @param {VideoJSControlBar} controlBar - The VideoJS control bar
+   * @return {boolean} Whether the control bar is valid
+   */
+  const isValidControlBar = (controlBar) => {
+    if (!controlBar || typeof controlBar.addChild !== 'function') {
+      console.warn('VideoJS control bar not available');
+      return false;
+    }
+    return true;
+  };
+
+  /**
+   * Adds playback rate control to the control bar
+   * @param {VideoJSControlBar} controlBar - The VideoJS control bar
+   * @param {VideoJSPlayer} player - The VideoJS player instance
+   */
+  const addPlaybackRateControl = (controlBar, player) => {
+    const PlaybackRateMenuButton = (videojs.getComponent('PlaybackRateMenuButton'));
+    if (!PlaybackRateMenuButton) return;
+
+    const playbackRateMenu = new PlaybackRateMenuButton(player, {
+      playbackRates: [0.5, 0.75, 1, 1.25, 1.5, 2],
+    });
+
+    const volumeControl = controlBar.getChild('VolumeControl');
+    if (volumeControl) {
+      const volumeIndex = controlBar.children().indexOf(volumeControl);
+      controlBar.addChild(playbackRateMenu, {}, volumeIndex + 1);
+    } else {
+      controlBar.addChild(playbackRateMenu);
+    }
+  };
+
+  /**
+   * Adds fullscreen control to the control bar
+   * @param {VideoJSControlBar} controlBar - The VideoJS control bar
+   * @param {VideoJSPlayer} player - The VideoJS player instance
+   */
+  const addFullscreenControl = (controlBar, player) => {
+    const FullscreenToggle = (videojs.getComponent('FullscreenToggle'));
+    if (!FullscreenToggle) return;
+
+    let fullscreenToggle = controlBar.getChild('FullscreenToggle');
+    if (!fullscreenToggle) {
+      fullscreenToggle = new FullscreenToggle(player);
+      controlBar.addChild(fullscreenToggle);
+    } else {
+      fullscreenToggle.show();
+    }
+  };
+
+  /**
    * Attempts to start autoplay if enabled
-   * @param {Object} playerInstance - The video player instance
+   * @param {VHLVideoFile} playerInstance - The video player instance
    */
   const attemptAutoPlay = (playerInstance) => {
     if (!useActivitySettingsStore().useAutoPlay) return;
@@ -124,6 +215,7 @@ export function useVideoPlayer(videoContainer, onEnded) {
         );
 
         setUpPlayerEvents(videoPlayerInstance);
+        configureVideoJSControls(videoPlayerInstance.videojs_player);
         attemptAutoPlay(videoPlayerInstance);
       }
     } catch (error) {
@@ -156,6 +248,18 @@ export function useVideoPlayer(videoContainer, onEnded) {
 
       player.on('play', () => {
         isPlaying.value = true;
+      });
+
+      player.on('ratechange', () => {
+        if (typeof player.playbackRate === 'function') {
+          console.log('Playback rate changed to:', player.playbackRate());
+        }
+      });
+
+      player.on('fullscreenchange', () => {
+        if (typeof player.isFullscreen === 'function') {
+          console.log('Fullscreen state changed:', player.isFullscreen());
+        }
       });
     }
   };

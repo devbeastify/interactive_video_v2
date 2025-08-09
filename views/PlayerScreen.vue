@@ -10,7 +10,6 @@
       :preventInitialization="preventInitialization"
       @quick-check-complete="handleQuickCheckComplete" />
 
-    <!-- Continue button overlay -->
     <div v-if="showContinueButton" :class="$style['continue-overlay']">
       <div :class="$style['continue-container']">
         <h3>Video Complete</h3>
@@ -45,9 +44,6 @@
   import VideoPlayer from '../components/VideoPlayer.vue';
   import QuickCheck from '../components/QuickCheck.vue';
 
-  /**
-   * Props for the component
-   */
   const props = defineProps({
     preventInitialization: {
       type: Boolean,
@@ -74,13 +70,28 @@
     activitySettings: useActivitySettingsStore(),
   };
 
-  // Reactive state for continue button
+  /**
+   * Reactive state for continue button visibility
+   * @type {import('vue').Ref<boolean>}
+   */
   const showContinueButton = ref(false);
-  /** @type {import('vue').Ref<number | null>} */
+
+  /**
+   * Timeout reference for autoplay functionality
+   * @type {import('vue').Ref<number | null>}
+   */
   const autoPlayTimeout = ref(null);
+
+  /**
+   * Reference to the video player component
+   * @type {import('vue').Ref<null>}
+   */
   const videoPlayerRef = ref(null);
 
-  // Computed property to check if autoplay is enabled
+  /**
+   * Computed property indicating whether autoplay mode is enabled
+   * @type {import('vue').ComputedRef<boolean>}
+   */
   const isAutoPlayMode = computed(() => stores.activitySettings.useAutoPlay);
 
   /**
@@ -160,11 +171,6 @@
     }
   }
 
-  /**
-   * Lifecycle hook: Initialize component state on mount
-   * Resets action store and sets up quick check state
-   * @return {void}
-   */
   onMounted(() => {
     if (!props.preventInitialization) {
       stores.action.reset();
@@ -172,7 +178,6 @@
     }
   });
 
-  // Clean up timeout when component is unmounted
   onUnmounted(() => {
     cleanupAutoPlayTimeout();
   });
@@ -200,21 +205,21 @@
   max-width: 600px;
   width: 90%;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  color: white; /* Added to ensure text is readable on image */
+  color: white;
 }
 
 .continue-container h3 {
   margin: 0 0 16px 0;
-  color: white; /* Changed from #333 to white */
+  color: white;
   font-size: 24px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Added for better readability */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
 }
 
 .continue-container p {
   margin: 0 0 24px 0;
-  color: white; /* Changed from #666 to white */
+  color: white;
   font-size: 16px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7); /* Added for better readability */
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
 }
 
 .continue-button {

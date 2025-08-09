@@ -7,10 +7,10 @@
         :key="idx"
         :draggable="true"
         :class="[
-          $style['word'], 
-          { 
+          $style['word'],
+          {
             [$style['dragged']]: draggedIndex === idx,
-            [$style['selected']]: selectedIndex === idx 
+            [$style['selected']]: selectedIndex === idx
           }
         ]"
         @dragstart="onDragStart(idx)"
@@ -51,7 +51,6 @@
   /**
    * @typedef {Object} QuickCheckItem
    * @property {Word[]} words - Array of available words
-   * @property {string} prompt - The question prompt text
    */
 
   /**
@@ -95,14 +94,6 @@
   });
 
   /**
-   * Gets prompt from the current item
-   * @return {string} The question prompt
-   */
-  const prompt = computed(() => {
-    return currentItem.value?.prompt || '';
-  });
-
-  /**
    * Initializes available words when component mounts
    */
   function initializeAvailableWords() {
@@ -119,34 +110,33 @@
    * @param {KeyboardEvent} event - The keyboard event
    */
   function handleGlobalKeydown(event) {
-    // Only handle if we have words and not in an input field
-    if (availableWords.value.length === 0 || 
-        event.target.tagName === 'INPUT' || 
-        event.target.tagName === 'TEXTAREA') {
+    if (availableWords.value.length === 0 ||
+      event.target.tagName === 'INPUT' ||
+      event.target.tagName === 'TEXTAREA') {
       return;
     }
 
     switch (event.key) {
-      case 'ArrowLeft':
-        event.preventDefault();
-        selectPreviousWord();
-        break;
-      case 'ArrowRight':
-        event.preventDefault();
-        selectNextWord();
-        break;
-      case ' ':
-        event.preventDefault();
-        if (selectedIndex.value !== null) {
-          placeSelectedWord();
-        }
-        break;
-      case 'Enter':
-        event.preventDefault();
-        if (selectedIndex.value !== null) {
-          placeSelectedWord();
-        }
-        break;
+    case 'ArrowLeft':
+      event.preventDefault();
+      selectPreviousWord();
+      break;
+    case 'ArrowRight':
+      event.preventDefault();
+      selectNextWord();
+      break;
+    case ' ':
+      event.preventDefault();
+      if (selectedIndex.value !== null) {
+        placeSelectedWord();
+      }
+      break;
+    case 'Enter':
+      event.preventDefault();
+      if (selectedIndex.value !== null) {
+        placeSelectedWord();
+      }
+      break;
     }
   }
 
@@ -222,7 +212,7 @@
       availableWords.value[draggedIndex.value]) {
       droppedWord.value = availableWords.value[draggedIndex.value];
       draggedIndex.value = null;
-      selectedIndex.value = null; // Clear keyboard selection when drag is used
+      selectedIndex.value = null;
     }
   }
 

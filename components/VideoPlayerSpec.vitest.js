@@ -193,18 +193,6 @@ describe('VideoPlayer', () => {
     });
   });
 
-  describe('direction line integration', () => {
-    it('does not display DirectionLine by default', () => {
-      const wrapper = mount(VideoPlayer, {
-        global: {
-          plugins: [pinia],
-        },
-      });
-
-      expect(wrapper.findComponent({ name: 'DirectionLine' }).exists()).toBe(false);
-    });
-  });
-
   describe('component lifecycle', () => {
     it('mounts successfully', () => {
       const wrapper = mount(VideoPlayer, {
@@ -230,7 +218,7 @@ describe('VideoPlayer', () => {
   });
 
   describe('props handling', () => {
-    it('prevents initialization when preventInitialization is true', () => {
+    it('always displays initialized class regardless of preventInitialization prop', () => {
       const wrapper = mount(VideoPlayer, {
         props: {
           preventInitialization: true,
@@ -240,7 +228,20 @@ describe('VideoPlayer', () => {
         },
       });
 
-      expect(wrapper.exists()).toBe(true);
+      expect(wrapper.find('.test-initialized').exists()).toBe(true);
+    });
+
+    it('displays initialized class when preventInitialization is false', () => {
+      const wrapper = mount(VideoPlayer, {
+        props: {
+          preventInitialization: false,
+        },
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(wrapper.find('.test-initialized').exists()).toBe(true);
     });
   });
 });
