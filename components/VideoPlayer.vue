@@ -1,5 +1,9 @@
 <template>
-  <div :class="$style['video-player']">
+  <div
+    :class="[
+      $style['video-player'],
+      testClass('initialized')
+    ]">
     <DirectionLine
       v-if="dlStore.hasDL"
       :dlText="dlStore.currentDLText"
@@ -36,9 +40,11 @@
   import { useVideoPlayer } from '../composables/use_video_player';
   import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher.js';
   import DirectionLine from './DirectionLine.vue';
+  import { testClass } from 'music';
 
   /**
    * @typedef {import('../composables/use_video_player').VideoPlayerAPI} VideoPlayerAPI
+   * @typedef {import('../stores/action_store').Action} Action
    */
 
   const emit = defineEmits(['video-ended']);
@@ -267,7 +273,7 @@
 
   /**
    * Handles action changes and reinitializes video system
-   * @param {any} newAction - The new action object
+   * @param {Action|null} newAction - The new action object
    */
   const handleActionChange = (newAction) => {
     if (newAction?.type === 'video') {

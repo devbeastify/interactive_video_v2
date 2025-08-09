@@ -6,16 +6,27 @@
         v-for="(word, idx) in availableWords"
         :key="idx"
         :draggable="true"
-        :class="[$style['word'], { [$style['dragged']]: draggedIndex === idx }]"
+        :class="[
+          $style['word'],
+          {
+            [$style['dragged']]: draggedIndex === idx,
+            [$style['selected']]: selectedIndex === idx
+          }
+        ]"
         @dragstart="onDragStart(idx)"
-        @dragend="onDragEnd">
+        @dragend="onDragEnd"
+        @click="onWordClick(idx)">
         {{ word.content }}
       </span>
     </div>
     <div
-      :class="$style['drop-zone']"
+      :class="[
+        $style['drop-zone'],
+        { [$style['drop-zone-focused']]: isDropZoneFocused }
+      ]"
       @dragover.prevent
-      @drop="onDrop">
+      @drop="onDrop"
+      @click="onDropZoneClick">
       <span v-if="droppedWord">{{ droppedWord.content }}</span>
       <span v-else class="placeholder">Drop here</span>
     </div>
@@ -30,7 +41,7 @@
 
 <script setup>
 // @ts-check
-  import { ref, computed, onMounted } from 'vue';
+  import { ref, computed, onMounted, onUnmounted } from 'vue';
 
   /**
    * @typedef {Object} Word
@@ -40,7 +51,6 @@
   /**
    * @typedef {Object} QuickCheckItem
    * @property {Word[]} words - Array of available words
-   * @property {string} prompt - The question prompt text
    */
 
   /**
@@ -61,6 +71,8 @@
   const availableWords = ref([]);
   const droppedWord = ref(null);
   const draggedIndex = ref(null);
+  const selectedIndex = ref(null);
+  const isDropZoneFocused = ref(false);
 
   /**
    * Gets the first item from quick_check_content.items
@@ -82,14 +94,6 @@
   });
 
   /**
-   * Gets prompt from the current item
-   * @return {string} The question prompt
-   */
-  const prompt = computed(() => {
-    return currentItem.value?.prompt || '';
-  });
-
-  /**
    * Initializes available words when component mounts
    */
   function initializeAvailableWords() {
@@ -101,24 +105,89 @@
     }
   }
 
-  onMounted(initializeAvailableWords);
+  /**
+   * Handles global keyboard navigation and actions
+   * @param {KeyboardEvent} event - The keyboard event
+   */
+  function handleGlobalKeydown(event) {
+    if (availableWords.value.length === 0 ||
+      event.target.tagName === 'INPUT' ||
+      event.target.tagName === 'TEXTAREA') {
+      return;
+    }
+
+    switch (event.key) {
+    case 'ArrowLeft':
+      event.preventDefault();
+      selectPreviousWord();
+      break;
+    case 'ArrowRight':
+      event.preventDefault();
+      selectNextWord();
+      break;
+    case ' ':
+      event.preventDefault();
+      if (selectedIndex.value !== null) {
+        placeSelectedWord();
+      }
+      break;
+    case 'Enter':
+      event.preventDefault();
+      if (selectedIndex.value !== null) {
+        placeSelectedWord();
+      }
+      break;
+    }
+  }
 
   /**
-   * Replaces %1% in prompt with a drop zone placeholder
-   * @return {string} The prompt with drop zone placeholder
+   * Selects the previous word in the list
    */
-  const promptWithDropZone = computed(() => {
-    if (!prompt.value) return '';
+  function selectPreviousWord() {
+    if (selectedIndex.value === null || selectedIndex.value <= 0) {
+      selectedIndex.value = availableWords.value.length - 1;
+    } else {
+      selectedIndex.value--;
+    }
+  }
 
-    const placeholder = droppedWord.value ?
-      droppedWord.value.content :
-      '_____';
+  /**
+   * Selects the next word in the list
+   */
+  function selectNextWord() {
+    if (selectedIndex.value === null || selectedIndex.value >= availableWords.value.length - 1) {
+      selectedIndex.value = 0;
+    } else {
+      selectedIndex.value++;
+    }
+  }
 
-    return prompt.value.replace(
-      '%1%',
-      `<span class="drop-placeholder">${placeholder}</span>`
-    );
-  });
+  /**
+   * Places the currently selected word in the drop zone
+   */
+  function placeSelectedWord() {
+    if (selectedIndex.value !== null && availableWords.value[selectedIndex.value]) {
+      droppedWord.value = availableWords.value[selectedIndex.value];
+      selectedIndex.value = null;
+    }
+  }
+
+  /**
+   * Handles clicking on a word to select it
+   * @param {number} idx - The index of the clicked word
+   */
+  function onWordClick(idx) {
+    selectedIndex.value = idx;
+  }
+
+  /**
+   * Handles clicking on the drop zone to place selected word
+   */
+  function onDropZoneClick() {
+    if (selectedIndex.value !== null) {
+      placeSelectedWord();
+    }
+  }
 
   /**
    * Handles drag start event
@@ -143,6 +212,7 @@
       availableWords.value[draggedIndex.value]) {
       droppedWord.value = availableWords.value[draggedIndex.value];
       draggedIndex.value = null;
+      selectedIndex.value = null;
     }
   }
 
@@ -154,6 +224,21 @@
       emit('answer-submitted', [droppedWord.value.content]);
     }
   }
+
+  /**
+   * Sets up global keyboard event listener
+   */
+  onMounted(() => {
+    initializeAvailableWords();
+    document.addEventListener('keydown', handleGlobalKeydown);
+  });
+
+  /**
+   * Cleans up global keyboard event listener
+   */
+  onUnmounted(() => {
+    document.removeEventListener('keydown', handleGlobalKeydown);
+  });
 </script>
 
 <style lang="scss" module>
@@ -184,6 +269,7 @@
   cursor: grab;
   user-select: none;
   transition: background 0.2s;
+  border: 2px solid transparent;
 
   &:hover {
     background: #e0e0e0;
@@ -192,6 +278,12 @@
 
 .word.dragged {
   opacity: 0.5;
+}
+
+.word.selected {
+  background: #1f7069;
+  color: white;
+  border-color: #1f7069;
 }
 
 .drop-zone {
@@ -205,6 +297,17 @@
   margin-bottom: 1rem;
   background: #fafafa;
   padding: 0.5em;
+  cursor: pointer;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: #1f7069;
+  }
+}
+
+.drop-zone-focused {
+  border-color: #1f7069;
+  background: #f0f8f7;
 }
 
 .placeholder {
