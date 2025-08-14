@@ -3,7 +3,8 @@
     <DirectionLine
       v-if="dlStore.hasDL"
       :dlText="dlStore.currentDLText"
-      :isPlaying="dlStore.isPlaying" />
+      :isPlaying="dlStore.isPlaying"
+      :direction_line_audio="dlStore.currentAudioPath" />
 
     <div :class="$style['diagnostic-content']">
       <h2>Diagnostic</h2>
@@ -83,10 +84,7 @@
    * @return {void}
    */
   const initializeDiagnostic = () => {
-    const activityInfoForDL = /** @type {import('../stores/direction_line_store').ActivityInfo} */ (
-      store.activityInfo
-    );
-    dlStore.initializeDLForPhase('diagnostic', activityInfoForDL);
+    dlStore.initializeDLForPhase('diagnostic');
   };
 
   /**

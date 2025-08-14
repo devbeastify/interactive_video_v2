@@ -4,7 +4,6 @@ import { defineStore } from 'pinia';
 
 /**
  * @typedef Reference
- * @property {string} dl
  * @property {string} id
  * @property {string} title
  * @property {string} url
@@ -20,7 +19,6 @@ import { defineStore } from 'pinia';
 /**
  * @typedef ActivityInfo
  * @property {Object} diagnostic
- * @property {string} dl
  * @property {Array<QuickCheck>} quick_checks
  * @property {Array<Reference>} reference
  * @property {string} sub_topic

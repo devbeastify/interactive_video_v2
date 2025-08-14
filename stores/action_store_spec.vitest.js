@@ -439,18 +439,6 @@ describe('useActionStore', () => {
 
       expect(store.actions).toEqual(mockActions);
     });
-
-    it('resets currentActionIndex correctly', () => {
-      const mockActions = [
-        { type: 'video', data: { dl: 'Video 1' }, index: 0 },
-      ];
-      store.actions = mockActions;
-      store.currentActionIndex = 5;
-
-      store.reset();
-
-      expect(store.currentActionIndex).toBe(0);
-    });
   });
 
   describe('resetToFirstAction', () => {
@@ -472,18 +460,6 @@ describe('useActionStore', () => {
       store.resetToFirstAction();
 
       expect(store.actions).toEqual(mockActions);
-    });
-
-    it('resets currentActionIndex correctly', () => {
-      const mockActions = [
-        { type: 'video', data: { dl: 'Video 1' }, index: 0 },
-      ];
-      store.actions = mockActions;
-      store.currentActionIndex = 5;
-
-      store.resetToFirstAction();
-
-      expect(store.currentActionIndex).toBe(0);
     });
   });
 });

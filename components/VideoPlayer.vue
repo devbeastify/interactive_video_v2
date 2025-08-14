@@ -4,11 +4,6 @@
       $style['video-player'],
       testClass('initialized')
     ]">
-    <DirectionLine
-      v-if="dlStore.hasDL"
-      :dlText="dlStore.currentDLText"
-      :isPlaying="dlStore.isPlaying" />
-
     <div :class="$style['c-interactive-video']">
       <div :class="$style['c-interactive-video-video']">
         <div ref="videoContainer" class="js-tutorial-container" />
@@ -36,10 +31,7 @@
   import { mainStore } from '../stores/main_store';
   import { useActionStore } from '../stores/action_store';
   import { useActivitySettingsStore } from '../stores/activity_settings_store';
-  import { useDLStore } from '../stores/direction_line_store';
   import { useVideoPlayer } from '../composables/use_video_player';
-  import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher.js';
-  import DirectionLine from './DirectionLine.vue';
   import { testClass } from 'music';
 
   /**
@@ -62,7 +54,6 @@
   const store = mainStore();
   const actionStore = useActionStore();
   const activitySettingsStore = useActivitySettingsStore();
-  const dlStore = useDLStore();
 
   const videoContainer = ref(null);
   const showControls = ref(true);
@@ -99,7 +90,6 @@
    */
   const canControlVideo = () => {
     if (!videoPlayer.value) return false;
-    if (dlStore.isPlaying) return false;
     return true;
   };
 
@@ -169,38 +159,6 @@
   };
 
   /**
-   * Handles DL completion event
-   */
-  const handleDLCompleted = () => {
-    if (actionStore.currentActionIsVideo) {
-      startVideoPlayback();
-    }
-  };
-
-  /**
-   * Handles DL start event
-   */
-  const handleDLStarted = () => {
-    pauseVideo();
-  };
-
-  /**
-   * Sets up event listeners for video and DL events
-   */
-  const setUpEventListeners = () => {
-    eventDispatcher.on(DL_EVENTS.COMPLETED, handleDLCompleted);
-    eventDispatcher.on(DL_EVENTS.STARTED, handleDLStarted);
-  };
-
-  /**
-   * Cleans up event listeners
-   */
-  const cleanupEventListeners = () => {
-    eventDispatcher.off(DL_EVENTS.COMPLETED, handleDLCompleted);
-    eventDispatcher.off(DL_EVENTS.STARTED, handleDLStarted);
-  };
-
-  /**
    * Waits for video element to be ready and starts playback
    */
   const waitForVideoElement = () => {
@@ -217,12 +175,7 @@
   const startPlaybackSequence = () => {
     if (!actionStore.currentActionIsVideo) return;
 
-    if (dlStore.hasDL) {
-      pauseVideo();
-      dlStore.playDL();
-    } else {
-      setTimeout(waitForVideoElement, 200);
-    }
+    setTimeout(waitForVideoElement, 200);
   };
 
   /**
@@ -231,7 +184,6 @@
   const initializeVideoSystem = () => {
     if (!isVideoAction.value) return;
 
-    dlStore.initializeDLForPhase('video', store.activityInfo);
     startPlaybackSequence();
   };
 
@@ -280,12 +232,10 @@
       showControls.value = true;
 
       cleanupVideoPlayer();
-      cleanupEventListeners();
 
       setTimeout(() => {
         initializeVideoPlayer();
         initializeVideoSystem();
-        setUpEventListeners();
       }, 100);
     } else if (newAction?.type === 'quick_check') {
       showControls.value = false;
@@ -299,8 +249,6 @@
   const handleAutoPlayChange = (newValue) => {
     if (!videoPlayer.value) return;
 
-    if (dlStore.isPlaying) return;
-
     if (newValue) {
       playVideo();
     } else {
@@ -308,37 +256,22 @@
     }
   };
 
-  /**
-   * Handles DL playing state changes
-   * @param {boolean} isDLPlaying - Whether DL is currently playing
-   */
-  const handleDLPlayingChange = (isDLPlaying) => {
-    if (isDLPlaying) {
-      pauseVideo(false);
-    } else {
-      if (shouldAutoPlay.value && actionStore.currentActionIsVideo) {
-        startVideoPlayback();
-      }
-    }
-  };
-
-  watch(() => dlStore.isPlaying, handleDLPlayingChange);
   watch(() => actionStore.currentAction, handleActionChange);
   watch(() => activitySettingsStore.useAutoPlay, handleAutoPlayChange);
+  watch(() => !actionStore.currentActionIsVideo, () => {
+    cleanupVideoPlayer();
+  });
 
   onMounted(() => {
     if (!props.preventInitialization) {
       initializeVideoPlayer();
       initializeVideoSystem();
-      setUpEventListeners();
     }
   });
 
   onUnmounted(() => {
     try {
       cleanupVideoPlayer();
-      cleanupEventListeners();
-      dlStore.cleanup();
     } catch (error) {
       console.warn('Error during component cleanup:', error);
     }

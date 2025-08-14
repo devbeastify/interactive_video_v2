@@ -5,7 +5,8 @@
         <DirectionLine
           v-if="dlStore.hasDL"
           :dlText="dlStore.currentDLText"
-          :isPlaying="dlStore.isPlaying" />
+          :isPlaying="dlStore.isPlaying"
+          :direction_line_audio="dlStore.currentAudioPath" />
       </div>
 
       <div :class="$style['quick-check-content']">
@@ -54,8 +55,6 @@
   import { computed, onMounted, onUnmounted, watch } from 'vue';
   import { useActionStore } from '../stores/action_store';
   import { useDLStore } from '../stores/direction_line_store';
-  import { mainStore } from '../stores/main_store';
-  import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher.js';
   import MultipleChoiceQuestion from './questions/MultipleChoiceQuestion.vue';
   import FillInTheBlanksQuestion from './questions/FillInTheBlanksQuestion.vue';
   import PronunciationQuestion from './questions/PronunciationQuestion.vue';
@@ -84,19 +83,8 @@
 
   const emit = defineEmits(['quick-check-complete']);
 
-  /**
-   * Props for the component
-   */
-  const props = defineProps({
-    preventInitialization: {
-      type: Boolean,
-      default: false,
-    },
-  });
-
   const actionStore = useActionStore();
   const dlStore = useDLStore();
-  const store = mainStore();
 
   /**
    * Computed property for current quick check data from action store
@@ -132,44 +120,7 @@
    * Initializes DL for quick check phase
    */
   const initializeDLForQuickCheck = () => {
-    const activityInfoForDL = /** @type {import('../stores/direction_line_store').ActivityInfo} */ (
-      store.activityInfo
-    );
-    dlStore.initializeDLForPhase('quick_check', activityInfoForDL);
-
-    if (dlStore.hasDL) {
-      dlStore.playDL();
-    }
-  };
-
-  /**
-   * Handles DL completion event
-   */
-  const handleDLCompleted = () => {
-    console.log('DL completed');
-  };
-
-  /**
-   * Handles DL start event
-   */
-  const handleDLStarted = () => {
-    console.log('DL started');
-  };
-
-  /**
-   * Sets up event listeners for DL
-   */
-  const setUpEventListeners = () => {
-    eventDispatcher.on(DL_EVENTS.COMPLETED, handleDLCompleted);
-    eventDispatcher.on(DL_EVENTS.STARTED, handleDLStarted);
-  };
-
-  /**
-   * Cleans up event listeners
-   */
-  const cleanupEventListeners = () => {
-    eventDispatcher.off(DL_EVENTS.COMPLETED, handleDLCompleted);
-    eventDispatcher.off(DL_EVENTS.STARTED, handleDLStarted);
+    dlStore.initializeDLForPhase('quick_check');
   };
 
   /**
@@ -223,15 +174,13 @@
    * Watches for action changes and initializes quick check
    */
   watch(() => actionStore.currentAction, (newAction) => {
-    if (newAction?.type === 'quick_check' && !props.preventInitialization) {
+    if (newAction?.type === 'quick_check') {
       pauseVideoIfPlaying();
       initializeDLForQuickCheck();
     }
   });
 
   onMounted(() => {
-    setUpEventListeners();
-
     if (actionStore.currentAction?.type === 'quick_check') {
       initializeDLForQuickCheck();
     }
@@ -239,7 +188,6 @@
 
   onUnmounted(() => {
     try {
-      cleanupEventListeners();
       dlStore.cleanup();
     } catch (error) {
       console.warn('Error during QuickCheck component cleanup:', error);

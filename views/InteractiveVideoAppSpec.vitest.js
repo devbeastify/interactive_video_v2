@@ -11,7 +11,6 @@ vi.mock('../stores/main_store', () => ({
       topic: 'Test Topic',
       sub_topic: 'Test Sub Topic',
       title: 'Test Title',
-      dl: 'Test Direction Line',
       reference: [],
       quick_checks: [],
       diagnostic: {
@@ -86,7 +85,7 @@ describe('InteractiveVideoApp', () => {
    * @description Tests component initialization
    */
   describe('initialization', () => {
-    it('sets up progress bar event listeners on mount', () => {
+    it('adds progress bar button click event listener on mount', () => {
       const addEventListenerSpy = vi.spyOn(document, 'addEventListener');
 
       mount(InteractiveVideoApp, {
@@ -99,6 +98,16 @@ describe('InteractiveVideoApp', () => {
         'progressBarButtonClick',
         expect.any(Function)
       );
+    });
+
+    it('adds progress bar element enabled event listener on mount', () => {
+      const addEventListenerSpy = vi.spyOn(document, 'addEventListener');
+
+      mount(InteractiveVideoApp, {
+        global: {
+          plugins: [pinia],
+        },
+      });
 
       expect(addEventListenerSpy).toHaveBeenCalledWith(
         'progressBarElementEnabled',
@@ -106,7 +115,7 @@ describe('InteractiveVideoApp', () => {
       );
     });
 
-    it('removes progress bar event listeners on unmount', () => {
+    it('removes progress bar button click event listener on unmount', () => {
       const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
 
       const wrapper = mount(InteractiveVideoApp, {
@@ -121,6 +130,18 @@ describe('InteractiveVideoApp', () => {
         'progressBarButtonClick',
         expect.any(Function)
       );
+    });
+
+    it('removes progress bar element enabled event listener on unmount', () => {
+      const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
+
+      const wrapper = mount(InteractiveVideoApp, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      wrapper.unmount();
 
       expect(removeEventListenerSpy).toHaveBeenCalledWith(
         'progressBarElementEnabled',
@@ -150,7 +171,7 @@ describe('InteractiveVideoApp', () => {
    * @description Tests progress bar event handling
    */
   describe('progress bar events', () => {
-    it('handles progress bar element enabled event', () => {
+    it('logs message when progress bar element enabled event occurs', () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       mount(InteractiveVideoApp, {

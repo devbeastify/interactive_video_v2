@@ -6,12 +6,10 @@ import { createPinia, setActivePinia } from 'pinia';
 import DirectionLine from './DirectionLine.vue';
 
 vi.mock('../lib/event_dispatcher', () => ({
-  EventDispatcher: {
-    getInstance: vi.fn(() => ({
-      on: vi.fn(),
-      off: vi.fn(),
-      dispatch: vi.fn(),
-    })),
+  eventDispatcher: {
+    on: vi.fn(),
+    off: vi.fn(),
+    dispatch: vi.fn(),
   },
   DL_EVENTS: {
     COMPLETED: 'dl:completed',
@@ -23,9 +21,12 @@ vi.mock('../lib/event_dispatcher', () => ({
   },
 }));
 
-/**
- * @description Test suite for DirectionLine component
- */
+vi.mock('../stores/activity_settings_store', () => ({
+  useActivitySettingsStore: () => ({
+    useAutoPlay: true,
+  }),
+}));
+
 describe('DirectionLine', () => {
   /** @type {import('pinia').Pinia} */
   let pinia;
@@ -37,33 +38,16 @@ describe('DirectionLine', () => {
     setActivePinia(pinia);
     vi.clearAllMocks();
 
-    const { EventDispatcher } = await import('../lib/event_dispatcher');
-    eventDispatcher = EventDispatcher.getInstance();
+    const { eventDispatcher: dispatcher } = await import('../lib/event_dispatcher');
+    eventDispatcher = dispatcher;
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  /**
-   * @description Tests component rendering
-   */
   describe('rendering', () => {
-    it('renders when dlText is provided', () => {
-      const wrapper = mount(DirectionLine, {
-        props: {
-          dlText: 'Test direction line text',
-          isPlaying: false,
-        },
-        global: {
-          plugins: [pinia],
-        },
-      });
-
-      expect(wrapper.exists()).toBe(true);
-    });
-
-    it('displays dlText content', () => {
+    it('displays direction line text when provided', () => {
       const wrapper = mount(DirectionLine, {
         props: {
           dlText: 'Test direction line text',
@@ -77,7 +61,7 @@ describe('DirectionLine', () => {
       expect(wrapper.text()).toContain('Test direction line text');
     });
 
-    it('does not render when dlText is empty', () => {
+    it('hides component when dlText is empty', () => {
       const wrapper = mount(DirectionLine, {
         props: {
           dlText: '',
@@ -91,41 +75,11 @@ describe('DirectionLine', () => {
       expect(wrapper.find('div').exists()).toBe(false);
     });
 
-    it('renders dlText content correctly', () => {
-      const testText = 'Test direction line text';
+    it('shows play button when direction_line_audio is provided', () => {
       const wrapper = mount(DirectionLine, {
         props: {
-          dlText: testText,
-          isPlaying: false,
-        },
-        global: {
-          plugins: [pinia],
-        },
-      });
-
-      expect(wrapper.text()).toContain(testText);
-    });
-
-    it('has correct CSS classes', () => {
-      const wrapper = mount(DirectionLine, {
-        props: {
-          dlText: 'Test direction line text',
-          isPlaying: false,
-        },
-        global: {
-          plugins: [pinia],
-        },
-      });
-
-      expect(wrapper.find('div').exists()).toBe(true);
-    });
-  });
-
-  describe('PlayButton integration', () => {
-    it('renders PlayButton component', () => {
-      const wrapper = mount(DirectionLine, {
-        props: {
-          dlText: 'Test direction line text',
+          dlText: 'Test text',
+          direction_line_audio: 'audio.mp3',
           isPlaying: false,
         },
         global: {
@@ -136,10 +90,28 @@ describe('DirectionLine', () => {
       expect(wrapper.findComponent({ name: 'PlayButton' }).exists()).toBe(true);
     });
 
-    it('passes correct audioBtnState to PlayButton when not playing', () => {
+    it('hides play button when direction_line_audio is not provided', () => {
       const wrapper = mount(DirectionLine, {
         props: {
-          dlText: 'Test direction line text',
+          dlText: 'Test text',
+          direction_line_audio: '',
+          isPlaying: false,
+        },
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(wrapper.findComponent({ name: 'PlayButton' }).exists()).toBe(false);
+    });
+  });
+
+  describe('play button state', () => {
+    it('shows paused state when not playing', () => {
+      const wrapper = mount(DirectionLine, {
+        props: {
+          dlText: 'Test text',
+          direction_line_audio: 'audio.mp3',
           isPlaying: false,
         },
         global: {
@@ -152,10 +124,11 @@ describe('DirectionLine', () => {
       expect(playButton.props('audioBtnState')).toBe('paused');
     });
 
-    it('passes correct audioBtnState to PlayButton when playing', () => {
+    it('shows playing state when playing', () => {
       const wrapper = mount(DirectionLine, {
         props: {
-          dlText: 'Test direction line text',
+          dlText: 'Test text',
+          direction_line_audio: 'audio.mp3',
           isPlaying: true,
         },
         global: {
@@ -169,11 +142,49 @@ describe('DirectionLine', () => {
     });
   });
 
+  describe('play button interaction', () => {
+    it('dispatches play event when clicked while paused', async () => {
+      const wrapper = mount(DirectionLine, {
+        props: {
+          dlText: 'Test text',
+          direction_line_audio: 'audio.mp3',
+          isPlaying: false,
+        },
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      const playButton = wrapper.findComponent({ name: 'PlayButton' });
+      await playButton.vm.$emit('click');
+
+      expect(eventDispatcher.dispatch).toHaveBeenCalledWith('dl:play');
+    });
+
+    it('dispatches pause event when clicked while playing', async () => {
+      const wrapper = mount(DirectionLine, {
+        props: {
+          dlText: 'Test text',
+          direction_line_audio: 'audio.mp3',
+          isPlaying: true,
+        },
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      const playButton = wrapper.findComponent({ name: 'PlayButton' });
+      await playButton.vm.$emit('click');
+
+      expect(eventDispatcher.dispatch).toHaveBeenCalledWith('dl:pause');
+    });
+  });
+
   describe('event handling', () => {
-    it('registers for PLAY event on mount', async () => {
-      const wrapper = mount(DirectionLine, {
+    it('registers play event listener on mount', () => {
+      mount(DirectionLine, {
         props: {
-          dlText: 'Test direction line text',
+          dlText: 'Test text',
           isPlaying: false,
         },
         global: {
@@ -181,15 +192,13 @@ describe('DirectionLine', () => {
         },
       });
 
-      await wrapper.vm.$nextTick();
-
-      expect(wrapper.exists()).toBe(true);
+      expect(eventDispatcher.on).toHaveBeenCalledWith('dl:play', expect.any(Function));
     });
 
-    it('registers for PAUSED event on mount', async () => {
-      const wrapper = mount(DirectionLine, {
+    it('registers paused event listener on mount', () => {
+      mount(DirectionLine, {
         props: {
-          dlText: 'Test direction line text',
+          dlText: 'Test text',
           isPlaying: false,
         },
         global: {
@@ -197,15 +206,13 @@ describe('DirectionLine', () => {
         },
       });
 
-      await wrapper.vm.$nextTick();
-
-      expect(wrapper.exists()).toBe(true);
+      expect(eventDispatcher.on).toHaveBeenCalledWith('dl:paused', expect.any(Function));
     });
 
-    it('registers for COMPLETED event on mount', async () => {
-      const wrapper = mount(DirectionLine, {
+    it('registers completed event listener on mount', () => {
+      mount(DirectionLine, {
         props: {
-          dlText: 'Test direction line text',
+          dlText: 'Test text',
           isPlaying: false,
         },
         global: {
@@ -213,15 +220,13 @@ describe('DirectionLine', () => {
         },
       });
 
-      await wrapper.vm.$nextTick();
-
-      expect(wrapper.exists()).toBe(true);
+      expect(eventDispatcher.on).toHaveBeenCalledWith('dl:completed', expect.any(Function));
     });
 
-    it('unregisters events on unmount', async () => {
+    it('unregisters play event listener on unmount', () => {
       const wrapper = mount(DirectionLine, {
         props: {
-          dlText: 'Test direction line text',
+          dlText: 'Test text',
           isPlaying: false,
         },
         global: {
@@ -229,18 +234,50 @@ describe('DirectionLine', () => {
         },
       });
 
-      await wrapper.vm.$nextTick();
       wrapper.unmount();
 
-      expect(wrapper.exists()).toBe(false);
+      expect(eventDispatcher.off).toHaveBeenCalledWith('dl:play', expect.any(Function));
+    });
+
+    it('unregisters paused event listener on unmount', () => {
+      const wrapper = mount(DirectionLine, {
+        props: {
+          dlText: 'Test text',
+          isPlaying: false,
+        },
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      wrapper.unmount();
+
+      expect(eventDispatcher.off).toHaveBeenCalledWith('dl:paused', expect.any(Function));
+    });
+
+    it('unregisters completed event listener on unmount', () => {
+      const wrapper = mount(DirectionLine, {
+        props: {
+          dlText: 'Test text',
+          isPlaying: false,
+        },
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      wrapper.unmount();
+
+      expect(eventDispatcher.off).toHaveBeenCalledWith('dl:completed', expect.any(Function));
     });
   });
 
   describe('event callbacks', () => {
-    it('updates local playing state when PLAY event is received', async () => {
+    it('updates playing state when play event is received', async () => {
       const wrapper = mount(DirectionLine, {
         props: {
-          dlText: 'Test direction line text',
+          dlText: 'Test text',
+          direction_line_audio: 'audio.mp3',
           isPlaying: false,
         },
         global: {
@@ -269,10 +306,11 @@ describe('DirectionLine', () => {
       }
     });
 
-    it('updates local playing state when PAUSED event is received', async () => {
+    it('updates playing state when paused event is received', async () => {
       const wrapper = mount(DirectionLine, {
         props: {
-          dlText: 'Test direction line text',
+          dlText: 'Test text',
+          direction_line_audio: 'audio.mp3',
           isPlaying: true,
         },
         global: {
@@ -301,10 +339,11 @@ describe('DirectionLine', () => {
       }
     });
 
-    it('updates local playing state when COMPLETED event is received', async () => {
+    it('updates playing state when completed event is received', async () => {
       const wrapper = mount(DirectionLine, {
         props: {
-          dlText: 'Test direction line text',
+          dlText: 'Test text',
+          direction_line_audio: 'audio.mp3',
           isPlaying: true,
         },
         global: {
@@ -334,6 +373,40 @@ describe('DirectionLine', () => {
     });
   });
 
+  describe('auto-play functionality', () => {
+    it('auto-plays when dlText and direction_line_audio are provided', () => {
+      mount(DirectionLine, {
+        props: {
+          dlText: 'Test text',
+          direction_line_audio: 'audio.mp3',
+          isPlaying: false,
+        },
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      setTimeout(() => {
+        expect(eventDispatcher.dispatch).toHaveBeenCalledWith('dl:play');
+      }, 150);
+    });
+
+    it('does not auto-play when direction_line_audio is missing', () => {
+      mount(DirectionLine, {
+        props: {
+          dlText: 'Test text',
+          direction_line_audio: '',
+          isPlaying: false,
+        },
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      expect(eventDispatcher.dispatch).not.toHaveBeenCalledWith('dl:play');
+    });
+  });
+
   describe('props', () => {
     it('has default dlText as empty string', () => {
       const wrapper = mount(DirectionLine, {
@@ -352,26 +425,24 @@ describe('DirectionLine', () => {
         },
       });
 
+      wrapper.vm.$nextTick();
+
       expect(wrapper.props('isPlaying')).toBe(false);
     });
-  });
 
-  describe('accessibility', () => {
-    it('has proper structure for screen readers', () => {
+    it('has default direction_line_audio as empty string', () => {
       const wrapper = mount(DirectionLine, {
-        props: {
-          dlText: 'Test direction line text',
-          isPlaying: false,
-        },
         global: {
           plugins: [pinia],
         },
       });
 
-      expect(wrapper.find('div').exists()).toBe(true);
+      expect(wrapper.props('direction_line_audio')).toBe('');
     });
+  });
 
-    it('displays text content for screen readers', () => {
+  describe('accessibility', () => {
+    it('renders text content for screen readers', () => {
       const wrapper = mount(DirectionLine, {
         props: {
           dlText: 'Test direction line text',

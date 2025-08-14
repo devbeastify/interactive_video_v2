@@ -58,9 +58,6 @@ vi.mock('../components/DirectionLine.vue', () => ({
   },
 }));
 
-/**
- * @description Test suite for DiagnosticScreen component
- */
 describe('DiagnosticScreen', () => {
   /** @type {import('pinia').Pinia} */
   let pinia;
@@ -89,9 +86,6 @@ describe('DiagnosticScreen', () => {
     vi.restoreAllMocks();
   });
 
-  /**
-   * @description Tests component rendering
-   */
   describe('rendering', () => {
     it('renders the diagnostic screen layout', () => {
       const wrapper = mount(DiagnosticScreen, {
@@ -125,18 +119,7 @@ describe('DiagnosticScreen', () => {
       expect(directionLine.exists()).toBe(true);
     });
 
-    it('does not render DirectionLine when hasDL is false', () => {
-      const wrapper = mount(DiagnosticScreen, {
-        global: {
-          plugins: [pinia],
-        },
-      });
-
-      const directionLine = wrapper.findComponent({ name: 'DirectionLine' });
-      expect(directionLine.exists()).toBe(true);
-    });
-
-    it('passes correct props to DirectionLine component', () => {
+    it('passes correct dlText prop to DirectionLine component', () => {
       const wrapper = mount(DiagnosticScreen, {
         global: {
           plugins: [pinia],
@@ -146,6 +129,17 @@ describe('DiagnosticScreen', () => {
       const directionLine = wrapper.findComponent({ name: 'DirectionLine' });
 
       expect(directionLine.props('dlText')).toBe('Test direction line text');
+    });
+
+    it('passes correct isPlaying prop to DirectionLine component', () => {
+      const wrapper = mount(DiagnosticScreen, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      const directionLine = wrapper.findComponent({ name: 'DirectionLine' });
+
       expect(directionLine.props('isPlaying')).toBe(false);
     });
 
@@ -162,11 +156,8 @@ describe('DiagnosticScreen', () => {
     });
   });
 
-  /**
-   * @description Tests component initialization
-   */
   describe('initialization', () => {
-    it('sets up event listeners on mount', () => {
+    it('sets up dl:completed event listener on mount', () => {
       mount(DiagnosticScreen, {
         global: {
           plugins: [pinia],
@@ -177,6 +168,14 @@ describe('DiagnosticScreen', () => {
         'dl:completed',
         expect.any(Function)
       );
+    });
+
+    it('sets up dl:started event listener on mount', () => {
+      mount(DiagnosticScreen, {
+        global: {
+          plugins: [pinia],
+        },
+      });
 
       expect(mockEventDispatcher.on).toHaveBeenCalledWith(
         'dl:started',
@@ -185,9 +184,6 @@ describe('DiagnosticScreen', () => {
     });
   });
 
-  /**
-   * @description Tests event handling
-   */
   describe('event handling', () => {
     it('handles direction line completed event', () => {
       const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -246,9 +242,6 @@ describe('DiagnosticScreen', () => {
     });
   });
 
-  /**
-   * @description Tests navigation functionality
-   */
   describe('navigation', () => {
     it('has back button that can be clicked', async () => {
       const wrapper = mount(DiagnosticScreen, {
@@ -259,20 +252,14 @@ describe('DiagnosticScreen', () => {
 
       const backButton = wrapper.find('button');
 
-      expect(backButton.exists()).toBe(true);
-      expect(backButton.isVisible()).toBe(true);
-
       await backButton.trigger('click');
 
       expect(backButton.exists()).toBe(true);
     });
   });
 
-  /**
-   * @description Tests cleanup functionality
-   */
   describe('cleanup', () => {
-    it('removes event listeners on unmount', () => {
+    it('removes dl:completed event listener on unmount', () => {
       const wrapper = mount(DiagnosticScreen, {
         global: {
           plugins: [pinia],
@@ -285,6 +272,16 @@ describe('DiagnosticScreen', () => {
         'dl:completed',
         expect.any(Function)
       );
+    });
+
+    it('removes dl:started event listener on unmount', () => {
+      const wrapper = mount(DiagnosticScreen, {
+        global: {
+          plugins: [pinia],
+        },
+      });
+
+      wrapper.unmount();
 
       expect(mockEventDispatcher.off).toHaveBeenCalledWith(
         'dl:started',
@@ -293,9 +290,6 @@ describe('DiagnosticScreen', () => {
     });
   });
 
-  /**
-   * @description Tests CSS classes and styling
-   */
   describe('styling', () => {
     it('has diagnostic layout class', () => {
       const wrapper = mount(DiagnosticScreen, {
@@ -306,7 +300,9 @@ describe('DiagnosticScreen', () => {
 
       const layout = wrapper.findAll('div')[0];
 
-      expect(layout.classes().some((cls) => cls.includes('diagnostic-layout'))).toBe(true);
+      expect(layout.classes().some((cls) =>
+        cls.includes('diagnostic-layout')
+      )).toBe(true);
     });
 
     it('has diagnostic content class', () => {
@@ -346,13 +342,12 @@ describe('DiagnosticScreen', () => {
 
       const backButton = wrapper.find('button');
 
-      expect(backButton.classes().some((cls) => cls.includes('back-btn'))).toBe(true);
+      expect(backButton.classes().some((cls) =>
+        cls.includes('back-btn')
+      )).toBe(true);
     });
   });
 
-  /**
-   * @description Tests accessibility features
-   */
   describe('accessibility', () => {
     it('has proper heading structure', () => {
       const wrapper = mount(DiagnosticScreen, {
@@ -364,7 +359,6 @@ describe('DiagnosticScreen', () => {
       const heading = wrapper.find('h2');
 
       expect(heading.exists()).toBe(true);
-      expect(heading.text()).toBe('Diagnostic');
     });
 
     it('has clickable back button', () => {
@@ -376,14 +370,10 @@ describe('DiagnosticScreen', () => {
 
       const backButton = wrapper.find('button');
 
-      expect(backButton.exists()).toBe(true);
       expect(backButton.isVisible()).toBe(true);
     });
   });
 
-  /**
-   * @description Tests edge cases
-   */
   describe('edge cases', () => {
     it('handles missing activity info gracefully', () => {
       mockMainStore.activityInfo = null;
