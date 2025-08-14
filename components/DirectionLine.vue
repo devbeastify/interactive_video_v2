@@ -1,7 +1,7 @@
 <template>
   <div v-if="dlText" :class="$style['dl-container']">
     <div :class="$style['dl-content']">
-      <div :class="$style['dl-controls']">
+      <div v-if="props.direction_line_audio" :class="$style['dl-controls']">
         <PlayButton
           :audioBtnState="localIsPlaying ? 'playing' : 'paused'"
           @click="handlePlayButtonClick" />
@@ -15,13 +15,15 @@
 // @ts-check
 
   import { onMounted, onUnmounted, ref, watch } from 'vue';
-  import { EventDispatcher, DL_EVENTS } from '../lib/event_dispatcher.js';
+  import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher.js';
   import PlayButton from './PlayButton.vue';
+  import { useActivitySettingsStore } from '../stores/activity_settings_store.js';
 
   /**
    * @typedef {Object} DirectionLineProps
    * @property {string} dlText - The direction line text content
    * @property {boolean} isPlaying - Whether the direction line is currently playing
+   * @property {string} direction_line_audio - The direction line audio content
    */
 
   /**
@@ -36,12 +38,14 @@
       type: Boolean,
       default: false,
     },
+    direction_line_audio: {
+      type: String,
+      default: '',
+    },
   });
 
-  /**
-   * Get the event dispatcher instance
-   */
-  const eventDispatcher = EventDispatcher.getInstance();
+  const activitySettingsStore = useActivitySettingsStore();
+  const useAutoPlay = activitySettingsStore.useAutoPlay;
 
   /**
    * Local playing state for the direction line
@@ -102,12 +106,18 @@
    * Auto-plays direction line when component is mounted if text is available
    */
   const autoPlayDirectionLine = () => {
-    if (props.dlText && props.dlText.trim()) {
+    if (props.dlText && props.dlText.trim() && useAutoPlay && props.direction_line_audio) {
       setTimeout(() => {
         eventDispatcher.dispatch(DL_EVENTS.PLAY);
       }, 100);
     }
   };
+
+  watch(() => props.dlText, (newDLText) => {
+    if (newDLText) {
+      autoPlayDirectionLine();
+    }
+  }, { immediate: false });
 
   onMounted(() => {
     autoPlayDirectionLine();

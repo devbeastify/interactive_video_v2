@@ -9,6 +9,7 @@ import { useActionStore } from './action_store';
 /**
  * @typedef {Object} Diagnostic
  * @property {string} dl
+ * @property {string} direction_line_audio
  * @property {string} failure_message
  * @property {Array<Object>} items
  * @property {string} language
@@ -27,7 +28,6 @@ import { useActionStore } from './action_store';
  * @property {string} id
  * @property {string} title
  * @property {string} url
- * @property {string} dl - Direction line text
  */
 
 /**
@@ -43,7 +43,6 @@ import { useActionStore } from './action_store';
  * @property {string} topic
  * @property {string} sub_topic
  * @property {string} title
- * @property {string} dl
  * @property {Array<Reference>} reference
  * @property {Array<QuickCheck>} quick_checks
  * @property {Diagnostic} diagnostic
@@ -60,9 +59,9 @@ export const mainStore = defineStore('interactive_video_v2', {
   state: () => ({
     /** @type {ActivityInfo} */
     activityInfo: {
-      dl: '',
       diagnostic: {
         dl: '',
+        direction_line_audio: '',
         failure_message: '',
         items: [],
         language: '',
@@ -102,14 +101,6 @@ export const mainStore = defineStore('interactive_video_v2', {
      */
     title() {
       return this.activityInfo.title;
-    },
-
-    /**
-     * Returns the dl from activityInfo
-     * @return {string}
-     */
-    dl() {
-      return this.activityInfo.dl;
     },
 
     /**
@@ -171,6 +162,7 @@ export const mainStore = defineStore('interactive_video_v2', {
     createDefaultDiagnostic() {
       return {
         dl: '',
+        direction_line_audio: '',
         failure_message: '',
         items: [],
         language: '',
@@ -186,7 +178,6 @@ export const mainStore = defineStore('interactive_video_v2', {
      */
     mergeActivityInfoWithDefaults(parsedActivityInfo) {
       return {
-        dl: parsedActivityInfo.dl || '',
         diagnostic: parsedActivityInfo.diagnostic || this.createDefaultDiagnostic(),
         quick_checks: parsedActivityInfo.quick_checks || [],
         reference: parsedActivityInfo.reference || [],
@@ -207,6 +198,7 @@ export const mainStore = defineStore('interactive_video_v2', {
         }
 
         const parsedActivityInfo = await this.parseActivityInfo(activityInfoElement);
+
         this.activityInfo = this.mergeActivityInfoWithDefaults(parsedActivityInfo);
 
         const actionStore = useActionStore();
@@ -238,9 +230,9 @@ export const mainStore = defineStore('interactive_video_v2', {
     reset() {
       this.isInitialized = false;
       this.activityInfo = {
-        dl: '',
         diagnostic: {
           dl: '',
+          direction_line_audio: '',
           failure_message: '',
           items: [],
           language: '',

@@ -23,9 +23,9 @@ describe('main_store', () => {
 
     it('initializes with default activityInfo', () => {
       expect(store.activityInfo).toEqual({
-        dl: '',
         diagnostic: {
           dl: '',
+          direction_line_audio: '',
           failure_message: '',
           items: [],
           language: '',
@@ -75,13 +75,11 @@ describe('main_store', () => {
         topic: 'Spanish Grammar',
         sub_topic: 'Present Tense',
         title: 'Basic Conjugation',
-        dl: 'Learn the present tense',
         reference: [
           {
             id: '1',
             title: 'Video 1',
             url: '/video1.mp4',
-            dl: 'Watch this video',
           },
         ],
         quick_checks: [
@@ -94,6 +92,7 @@ describe('main_store', () => {
         ],
         diagnostic: {
           dl: 'Test your knowledge',
+          direction_line_audio: '',
           failure_message: 'You need more practice',
           items: [
             {
@@ -137,11 +136,11 @@ describe('main_store', () => {
         topic: 'Spanish Grammar',
         sub_topic: 'Present Tense',
         title: 'Basic Conjugation',
-        dl: 'Learn the present tense',
         reference: [],
         quick_checks: [],
         diagnostic: {
           dl: '',
+          direction_line_audio: '',
           failure_message: '',
           items: [],
           language: '',
@@ -159,17 +158,17 @@ describe('main_store', () => {
       expect(store.isInitialized).toBe(true);
     });
 
-    it('sets activityInfo when initializing', async () => {
+    it('sets activityInfo topic when initializing', async () => {
       const mockElement = document.createElement('div');
       const activityData = {
         topic: 'Spanish Grammar',
         sub_topic: 'Present Tense',
         title: 'Basic Conjugation',
-        dl: 'Learn the present tense',
         reference: [],
         quick_checks: [],
         diagnostic: {
           dl: '',
+          direction_line_audio: '',
           failure_message: '',
           items: [],
           language: '',
@@ -193,11 +192,11 @@ describe('main_store', () => {
         topic: 'Spanish Grammar',
         sub_topic: 'Present Tense',
         title: 'Basic Conjugation',
-        dl: 'Learn the present tense',
         reference: [],
         quick_checks: [],
         diagnostic: {
           dl: '',
+          direction_line_audio: '',
           failure_message: '',
           items: [],
           language: '',
@@ -215,34 +214,6 @@ describe('main_store', () => {
       expect(store.activityInfo.title).toBe('Basic Conjugation');
     });
 
-    it('sets activityInfo dl when initializing', async () => {
-      const mockElement = document.createElement('div');
-      const activityData = {
-        topic: 'Spanish Grammar',
-        sub_topic: 'Present Tense',
-        title: 'Basic Conjugation',
-        dl: 'Learn the present tense',
-        reference: [],
-        quick_checks: [],
-        diagnostic: {
-          dl: '',
-          failure_message: '',
-          items: [],
-          language: '',
-          number_of_questions: '',
-          threshold: '',
-        },
-      };
-      mockElement.innerHTML = JSON.stringify([activityData]);
-
-      vi.spyOn(store, 'getActivityInfo').mockResolvedValue(mockElement);
-      vi.spyOn(store, 'parseActivityInfo').mockResolvedValue(activityData);
-
-      await store.initialize();
-
-      expect(store.activityInfo.dl).toBe('Learn the present tense');
-    });
-
     it('handles initialization failure gracefully', async () => {
       vi.spyOn(store, 'getActivityInfo').mockResolvedValue(null);
 
@@ -256,7 +227,9 @@ describe('main_store', () => {
       mockElement.innerHTML = 'invalid json';
 
       vi.spyOn(store, 'getActivityInfo').mockResolvedValue(mockElement);
-      vi.spyOn(store, 'parseActivityInfo').mockRejectedValue(new Error('Parse error'));
+      vi.spyOn(store, 'parseActivityInfo').mockRejectedValue(
+        new Error('Parse error')
+      );
 
       await store.initialize();
 
@@ -283,19 +256,12 @@ describe('main_store', () => {
       expect(store.title).toBe('Basic Conjugation');
     });
 
-    it('returns dl from activityInfo', () => {
-      store.activityInfo.dl = 'Learn the present tense';
-
-      expect(store.dl).toBe('Learn the present tense');
-    });
-
     it('returns reference from activityInfo', () => {
       const reference = [
         {
           id: '1',
           title: 'Video 1',
           url: '/video1.mp4',
-          dl: 'Watch this video',
         },
       ];
       store.activityInfo.reference = reference;
@@ -320,6 +286,7 @@ describe('main_store', () => {
     it('returns diagnostic from activityInfo', () => {
       const diagnostic = {
         dl: 'Test your knowledge',
+        direction_line_audio: '',
         failure_message: 'You need more practice',
         items: [],
         language: 'en',
@@ -339,11 +306,11 @@ describe('main_store', () => {
         topic: 'Test',
         sub_topic: 'Test',
         title: 'Test',
-        dl: 'Test',
         reference: [],
         quick_checks: [],
         diagnostic: {
           dl: '',
+          direction_line_audio: '',
           failure_message: '',
           items: [],
           language: '',
@@ -357,17 +324,17 @@ describe('main_store', () => {
       expect(store.isInitialized).toBe(false);
     });
 
-    it('resets activityInfo to default values', () => {
+    it('resets activityInfo topic to default', () => {
       store.isInitialized = true;
       store.activityInfo = {
         topic: 'Test',
         sub_topic: 'Test',
         title: 'Test',
-        dl: 'Test',
         reference: [],
         quick_checks: [],
         diagnostic: {
           dl: '',
+          direction_line_audio: '',
           failure_message: '',
           items: [],
           language: '',
@@ -387,11 +354,11 @@ describe('main_store', () => {
         topic: 'Test',
         sub_topic: 'Test',
         title: 'Test',
-        dl: 'Test',
         reference: [],
         quick_checks: [],
         diagnostic: {
           dl: '',
+          direction_line_audio: '',
           failure_message: '',
           items: [],
           language: '',
@@ -411,11 +378,11 @@ describe('main_store', () => {
         topic: 'Test',
         sub_topic: 'Test',
         title: 'Test',
-        dl: 'Test',
         reference: [],
         quick_checks: [],
         diagnostic: {
           dl: '',
+          direction_line_audio: '',
           failure_message: '',
           items: [],
           language: '',
@@ -427,30 +394,6 @@ describe('main_store', () => {
       store.reset();
 
       expect(store.activityInfo.title).toBe('');
-    });
-
-    it('resets activityInfo dl to default', () => {
-      store.isInitialized = true;
-      store.activityInfo = {
-        topic: 'Test',
-        sub_topic: 'Test',
-        title: 'Test',
-        dl: 'Test',
-        reference: [],
-        quick_checks: [],
-        diagnostic: {
-          dl: '',
-          failure_message: '',
-          items: [],
-          language: '',
-          number_of_questions: '',
-          threshold: '',
-        },
-      };
-
-      store.reset();
-
-      expect(store.activityInfo.dl).toBe('');
     });
   });
 });

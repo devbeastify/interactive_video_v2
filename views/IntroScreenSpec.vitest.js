@@ -52,14 +52,6 @@ vi.mock('../lib/safari_browser_check', () => ({
   browserIsSafari: vi.fn(() => true),
 }));
 
-vi.mock('../components/DirectionLine.vue', () => ({
-  default: {
-    name: 'DirectionLine',
-    template: '<div class="direction-line">Direction Line</div>',
-    props: ['dl-text', 'is-playing'],
-  },
-}));
-
 vi.mock('../components/AnimatedLoadingIcon.vue', () => ({
   default: {
     name: 'AnimatedLoadingIcon',
@@ -88,9 +80,6 @@ describe('IntroScreen', () => {
     vi.restoreAllMocks();
   });
 
-  /**
-   * @description Tests component rendering
-   */
   describe('rendering', () => {
     it('renders the main layout container', () => {
       const wrapper = mount(IntroScreen);
@@ -141,23 +130,7 @@ describe('IntroScreen', () => {
     });
   });
 
-  /**
-   * @description Tests direction line rendering
-   */
-  describe('direction line', () => {
-    it('renders DirectionLine when dlStore has DL', () => {
-      const wrapper = mount(IntroScreen);
-
-      const directionLine = wrapper.findComponent({ name: 'DirectionLine' });
-
-      expect(directionLine.exists()).toBe(true);
-    });
-  });
-
-  /**
-   * @description Tests subtitle rendering
-   */
-  describe('subtitle', () => {
+  describe('subtitle rendering', () => {
     it('renders subtitle when subTopic exists', () => {
       const wrapper = mount(IntroScreen);
 
@@ -167,9 +140,6 @@ describe('IntroScreen', () => {
     });
   });
 
-  /**
-   * @description Tests loading state
-   */
   describe('loading state', () => {
     it('renders AnimatedLoadingIcon when mediaState is loading', () => {
       const wrapper = mount(IntroScreen);
@@ -180,11 +150,8 @@ describe('IntroScreen', () => {
     });
   });
 
-  /**
-   * @description Tests autoplay checkbox
-   */
   describe('autoplay checkbox', () => {
-    it('does not render autoplay checkbox when condition is false', () => {
+    it('does not render autoplay checkbox when browser is Safari', () => {
       const wrapper = mount(IntroScreen);
 
       const checkbox = wrapper.findComponent({ name: 'BasicCheckbox' });
@@ -193,9 +160,6 @@ describe('IntroScreen', () => {
     });
   });
 
-  /**
-   * @description Tests BeginAction props
-   */
   describe('BeginAction props', () => {
     it('passes mediaState to BeginAction', () => {
       const wrapper = mount(IntroScreen);
@@ -212,21 +176,18 @@ describe('IntroScreen', () => {
 
       expect(beginAction.props('startButtonClickHandler')).toBeDefined();
     });
-  });
 
-  /**
-   * @description Tests component initialization
-   */
-  describe('initialization', () => {
-    it('loads media on mount', async () => {
+    it('passes function as startButtonClickHandler to BeginAction', () => {
       const wrapper = mount(IntroScreen);
 
-      await wrapper.vm.$nextTick();
+      const beginAction = wrapper.findComponent({ name: 'BeginAction' });
 
-      expect(wrapper.exists()).toBe(true);
+      expect(typeof beginAction.props('startButtonClickHandler')).toBe('function');
     });
+  });
 
-    it('initializes DL for intro phase on mount', async () => {
+  describe('component initialization', () => {
+    it('loads media on mount', async () => {
       const wrapper = mount(IntroScreen);
 
       await wrapper.vm.$nextTick();
@@ -243,10 +204,7 @@ describe('IntroScreen', () => {
     });
   });
 
-  /**
-   * @description Tests component cleanup
-   */
-  describe('cleanup', () => {
+  describe('component cleanup', () => {
     it('calls dlStore cleanup on unmount', async () => {
       const wrapper = mount(IntroScreen);
 
@@ -256,9 +214,6 @@ describe('IntroScreen', () => {
     });
   });
 
-  /**
-   * @description Tests component accessibility
-   */
   describe('accessibility', () => {
     it('renders topic heading with correct semantic structure', () => {
       const wrapper = mount(IntroScreen);
@@ -293,9 +248,6 @@ describe('IntroScreen', () => {
     });
   });
 
-  /**
-   * @description Tests component styling
-   */
   describe('styling', () => {
     it('applies correct CSS modules classes', () => {
       const wrapper = mount(IntroScreen);
@@ -330,10 +282,7 @@ describe('IntroScreen', () => {
     });
   });
 
-  /**
-   * @description Tests component behavior
-   */
-  describe('behavior', () => {
+  describe('data display', () => {
     it('displays topic from store', () => {
       const wrapper = mount(IntroScreen);
 
@@ -356,22 +305,6 @@ describe('IntroScreen', () => {
       const subtitleHeading = wrapper.find('h3');
 
       expect(subtitleHeading.exists()).toBe(true);
-    });
-
-    it('passes correct mediaState to BeginAction', () => {
-      const wrapper = mount(IntroScreen);
-
-      const beginAction = wrapper.findComponent({ name: 'BeginAction' });
-
-      expect(beginAction.props('mediaState')).toBeDefined();
-    });
-
-    it('passes function as startButtonClickHandler to BeginAction', () => {
-      const wrapper = mount(IntroScreen);
-
-      const beginAction = wrapper.findComponent({ name: 'BeginAction' });
-
-      expect(typeof beginAction.props('startButtonClickHandler')).toBe('function');
     });
   });
 });

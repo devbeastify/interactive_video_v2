@@ -4,7 +4,7 @@ import { defineStore } from 'pinia';
 import { AudioService } from '../lib/audio_service.js';
 import { eventDispatcher, DL_EVENTS } from '../lib/event_dispatcher.js';
 import { useActionStore } from './action_store';
-
+import { mainStore } from './main_store';
 /**
  * @typedef DLItem
  * @property {string} dl - Direction line text
@@ -33,17 +33,6 @@ import { useActionStore } from './action_store';
  */
 
 /**
- * @typedef ActivityInfo
- * @property {string} topic
- * @property {string} sub_topic
- * @property {string} title
- * @property {string} [dl] - Main direction line text (optional)
- * @property {Array<ReferenceItem>} reference - Video references
- * @property {Array<QuickCheckItem>} quick_checks - Quick check items
- * @property {DiagnosticItem} diagnostic - Diagnostic data
- */
-
-/**
  * @typedef DLState
  * @property {string} currentDLText - Current DL text
  * @property {string} currentAudioPath - Current audio path
@@ -64,6 +53,7 @@ import { useActionStore } from './action_store';
  * @typedef QuickCheckActionData
  * @property {Object} quick_check_content - Quick check content
  * @property {string} quick_check_content.dl - Direction line text
+ * @property {string} [quick_check_content.direction_line_audio] - Path to audio file
  */
 
 /**
@@ -87,8 +77,8 @@ export const useDLStore = defineStore('dl', {
     isAutoPlay: true,
     /** @type {boolean} */
     isInitialized: false,
-    /** @type {ActivityInfo|null} */
-    activityInfo: null,
+    /** @type {string} */
+    currentPhase: '',
   }),
 
   getters: {
@@ -100,19 +90,26 @@ export const useDLStore = defineStore('dl', {
     hasDL: (state) => {
       return Boolean(state.currentDLText && state.currentDLText.trim());
     },
+
+    /**
+     * Get the main store instance
+     * @return {ReturnType<typeof mainStore>} The main store instance
+     */
+    mainStore: () => mainStore(),
   },
 
   actions: {
     /**
      * Initialize DL for a specific phase
-     * @param {string} phaseType - The phase type (intro, video, quick_check, diagnostic)
-     * @param {ActivityInfo} activityInfo - The activity information
+     * @param {string} phaseType - The phase type (quick_check, diagnostic)
      */
-    initializeDLForPhase(phaseType, activityInfo) {
-      this.activityInfo = activityInfo;
+    initializeDLForPhase(phaseType) {
+      this.currentPhase = phaseType;
       this.isInitialized = true;
 
-      const dlItem = this._getDLsForPhase(phaseType, activityInfo);
+      this._removeEventListeners();
+
+      const dlItem = this._getDLsForPhase(phaseType);
       this._setCurrentDL(dlItem);
       this._setUpEventListeners();
     },
@@ -141,63 +138,22 @@ export const useDLStore = defineStore('dl', {
     /**
      * Get DLs for a specific phase based on the algorithm
      * @param {string} phaseType - The phase type
-     * @param {ActivityInfo} activityInfo - The activity information
      * @return {DLItem|null} DL item or null if not found
      */
-    _getDLsForPhase(phaseType, activityInfo) {
+    _getDLsForPhase(phaseType) {
       const actionStore = useActionStore();
       const currentAction = actionStore.currentAction;
 
       switch (phaseType) {
-      case 'intro':
-        return this._getIntroDL(activityInfo);
-
-      case 'video':
-        return this._getVideoDL(currentAction);
-
       case 'quick_check':
         return this._getQuickCheckDL(currentAction);
 
       case 'diagnostic':
-        return this._getDiagnosticDL(activityInfo);
+        return this._getDiagnosticDL();
 
       default:
         return null;
       }
-    },
-
-    /**
-     * Get intro DL
-     * @param {ActivityInfo} activityInfo - The activity information
-     * @return {DLItem|null} DL item or null if not found
-     */
-    _getIntroDL(activityInfo) {
-      if (activityInfo.dl && activityInfo.dl.trim()) {
-        return {
-          dl: activityInfo.dl,
-          language: 'en',
-        };
-      }
-      return null;
-    },
-
-    /**
-     * Get video DL
-     * @param {Action|null} currentAction - The current action
-     * @return {DLItem|null} DL item or null if not found
-     */
-    _getVideoDL(currentAction) {
-      if (currentAction && currentAction.type === 'video') {
-        const currentRef = /** @type {VideoActionData} */ (currentAction.data);
-        if (currentRef && currentRef.dl && currentRef.dl.trim()) {
-          return {
-            dl: currentRef.dl,
-            audio_path: currentRef.audio_path,
-            language: currentRef.language || 'en',
-          };
-        }
-      }
-      return null;
     },
 
     /**
@@ -212,6 +168,7 @@ export const useDLStore = defineStore('dl', {
             currentQC.quick_check_content.dl.trim()) {
           return {
             dl: currentQC.quick_check_content.dl,
+            audio_path: currentQC.quick_check_content.direction_line_audio || '',
             language: 'en',
           };
         }
@@ -221,15 +178,15 @@ export const useDLStore = defineStore('dl', {
 
     /**
      * Get diagnostic DL
-     * @param {ActivityInfo} activityInfo - The activity information
      * @return {DLItem|null} DL item or null if not found
      */
-    _getDiagnosticDL(activityInfo) {
-      if (activityInfo.diagnostic && activityInfo.diagnostic.dl &&
-          activityInfo.diagnostic.dl.trim()) {
+    _getDiagnosticDL() {
+      if (this.mainStore.activityInfo.diagnostic && this.mainStore.activityInfo.diagnostic.dl &&
+          this.mainStore.activityInfo.diagnostic.dl.trim()) {
         return {
-          dl: activityInfo.diagnostic.dl,
-          language: activityInfo.diagnostic.language || 'en',
+          dl: this.mainStore.activityInfo.diagnostic.dl,
+          audio_path: this.mainStore.activityInfo.diagnostic.direction_line_audio || '',
+          language: this.mainStore.activityInfo.diagnostic.language || 'en',
         };
       }
       return null;
@@ -252,11 +209,11 @@ export const useDLStore = defineStore('dl', {
     },
 
     /**
-     * Play DL audio
+     * Play DL audio using AudioService
      * @return {Promise<void>}
      */
     async playDL() {
-      if (!this.hasDL) {
+      if (!this.hasDL || this.isPlaying) {
         return;
       }
 
@@ -264,20 +221,25 @@ export const useDLStore = defineStore('dl', {
       eventDispatcher.dispatch(DL_EVENTS.STARTED);
 
       try {
-        if (this.currentAudioPath) {
-          await this._playAudioFile();
-        } else {
-          await this._playTTS();
-        }
+        await AudioService.playDL({
+          text: this.currentDLText,
+          audioPath: this.currentAudioPath,
+          languageCode: this.currentLanguage,
+          onStart: () => {
+            this.isPlaying = true;
+          },
+          onEnd: () => {
+            this.isPlaying = false;
+            eventDispatcher.dispatch(DL_EVENTS.COMPLETED);
+          },
+          onError: (error) => {
+            this.isPlaying = false;
+            eventDispatcher.dispatch(DL_EVENTS.ERROR, error);
+          },
+        });
       } catch (error) {
-        console.warn('DL playback failed, trying TTS fallback:', error);
-        try {
-          await this._playTTS();
-        } catch (ttsError) {
-          console.error('TTS fallback also failed:', ttsError);
-          this.isPlaying = false;
-          eventDispatcher.dispatch(DL_EVENTS.ERROR, ttsError);
-        }
+        this.isPlaying = false;
+        eventDispatcher.dispatch(DL_EVENTS.ERROR, error);
       }
     },
 
@@ -288,64 +250,6 @@ export const useDLStore = defineStore('dl', {
       this.isPlaying = false;
       AudioService.stopAudio();
       eventDispatcher.dispatch(DL_EVENTS.PAUSED);
-    },
-
-    /**
-     * Play audio file
-     * @return {Promise<void>}
-     */
-    async _playAudioFile() {
-      return new Promise((resolve, reject) => {
-        const audio = new Audio(this.currentAudioPath);
-
-        audio.addEventListener('ended', () => {
-          this.isPlaying = false;
-          eventDispatcher.dispatch(DL_EVENTS.COMPLETED);
-          resolve();
-        }, { once: true });
-
-        audio.addEventListener('error', (error) => {
-          this.isPlaying = false;
-          eventDispatcher.dispatch(DL_EVENTS.ERROR, error);
-          reject(error);
-        }, { once: true });
-
-        audio.play().catch((playError) => {
-          this.isPlaying = false;
-          eventDispatcher.dispatch(DL_EVENTS.ERROR, playError);
-          reject(playError);
-        });
-      });
-    },
-
-    /**
-     * Play TTS
-     * @return {Promise<void>}
-     */
-    async _playTTS() {
-      return new Promise((resolve, reject) => {
-        this.isPlaying = true;
-
-        AudioService.playTTS(
-          this.currentDLText,
-          this.currentLanguage,
-          {
-            onStart: () => {
-              this.isPlaying = true;
-            },
-            onEnd: () => {
-              this.isPlaying = false;
-              eventDispatcher.dispatch(DL_EVENTS.COMPLETED);
-              resolve();
-            },
-            onError: (error) => {
-              this.isPlaying = false;
-              eventDispatcher.dispatch(DL_EVENTS.ERROR, error);
-              reject(error);
-            },
-          }
-        );
-      });
     },
 
     /**
@@ -365,7 +269,6 @@ export const useDLStore = defineStore('dl', {
       this.pauseDL();
       this.reset();
       this.isInitialized = false;
-      this.activityInfo = null;
       this._removeEventListeners();
     },
   },

@@ -4,7 +4,8 @@
     @start="goToPlayer" />
   <PlayerScreen
     v-else-if="store.sequencer.currentScreen?.name === 'player'"
-    :preventInitialization="isNavigatingViaProgressBar" />
+    :preventInitialization="isNavigatingViaProgressBar"
+    @goToActionFromOtherScreen="goToActionFromOtherScreen" />
   <DiagnosticScreen
     v-else-if="store.sequencer.currentScreen?.name === 'diagnostic'" />
 </template>
@@ -22,7 +23,7 @@
   const store = mainStore();
   const actionStore = useActionStore();
   const isNavigatingViaProgressBar = ref(false);
-
+  const elementIndex = ref(0);
   /**
    * Initialize the application by calling the store's init method
    * @return {void}
@@ -45,22 +46,23 @@
    */
   function handleProgressBarButtonClick(event) {
     const customEvent = /** @type {CustomEvent} */ (event);
-    const elementIndex = Number(customEvent.detail.elementIndex);
+    elementIndex.value = Number(customEvent.detail.elementIndex);
 
     if (store.sequencer.currentScreen?.name !== 'player') {
       isNavigatingViaProgressBar.value = true;
-
       store.sequencer.goToScreen('player');
-      setTimeout(() => {
-        if (elementIndex >= 0 && elementIndex < actionStore.actions.length) {
-          isNavigatingViaProgressBar.value = false;
-          actionStore.goToAction(elementIndex);
-        }
-      }, 100);
     } else {
-      if (elementIndex >= 0 && elementIndex < actionStore.actions.length) {
-        actionStore.goToAction(elementIndex);
+      if (elementIndex.value >= 0 && elementIndex.value < actionStore.actions.length) {
+        actionStore.goToAction(elementIndex.value);
       }
+    }
+  }
+
+  function goToActionFromOtherScreen() {
+    console.log('goToActionFromOtherScreen');
+    if (elementIndex.value >= 0 && elementIndex.value < actionStore.actions.length) {
+      isNavigatingViaProgressBar.value = false;
+      actionStore.goToAction(elementIndex.value);
     }
   }
 

@@ -1,12 +1,5 @@
 <template>
   <div :class="$style['interstitial-layout']">
-    <div :class="$style['dl-container']">
-      <DirectionLine
-        v-if="dlStore.hasDL"
-        :dlText="dlStore.currentDLText"
-        :isPlaying="dlStore.isPlaying" />
-    </div>
-
     <div :class="$style['interstitial-layout__main']">
       <div :class="$style['l-stack']">
         <h1 :class="$style['page-topic']" v-html="topic" />
@@ -21,7 +14,7 @@
             :modelValue="activitySettingsStore.useAutoPlay"
             size="lg"
             @change="updateSettings">
-            Auto Play Video
+            Auto Play
           </BasicCheckbox>
           <AnimatedLoadingIcon v-if="mediaState === 'loading'" />
           <BeginAction
@@ -38,7 +31,6 @@
   import { onMounted, onUnmounted } from 'vue';
   import AnimatedLoadingIcon from '../components/AnimatedLoadingIcon.vue';
   import BeginAction from '../components/BeginAction.vue';
-  import DirectionLine from '../components/DirectionLine.vue';
   import { useActivitySettingsStore } from '../stores/activity_settings_store';
   import { useActionStore } from '../stores/action_store';
   import { useDLStore } from '../stores/direction_line_store';
@@ -63,14 +55,6 @@
    * @typedef {Object} ReferenceItem
    * @property {string} audio_path - Path to the audio file
    * @property {string} video_path - Path to the video file
-   */
-
-  /**
-   * @typedef {Object} ActivityInfo
-   * @property {string} topic - Activity topic
-   * @property {string} sub_topic - Activity sub-topic
-   * @property {string} title - Activity title
-   * @property {ReferenceItem[]} reference - Reference items
    */
 
   const emit = defineEmits(['start']);
@@ -183,7 +167,6 @@
   function initializeComponent() {
     activitySettingsStore.resetAutoPlayToEnabled();
     loadMedia();
-    dlStore.initializeDLForPhase('intro', store.activityInfo);
   }
 
   onMounted(initializeComponent);
@@ -201,15 +184,6 @@
   font-weight: 600;
   margin: 0;
   padding: 0;
-}
-
-.dl-container {
-  align-items: flex-start;
-  display: flex;
-  flex-shrink: 0;
-  justify-content: center;
-  padding-top: base.rpx(16);
-  width: 100%;
 }
 
 .interstitial-controls {
