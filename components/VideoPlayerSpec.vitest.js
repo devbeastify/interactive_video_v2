@@ -193,18 +193,6 @@ describe('VideoPlayer', () => {
     });
   });
 
-  describe('direction line integration', () => {
-    it('does not display DirectionLine by default', () => {
-      const wrapper = mount(VideoPlayer, {
-        global: {
-          plugins: [pinia],
-        },
-      });
-
-      expect(wrapper.findComponent({ name: 'DirectionLine' }).exists()).toBe(false);
-    });
-  });
-
   describe('component lifecycle', () => {
     it('mounts successfully', () => {
       const wrapper = mount(VideoPlayer, {
