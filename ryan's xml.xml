@@ -1,0 +1,250 @@
+<activity activity_type="interactive_video_v2" title="Interactive Video with quick checks" language="es" >
+  <dl>Example Direction Line</dl>
+  <items>
+  
+    <!--
+      The <global_intro> node is required for Espirales initial launch (even if there is no topic or sub-topic).
+      The <topic> node is optional, but when provided cannot be blank, and cannot contain html.
+      The <sub_topic> node is optional, but when provided cannot be blank and cannot contain html.
+    -->
+    <global_intro>
+      <topic>Vamos a la ciudad</topic>
+      <sub_topic>Place in the city</sub_topic>
+    </global_intro>
+  
+    <reference type="video">
+      <video id="138699"/>
+      <!--You can include closed captioning as well. Example:
+      <subtitles>
+        <foreign_subtitles id="" />
+        <english_subtitles id="" />
+      </subtitles> -->
+    </reference>
+
+    <!-- The <quick_check> tag is comprised of a single quick_check activity of one of these types:
+         quick_check_category_matching
+         quick_check_drag_and_drop
+         quick_check_multiple_choice
+         quick_check_word_ordering
+         quick_check_pronunciation
+         The <quick_check> node specifies the start / end marks on the scrubber bar.
+     -->
+    <quick_check start="1" end="3">
+      <!-- A quick check category matching activity (bucketing activity) is comprised of one or more <item> nodes, each of which
+           represents a question.
+
+           The <item> node is comprised of one <categories> node and one <prompts> node.
+
+           The <categories> node is comprised of two <category> nodes.  Each <category> node has a ref attribute, used to
+           associate correct answer with the correct bucket; the text it wraps is used for the bucket/category name.
+
+           The <prompts> node has one or more <prompt> nodes; it has an answer_ref attribute, which is used to tie the answer
+           to the correct category/bucket.  The text in the node is shown in the label of the answer.
+      -->
+
+      <quick_check_category_matching>
+        <dl></dl>
+        <item>
+          <categories>
+            <category ref="1">singular</category>
+            <category ref="2">plural</category>
+          </categories>
+          <prompts>
+            <prompt answer_ref="2">animaux</prompt>
+            <prompt answer_ref="2">amis</prompt>
+            <prompt answer_ref="2">étudiants</prompt>
+            <prompt answer_ref="1">objet</prompt>
+            <prompt answer_ref="1">bureau</prompt>
+            <prompt answer_ref="1">télévision</prompt>
+          </prompts>
+        </item>
+      </quick_check_category_matching>      
+    </quick_check>
+
+    <quick_check start="4" end="7">
+      <!-- A quick check drag-and-drop activity is comprised of one or more <item> nodes.
+
+           Each <item> node is comprised of one <prompt> node and one or more <choices> nodes.
+
+           The <prompt> node contains one or more <wol> nodes with "ref" attributes that associate the correct
+           answer with that drop target.
+
+           The <choices> node contains one <answer> node and one or more <distractor> nodes.  Each of them have a &amp;amp;amp;#39;ref&amp;amp;amp;#39; attribute
+           to associate the correct answer with the right <wol>
+      -->
+
+      <quick_check_drag_and_drop>
+        <dl></dl>
+        <item>
+          <prompt>Juana
+            <wol ref="1" />
+            <wol ref="2" />
+            el periódico.</prompt>
+          <choices ref="1">
+            <distractor>es</distractor>
+            <answer>está</answer>
+            <distractor>están</distractor>
+          </choices>
+          <choices ref="2">
+            <distractor>lee</distractor>
+            <distractor>leer</distractor>
+            <answer>leyendo</answer>
+          </choices>
+        </item>
+      </quick_check_drag_and_drop>
+    </quick_check>
+    
+    <quick_check start="10" end="12">
+      <!-- A multiple choice activity is comprised of one or more <item> nodes, each of which represents a question.
+           Each <item> node is comprised of one <prompt> node and one <choices> node.
+
+           The <prompt> node represents the question.
+
+           The <choices> node represents the possible answers; it has exactly one <answer> node, and one or more <distractor> nodes.
+      -->
+
+      <quick_check_multiple_choice>
+        <dl></dl>
+        <item>
+          <prompt>Foo bar baz prompt</prompt>
+          <choices>
+            <answer>cierto</answer>
+            <distractor>falso</distractor>
+          </choices>
+        </item>
+      </quick_check_multiple_choice>
+    </quick_check>
+
+    <quick_check start="15" end="20">
+      <!-- A quick check word ordering (sentence-building) activity is comprised of one or more <item> nodes,
+           each of which represents a question.
+    
+           Each <item> node is comprised of one <final_sentence> node and one <answers> node.
+           If additional prompting is required, an optional <question_prompt> can be included.
+    
+           The <final_sentence> node represents the correct answer.
+    
+           The <answers> node is comprised of one or more <answer> nodes.  
+           The text for this portion of the answer is contained in the <answer> node.
+           The <answer> nodes must be arranged in the correct order, however the student will always see a
+           randomized set of answers.
+      -->
+
+      <quick_check_word_ordering>
+        <dl></dl>
+        <item>
+          <final_sentence>Elles voyagent en France, n&amp;amp;amp;#39;est-ce pas?</final_sentence>
+          <answers>
+            <answer>elles</answer>
+            <answer>voyagent</answer>
+            <answer>en France</answer>
+            <answer>n&amp;amp;amp;#39;est-ce pas</answer>
+          </answers>
+        </item>
+      </quick_check_word_ordering>
+    </quick_check>
+    
+    <quick_check start="21" end="25">
+      <quick_check_pronunciation>
+      <!-- Each record_and_compare node must have at least one word.
+           All the words for the checkpoint will be displayed in order before
+           the student can complete the activity. -->
+        <record_and_compare_word>
+          <!-- 1 audio and 1 word_text nodes are required. -->
+          <audio id="138794"/>
+          <word_text>pelota</word_text>
+          <!-- Optional: target_for_speech_rec: This node is used to add the "clean"
+               text that is sent to our speech rec engine. If not set, "text" node
+               content will be sanitize and send to speech rec engine. 
+               Must be all capital letters, no punctuation, include accent marks.-->
+          <target_for_speech_rec>PELOTA</target_for_speech_rec>
+        </record_and_compare_word>
+        <record_and_compare_word>
+          <audio id="138801"/>
+          <word_text>piscina</word_text>
+        </record_and_compare_word>
+      </quick_check_pronunciation>
+    </quick_check>
+    
+    <!-- The optional diagnostic node is comprised of one <threshold> node, one <number_of_questions> node, one <failure_message> node,
+         and one or more <item> nodes.
+
+         The <threshold> node indicates how many correct answers the student must have to avoid the <failure_message>.
+
+         The <number_of_questions> indicates how many questions will be displayed to the student from the question bank (represented
+         by the <item>s). The order of the questions is randomized.
+
+         The <failure_message> node has the text that will be shown to the student if they don&amp;amp;amp;#39;t reach the threshold.
+
+         Each <item> node is comprised of one <prompt> and one <answers> node.
+
+         Each <prompt> node has one or more <wol> nodes, each with a ref attribute; the ref attribute is used to associate the correct answers with the right wol.
+
+         Each <answers> node has a ref attribute, used to map to the wol in the prompt, and it has one or more <answer> nodes, each of which specify
+         a valid student answer.
+
+    -->
+
+    <diagnostic>
+      <!-- optional style node to enable activity level strictness
+           You can enable a setting with a "yes", "true", or "required", whichever feels sematically fit for you.
+           You do not need to list all three and setting any to "no" will NOT override a course level strictness requirement.
+      -->
+      <style>
+        <ruleset accents="no" capitalization="no" punctuation="no" />
+      </style>
+      
+      <threshold>2</threshold>
+      <number_of_questions>3</number_of_questions>
+      <failure_message>We suggest your repeat this checkpoint.</failure_message>
+
+      <!-- optional dl appears on the interstitial page after the video completes and near the top of the diagnostic activity -->
+      <dl></dl>
+      <item>
+        <prompt>
+          Ana está <wol ref="1" />; quiere dormir. 
+        </prompt>
+        <answers ref="1">
+          <answer>cansada</answer>
+        </answers>
+      </item>
+
+      <item>
+        <prompt>
+          Nosotros estamos <wol ref="1" />. ¡Vamos a jugar al fútbol! 
+        </prompt>
+        <answers ref="1">
+          <answer>aburridos</answer>
+        </answers>
+      </item>
+
+      <item>
+        <prompt>
+          El gimnasio no está <wol ref="1" /> a la medianoche.
+        </prompt>
+        <answers ref="1">
+          <answer>abierto</answer>
+        </answers>
+      </item>
+
+      <item>
+        <prompt>
+          Sandra no puede hablar contigo ahora; está <wol ref="1" />
+        </prompt>
+        <answers ref="1">
+          <answer>ocupada</answer>
+        </answers>
+      </item>
+
+      <item>
+        <prompt>
+          No me gusta comer en la cafetería porque las mesas están <wol ref="1" />. 
+        </prompt>
+        <answers ref="1">
+          <answer>sucias</answer>
+        </answers>
+      </item>
+    </diagnostic>
+    
+  </items>
+</activity>
