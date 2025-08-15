@@ -31,21 +31,17 @@ import { useActionStore } from './action_store';
  */
 
 /**
- * @typedef {Object} VideoReference
- * @property {string} video_path
- * @property {string|null} english_subtitles_path
- * @property {string|null} foreign_subtitles_path
- * @property {string} foreign_language
- */
-
-/**
  * @typedef {Object} ActivityInfo
- * @property {string} topic
- * @property {string} sub_topic
- * @property {string} title
+ * @property {GlobalIntroData} global_intro
  * @property {Array<Reference>} reference
  * @property {Array<QuickCheck>} quick_checks
  * @property {Diagnostic} diagnostic
+ */
+
+/**
+ * @typedef {Object} GlobalIntroData
+ * @property {string} topic
+ * @property {string} sub_topic
  */
 
 /**
@@ -59,6 +55,10 @@ export const mainStore = defineStore('interactive_video_v2', {
   state: () => ({
     /** @type {ActivityInfo} */
     activityInfo: {
+      global_intro: {
+        topic: '',
+        sub_topic: '',
+      },
       diagnostic: {
         dl: '',
         direction_line_audio: '',
@@ -69,10 +69,7 @@ export const mainStore = defineStore('interactive_video_v2', {
         threshold: '',
       },
       quick_checks: [],
-      reference: [],
-      sub_topic: '',
-      title: '',
-      topic: '',
+      reference: [],  // Video references are now stored here
     },
     isInitialized: false,
     sequencer: new Sequencer(),
@@ -80,19 +77,19 @@ export const mainStore = defineStore('interactive_video_v2', {
 
   getters: {
     /**
-     * Returns the topic from activityInfo
+     * Returns the topic from global_intro
      * @return {string}
      */
     topic() {
-      return this.activityInfo.topic;
+      return this.activityInfo.global_intro.topic;
     },
 
     /**
-     * Returns the sub_topic from activityInfo
+     * Returns the sub_topic from global_intro
      * @return {string}
      */
     sub_topic() {
-      return this.activityInfo.sub_topic;
+      return this.activityInfo.global_intro.sub_topic;
     },
 
     /**
@@ -100,7 +97,7 @@ export const mainStore = defineStore('interactive_video_v2', {
      * @return {string}
      */
     title() {
-      return this.activityInfo.title;
+      return this.activityInfo.global_intro.title || '';  // Can fall back to title if present in global_intro
     },
 
     /**
@@ -178,12 +175,13 @@ export const mainStore = defineStore('interactive_video_v2', {
      */
     mergeActivityInfoWithDefaults(parsedActivityInfo) {
       return {
+        global_intro: parsedActivityInfo.global_intro || {
+          topic: '',
+          sub_topic: '',
+        },
         diagnostic: parsedActivityInfo.diagnostic || this.createDefaultDiagnostic(),
         quick_checks: parsedActivityInfo.quick_checks || [],
-        reference: parsedActivityInfo.reference || [],
-        sub_topic: parsedActivityInfo.sub_topic || '',
-        title: parsedActivityInfo.title || '',
-        topic: parsedActivityInfo.topic || '',
+        reference: parsedActivityInfo.reference || [],  // Store video and other references here
       };
     },
 
@@ -230,6 +228,10 @@ export const mainStore = defineStore('interactive_video_v2', {
     reset() {
       this.isInitialized = false;
       this.activityInfo = {
+        global_intro: {
+          topic: '',
+          sub_topic: '',
+        },
         diagnostic: {
           dl: '',
           direction_line_audio: '',
@@ -240,10 +242,7 @@ export const mainStore = defineStore('interactive_video_v2', {
           threshold: '',
         },
         quick_checks: [],
-        reference: [],
-        sub_topic: '',
-        title: '',
-        topic: '',
+        reference: [],  // Video references are now here
       };
       this.sequencer = new Sequencer();
     },
