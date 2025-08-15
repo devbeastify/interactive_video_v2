@@ -4,21 +4,18 @@ module MaestroActivityEngine
       include DirectionLineA11y
       include DirectionLineNodeTransformer
       include NodeRegistryIterable
-      include RollUpA11yIssues
       include QuestionAndReferenceIterable
+      include RollUpA11yIssues
 
-      attr_accessor :diagnostic, :quick_check, :reference, :registry, :title, :topic, :sub_topic
+      attr_accessor :diagnostic, :global_intro, :quick_check, :reference, :registry, :title
       attr_reader :dl
+      attr_writer :mixed_entries
 
       def initialize(registry = nil)
         self.registry = registry
         self.diagnostic = []
         super() # don't pass args up the chain
         @mixed_entries = nil
-      end
-
-      def attributes
-        super + %i[diagnostic quick_check reference]
       end
 
       def a11y_issues
@@ -40,6 +37,7 @@ module MaestroActivityEngine
       def custom_parser_for_node(node_name)
         case node_name
         when :diagnostic then TagParser::InteractiveVideoV2::Diagnostic
+        when :global_intro then TagParser::InteractiveVideoV2::GlobalIntro
         end
       end
 
@@ -63,6 +61,18 @@ module MaestroActivityEngine
         scoring_ruleset
       end
 
+      def global_intro
+        (@global_intro || []).first
+      end
+
+      def topic
+        global_intro&.topic
+      end
+
+      def sub_topic
+        global_intro&.sub_topic
+      end
+
       def has_diagnostic?
         diagnostic.present?
       end
@@ -72,7 +82,7 @@ module MaestroActivityEngine
       end
 
       def mixed_entries
-        @mixed_entries ||= each_excluding_nodes(['diagnostic']).map do |index, node|
+        @mixed_entries ||= each_excluding_nodes(%w[diagnostic global_intro]).map do |index, node|
           send(node.name)[index]
         end
       end
@@ -132,12 +142,9 @@ module MaestroActivityEngine
       def serialize
         {
           diagnostic: diagnostic.first&.serialize,
-          topic: topic&.text || '',
-          sub_topic: sub_topic&.text || '',
-          title: title&.text || '',
           dl: dl&.inner_html || '',
-          quick_checks: (quick_check&.map(&:serialize) || []),
-          reference: reference.map(&:serialize)
+          mixed_entries: mixed_entries.map(&:serialize),
+          title: title,
         }.to_json
       end
 
