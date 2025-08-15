@@ -29,7 +29,6 @@ module MaestroActivityEngine
       end
 
       # a true value prevents attempt object from supplying blank answers for fields not submitted
-      # The diagnostic form contains only a subset of the total question set.
       def allow_missing_answers?
         true
       end
@@ -41,7 +40,6 @@ module MaestroActivityEngine
         end
       end
 
-      # The diagnostic portion is submitted for correction via ajax
       def diagnostic_feedback?
         true
       end
@@ -53,7 +51,6 @@ module MaestroActivityEngine
       end
 
       def effective_ruleset(scoring_ruleset)
-        # only change the ruleset settings to true if the activity requires it.
         scoring_ruleset.must_match_accents = true if requires_accents?
         scoring_ruleset.must_match_capitalization = true if requires_capitalization?
         scoring_ruleset.must_match_punctuation = true if requires_punctuation?
@@ -105,7 +102,7 @@ module MaestroActivityEngine
             {
               action_type: 'button',
               event_data: { elementIndex: index },
-              is_current: false, 
+              is_current: false,
               is_enabled: false,
               label: "Video #{video_index += 1}",
               url: ''
@@ -145,31 +142,18 @@ module MaestroActivityEngine
           dl: dl&.inner_html || '',
           mixed_entries: mixed_entries.map(&:serialize),
           title: title,
+          global_intro: global_intro&.serialize,
+          video_references: video_references.map(&:serialize),
+          quick_checks: quick_checks.map(&:serialize)
         }.to_json
       end
 
-      def show_answer_key?
-        false
+      def quick_checks
+        @quick_checks ||= parse_quick_checks_from_xml
       end
 
-      def submittable?
-        false
-      end
-
-      def validate_responses(
-        params, # student responses
-        scoring_ruleset, # strictness rules
-        mode = :submitted, # should be :submitted
-        disable_enhanced_feedback = false, # correction feedback level
-        feedback_items = [] # should be an empty array for this activity
-      )
-        diagnostic.first&.validate_responses(
-          params,
-          effective_ruleset(scoring_ruleset),
-          mode,
-          disable_enhanced_feedback,
-          feedback_items
-        )
+      def parse_quick_checks_from_xml
+        # Parse the XML for different quick check types (category matching, drag-and-drop, etc.)
       end
     end
   end

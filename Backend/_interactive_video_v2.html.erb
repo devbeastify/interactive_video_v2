@@ -1,14 +1,16 @@
-<% content_for(:js_head, vite_javascript_tag('entrypoints/activities/interactive_video_v2')) %>
 <%= render 'maestro_activity_engine/activities/progress_bar', elements: content_object.progress_bar_elements %>
 
 <div id="interactive_video_v2" class="ns-music-v1" data-activity="<%= content_object.serialize.to_json %>"></div>
 
 <% if content_object.global_intro.present? %>
-  <template
-    class="js-program-global"
-    data-action="global_intro"
-  >
-    <%= content_object.global_intro.serialize.to_json %>
+  <template class="js-program-global" data-action="global_intro">
+    <%= content_object.global_intro.serialize.to_json %>  <!-- Added global_intro data -->
+  </template>
+<% end %>
+
+<% content_object.quick_checks.each_with_index do |quick_check, index| %>
+  <template class="js-quick-check-<%= index + 1 %>">
+    <%= quick_check.serialize %>  <!-- Render quick check data -->
   </template>
 <% end %>
 
