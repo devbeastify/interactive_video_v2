@@ -36,6 +36,12 @@
               @answer-submitted="handleAnswerSubmitted" />
           </div>
 
+          <div v-else-if="isWordOrderingQuestion">
+            <WordOrderingQuestion
+              :question="currentQuickCheckActionData"
+              @answer-submitted="handleAnswerSubmitted" />
+          </div>
+
           <div>
             <button
               :class="$style['quick-check-complete-btn']"
@@ -59,6 +65,7 @@
   import FillInTheBlanksQuestion from './questions/FillInTheBlanksQuestion.vue';
   import PronunciationQuestion from './questions/PronunciationQuestion.vue';
   import DragAndDropQuestion from './questions/DragAndDropQuestion.vue';
+  import WordOrderingQuestion from './questions/WordOrderingQuestion.vue';
   import DirectionLine from './DirectionLine.vue';
 
   /**
@@ -100,21 +107,30 @@
   /**
    * Computed properties for question type checking
    */
-  const isMultipleChoiceQuestion = computed(() =>
-    currentQuickCheckActionData.value?.type === 'multiple_choice'
-  );
+  const isMultipleChoiceQuestion = computed(() => {
+    const data = currentQuickCheckActionData.value;
+    return data && typeof data === 'object' && 'type' in data ? data.type === 'multiple_choice' : false;
+  });
 
-  const isFillInTheBlanksQuestion = computed(() =>
-    currentQuickCheckActionData.value?.type === 'fill_in_the_blanks'
-  );
+  const isFillInTheBlanksQuestion = computed(() => {
+    const data = currentQuickCheckActionData.value;
+    return data && typeof data === 'object' && 'type' in data ? data.type === 'fill_in_the_blanks' : false;
+  });
 
-  const isPronunciationQuestion = computed(() =>
-    currentQuickCheckActionData.value?.type === 'pronunciation'
-  );
+  const isPronunciationQuestion = computed(() => {
+    const data = currentQuickCheckActionData.value;
+    return data && typeof data === 'object' && 'type' in data ? data.type === 'pronunciation' : false;
+  });
 
-  const isDragAndDropQuestion = computed(() =>
-    currentQuickCheckActionData.value?.type === 'quick_check_drag_and_drop'
-  );
+  const isDragAndDropQuestion = computed(() => {
+    const data = currentQuickCheckActionData.value;
+    return data && typeof data === 'object' && 'type' in data ? data.type === 'quick_check_drag_and_drop' : false;
+  });
+
+  const isWordOrderingQuestion = computed(() => {
+    const data = currentQuickCheckActionData.value;
+    return data && typeof data === 'object' && 'type' in data ? data.type === 'quick_check_word_ordering' : false;
+  });
 
   /**
    * Initializes DL for quick check phase
