@@ -10,43 +10,18 @@
       </div>
 
       <div :class="$style['quick-check-content']">
-        <h3>Quick Check</h3>
         <div v-if="currentQuickCheckActionData">
-          <div v-if="isMultipleChoiceQuestion">
-            <MultipleChoiceQuestion
-              :question="currentQuickCheckActionData"
-              @answer-selected="handleAnswerSelected" />
-          </div>
-
-          <div v-else-if="isFillInTheBlanksQuestion">
-            <FillInTheBlanksQuestion
-              :question="currentQuickCheckActionData"
+          <h3>{{ currentQuckCheckType }} placeholder</h3>
+          <div v-if="currentQuckCheckType === 'quick_check_word_ordering'">
+            <WordOrdering 
+              :question="currentQuickCheckActionData" 
               @answer-submitted="handleAnswerSubmitted" />
           </div>
-
-          <div v-else-if="isPronunciationQuestion">
-            <PronunciationQuestion
-              :question="currentQuickCheckActionData"
-              @pronunciation-complete="handlePronunciationComplete" />
-          </div>
-
-          <div v-else-if="isDragAndDropQuestion">
-            <DragAndDropQuestion
-              :question="currentQuickCheckActionData"
-              @answer-submitted="handleAnswerSubmitted" />
-          </div>
-
-          <div v-else-if="isWordOrderingQuestion">
-            <WordOrderingQuestion
-              :question="currentQuickCheckActionData"
-              @answer-submitted="handleAnswerSubmitted" />
-          </div>
-
           <div>
             <button
               :class="$style['quick-check-complete-btn']"
               @click="handleComplete">
-              Complete
+              Continue
             </button>
           </div>
         </div>
@@ -61,12 +36,8 @@
   import { computed, onMounted, onUnmounted, watch } from 'vue';
   import { useActionStore } from '../stores/action_store';
   import { useDLStore } from '../stores/direction_line_store';
-  import MultipleChoiceQuestion from './questions/MultipleChoiceQuestion.vue';
-  import FillInTheBlanksQuestion from './questions/FillInTheBlanksQuestion.vue';
-  import PronunciationQuestion from './questions/PronunciationQuestion.vue';
-  import DragAndDropQuestion from './questions/DragAndDropQuestion.vue';
-  import WordOrderingQuestion from './questions/WordOrderingQuestion.vue';
   import DirectionLine from './DirectionLine.vue';
+  import WordOrdering from './questions/WordOrdering.vue';
 
   /**
    * @typedef {Object} AnswerObject
@@ -104,32 +75,8 @@
       null;
   });
 
-  /**
-   * Computed properties for question type checking
-   */
-  const isMultipleChoiceQuestion = computed(() => {
-    const data = currentQuickCheckActionData.value;
-    return data && typeof data === 'object' && 'type' in data ? data.type === 'multiple_choice' : false;
-  });
-
-  const isFillInTheBlanksQuestion = computed(() => {
-    const data = currentQuickCheckActionData.value;
-    return data && typeof data === 'object' && 'type' in data ? data.type === 'fill_in_the_blanks' : false;
-  });
-
-  const isPronunciationQuestion = computed(() => {
-    const data = currentQuickCheckActionData.value;
-    return data && typeof data === 'object' && 'type' in data ? data.type === 'pronunciation' : false;
-  });
-
-  const isDragAndDropQuestion = computed(() => {
-    const data = currentQuickCheckActionData.value;
-    return data && typeof data === 'object' && 'type' in data ? data.type === 'quick_check_drag_and_drop' : false;
-  });
-
-  const isWordOrderingQuestion = computed(() => {
-    const data = currentQuickCheckActionData.value;
-    return data && typeof data === 'object' && 'type' in data ? data.type === 'quick_check_word_ordering' : false;
+  const currentQuckCheckType = computed(() => {
+    return currentQuickCheckActionData.value?.type;
   });
 
   /**
