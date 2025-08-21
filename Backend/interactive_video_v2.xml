@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<activity language="es" title="Interactive Video Activity" activity_type="interactive_video_v2">
+  <dl>Completa las siguientes actividades.</dl>
+  
+  <!-- Add the missing global_intro section -->
+  <global_intro>
+    <topic>Spanish Language Learning</topic>
+    <sub_topic>Grammar and Vocabulary</sub_topic>
+  </global_intro>
+  
+  <items>
+    <reference type="video">
+      <video id="119549"/>
+      <subtitles>
+        <foreign_subtitles id="145212" />
+        <english_subtitles id="145213" />
+      </subtitles>
+    </reference>
+
+    <quick_check>
+      <quick_check_category_matching>
+        <dl>instructions_go_here</dl>
+        <item>
+          <categories>
+            <category ref="1">singular</category>
+            <category ref="2">plural</category>
+          </categories>
+          <prompts>
+            <prompt answer_ref="2"><image id="38"></image>amis</prompt>
+            <prompt answer_ref="2"><image id="38"></image>animaux</prompt>
+            <prompt answer_ref="1"><image id="38"></image>bureau</prompt>
+            <prompt answer_ref="2">étudiants</prompt>
+            <prompt answer_ref="1">objet</prompt>
+            <prompt answer_ref="1">télévision</prompt>
+          </prompts>
+        </item>
+      </quick_check_category_matching>
+    </quick_check>
+
+    <reference type="video">
+      <video id="119549"/>
+      <subtitles>
+        <foreign_subtitles id="145212" />
+        <english_subtitles id="145213" />
+      </subtitles>
+    </reference>
+
+    <quick_check>
+      <quick_check_drag_and_drop>
+        <dl>Drag and Drop</dl>
+        <item>
+          <prompt>Tu parles aux professeurs. Tu <wol ref="1"/> parles.</prompt>
+          <choices ref="1">
+            <distractor>me</distractor>
+            <distractor>te</distractor>
+            <distractor>lui</distractor>
+            <distractor>nous</distractor>
+            <distractor>vous</distractor>
+            <answer>leur</answer>
+          </choices>
+        </item>
+      </quick_check_drag_and_drop>
+    </quick_check>
+
+    <quick_check>
+      <quick_check_multiple_choice>
+        <dl>Multiple Choice</dl>
+        <style/>
+        <item>
+          <prompt>Foo bar prompt</prompt>
+          <choices>
+            <answer>cierto</answer>
+            <distractor>falso</distractor>
+          </choices>
+        </item>
+      </quick_check_multiple_choice>
+    </quick_check>
+
+    <quick_check>
+      <quick_check_word_ordering>
+        <dl>Form questions using inverted word order. Put the subject at the end.</dl>
+        <item>
+          <final_sentence>¿Cena en la cafetería Pablo?</final_sentence>
+          <question_prompt/>
+          <answers>
+            <answer>¿</answer>
+            <answer>cena</answer>
+            <answer>en</answer>
+            <answer>la</answer>
+            <answer>cafetería</answer>
+            <answer>Pablo</answer>
+            <answer>?</answer>
+          </answers>
+        </item>
+        <item>
+          <final_sentence>¿Esperan el autobús los estudiantes?</final_sentence>
+          <question_prompt/>
+          <answers>
+            <answer>¿</answer>
+            <answer>esperan</answer>
+            <answer>el</answer>
+            <answer>autobús</answer>
+            <answer>los</answer>
+            <answer>estudiantes</answer>
+            <answer>?</answer>
+          </answers>
+        </item>
+      </quick_check_word_ordering>
+    </quick_check>
+
+    <quick_check>
+      <quick_check_pronunciation>
+        <dl>Optional directional line</dl>
+        <record_and_compare_word>
+          <audio id="138794"/>
+          <word_text>pelota</word_text>
+          <target_for_speech_rec>PELOTA</target_for_speech_rec>
+        </record_and_compare_word>
+        <record_and_compare_word>
+          <audio id="138801"/>
+          <word_text>piscina</word_text>
+        </record_and_compare_word>
+      </quick_check_pronunciation>
+    </quick_check>
+
+    <diagnostic>
+      <dl><important>Diagnostic Direction Line</important></dl>
+      <threshold>10</threshold>
+      <number_of_questions>10</number_of_questions>
+      <failure_message>you failed</failure_message>
+      <item>
+        <prompt>
+          FIB <important>Test</important> <wol ref="1"/> with <wol ref="2"/> blanks
+        </prompt>
+        <answers ref="1">
+          <answer>answer text 1-1</answer>
+        </answers>
+        <answers ref="2">
+          <answer> answer text 1-2</answer>
+          <answer>another answer 1-2 </answer>
+        </answers>
+      </item>
+      <item>
+        <prompt><wol/></prompt>
+        <answers>
+          <answer>answer text 2</answer>
+        </answers>
+      </item>
+      <item>
+        <prompt>This is the last single <wol/></prompt>
+        <answers>
+          <answer>answer text 3</answer>
+        </answers>
+      </item>
+      <item>
+        <prompt>This is <wol ref="1"/> the last <wol ref="2"/> multiple blanks</prompt>
+        <answers ref="1">
+          <answer>answer text 4-1</answer>
+          <answer>another answer 4-1 </answer>
+        </answers>
+        <answers ref="2">
+          <answer> answer text 4-2</answer>
+        </answers>
+      </item>
+    </diagnostic>
+
+  </items>
+</activity>
