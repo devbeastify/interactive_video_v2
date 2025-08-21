@@ -2,7 +2,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { mount } from '@vue/test-utils';
-import DragAndDropQuestion from './DragAndDropQuestion.vue';
+import DragAndDropQuestion from './DragAndDrop.vue';
 
 describe('DragAndDropQuestion', () => {
   const mockQuestion = {

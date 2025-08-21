@@ -17,6 +17,11 @@
               :question="currentQuickCheckActionData" 
               @answer-submitted="handleAnswerSubmitted" />
           </div>
+          <div v-if="currentQuckCheckType === 'quick_check_drag_and_drop'">
+            <DragAndDrop
+              :question="currentQuickCheckActionData"
+              @answer-submitted="handleAnswerSubmitted" />
+          </div>
           <div>
             <button
               :class="$style['quick-check-complete-btn']"
@@ -38,6 +43,7 @@
   import { useDLStore } from '../stores/direction_line_store';
   import DirectionLine from './DirectionLine.vue';
   import WordOrdering from './questions/WordOrdering.vue';
+  import DragAndDrop from './questions/DragAndDrop.vue';
 
   /**
    * @typedef {Object} AnswerObject
