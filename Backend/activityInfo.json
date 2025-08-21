@@ -1,0 +1,139 @@
+{
+  "dl": "Complete the tutorial",
+  "direction_line_audio": "",
+  "diagnostic": {
+    "dl": "Fill in the forms of <strong lang=\"es\">ser</strong>.",
+    "failure_message": "We suggest you repeat this tutorial.",
+    "items": [
+      {
+        "question_type": "fill_in_the_blanks",
+        "prompt": "<wol ref=\"1\"></wol> la escuela de Daniel.",
+        "answers": {
+          "1": [
+            "Es"
+          ]
+        }
+      }
+    ],
+    "language": "es",
+    "number_of_questions": "10",
+    "threshold": "7"
+  },
+  "quick_checks": [
+    {
+      "quick_check_content": {
+        "dl": "Quick Check 1: Which subject pronoun would you use to talk about these people?",
+        "items": [
+          {
+            "prompt": "una mujer: %1%",
+            "words": [
+              {
+                "content": "tú",
+                "targetId": null
+              },
+              {
+                "content": "yo",
+                "targetId": null
+              },
+              {
+                "content": "ella",
+                "targetId": "1"
+              }
+            ],
+            "targets": [
+              {
+                "content": "ella",
+                "targetId": "1"
+              }
+            ],
+            "size": "word"
+          }
+        ]
+      },
+      "type": "quick_check_drag_and_drop"
+    },
+    {
+      "quick_check_content": {
+        "dl": "Quick Check 2: Which subject pronoun would you use to talk about these people?",
+        "items": [
+          {
+            "prompt": "Pablo y yo: %1%",
+            "words": [
+              {
+                "content": "nosotros",
+                "targetId": "1"
+              },
+              {
+                "content": "ellas",
+                "targetId": null
+              },
+              {
+                "content": "usted",
+                "targetId": null
+              }
+            ],
+            "targets": [
+              {
+                "content": "nosotros",
+                "targetId": "1"
+              }
+            ],
+            "size": "word"
+          },
+          {
+            "prompt": "el profesor: %1%",
+            "words": [
+              {
+                "content": "tú",
+                "targetId": null
+              },
+              {
+                "content": "él",
+                "targetId": "1"
+              },
+              {
+                "content": "ella",
+                "targetId": null
+              }
+            ],
+            "targets": [
+              {
+                "content": "él",
+                "targetId": "1"
+              }
+            ],
+            "size": "word"
+          }
+        ]
+      },
+      "type": "quick_check_drag_and_drop"
+    }
+  ],
+  "reference": [
+    {
+      "descriptive_video_path": null,
+      "english_subtitles_path": "https://media.maestro.vhlcentral.com/subtitle/0022/VIS6e_L01-3_ser-present-tense_English.vtt",
+      "foreign_language": "Spanish",
+      "foreign_subtitles_path": null,
+      "height": 486,
+      "title": null,
+      "type": "video",
+      "video_path": "https://media.maestro.vhlcentral.com/video/m00329348_r00376768.mp4",
+      "width": 864
+    },
+    {
+      "descriptive_video_path": null,
+      "english_subtitles_path": "https://media.maestro.vhlcentral.com/subtitle/0022/VIS6e_L01-3_ser-present-tense_English.vtt",
+      "foreign_language": "Spanish",
+      "foreign_subtitles_path": null,
+      "height": 486,
+      "title": null,
+      "type": "video",
+      "video_path": "https://media.maestro.vhlcentral.com/video/m00329350_r00376770.mp4",
+      "width": 864
+    }
+  ],
+  "sub_topic": "",
+  "title": "Interactive Grammar Tutorial: Present tense of ser",
+  "topic": ""
+}
