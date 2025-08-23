@@ -61,6 +61,7 @@ import { useActionStore } from './action_store';
  * @property {string} direction_line_audio
  * @property {Array<Reference>} reference
  * @property {Array<QuickCheck>} quick_checks
+ * @property {Array<MixedEntry>} mixedEntries
  * @property {Diagnostic} diagnostic
  */
 
@@ -94,6 +95,7 @@ export const mainStore = defineStore('interactive_video_v2', {
       },
       quick_checks: [],
       reference: [],
+      mixedEntries: [],
       sub_topic: '',
       title: '',
       topic: '',
@@ -209,6 +211,7 @@ export const mainStore = defineStore('interactive_video_v2', {
         diagnostic: parsedActivityInfo.diagnostic || this.createDefaultDiagnostic(),
         quick_checks: sortedEntries.quickChecks,
         reference: sortedEntries.references,
+        mixedEntries: parsedActivityInfo.mixed_entries,
         sub_topic: parsedActivityInfo.sub_topic || globalIntroData.sub_topic,
         title: parsedActivityInfo.title,
         topic: parsedActivityInfo.topic || globalIntroData.topic,
@@ -222,7 +225,7 @@ export const mainStore = defineStore('interactive_video_v2', {
      * @return {GlobalIntroData}
      */
     parseGlobalIntroData() {
-    const globalIntroElement = document.querySelector('.js-program-global');
+      const globalIntroElement = document.querySelector('.js-program-global');
       /** @type {GlobalIntroData} */
       const globalIntroData = {
         topic: this.activityInfo.topic,
@@ -293,6 +296,7 @@ export const mainStore = defineStore('interactive_video_v2', {
         },
         quick_checks: [],
         reference: [],
+        mixedEntries: [],
         sub_topic: '',
         title: '',
         topic: '',
@@ -325,7 +329,6 @@ function sortMixedEntries(mixedEntries) {
       references.push(/** @type{Reference} */(entry));
     }
   });
-  console.log('quickChecks', quickChecks);
   return {
     references,
     quickChecks,

@@ -12,11 +12,6 @@
       <div :class="$style['quick-check-content']">
         <div v-if="currentQuickCheckActionData">
           <h3>{{ currentQuckCheckType }} placeholder</h3>
-          <div v-if="currentQuckCheckType === 'quick_check_word_ordering'">
-            <WordOrdering 
-              :question="currentQuickCheckActionData" 
-              @answer-submitted="handleAnswerSubmitted" />
-          </div>
           <div v-if="currentQuckCheckType === 'quick_check_drag_and_drop'">
             <DragAndDrop
               :question="currentQuickCheckActionData"
@@ -42,8 +37,7 @@
   import { useActionStore } from '../stores/action_store';
   import { useDLStore } from '../stores/direction_line_store';
   import DirectionLine from './DirectionLine.vue';
-  import WordOrdering from './questions/WordOrdering.vue';
-  import DragAndDrop from './questions/DragAndDrop.vue';
+  import DragAndDrop from './quick_checks/DragAndDrop.vue';
 
   /**
    * @typedef {Object} AnswerObject
@@ -103,26 +97,10 @@
   };
 
   /**
-   * Handles multiple choice answer selection
-   * @param {AnswerObject} answer - The selected answer object
-   */
-  const handleAnswerSelected = (answer) => {
-    handleComplete();
-  };
-
-  /**
    * Handles fill-in-the-blanks answer submission
    * @param {Array<string>} answers - The submitted answers
    */
   const handleAnswerSubmitted = (answers) => {
-    handleComplete();
-  };
-
-  /**
-   * Handles pronunciation question completion
-   * @param {PronunciationResult} result - The pronunciation result
-   */
-  const handlePronunciationComplete = (result) => {
     handleComplete();
   };
 

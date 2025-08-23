@@ -24,14 +24,17 @@ describe('main_store', () => {
     it('initializes with default activityInfo', () => {
       expect(store.activityInfo).toEqual({
         diagnostic: {
-          dl: '',
           direction_line_audio: '',
+          dl: '',
           failure_message: '',
           items: [],
           language: '',
           number_of_questions: '',
           threshold: '',
         },
+        direction_line_audio: '',
+        dl: '',
+        mixedEntries: [],
         quick_checks: [],
         reference: [],
         sub_topic: '',
@@ -129,6 +132,99 @@ describe('main_store', () => {
     });
   });
 
+  describe('parseGlobalIntroData', () => {
+    /** @type {typeof document.querySelector} */
+    const originalQuerySelector = document.querySelector;
+
+    beforeEach(() => {
+      store.activityInfo.topic = 'Initial Topic';
+      store.activityInfo.sub_topic = 'Initial Sub Topic';
+    });
+
+    afterEach(() => {
+      document.querySelector = originalQuerySelector;
+    });
+
+    it('returns default values when global intro element is not found', () => {
+      document.querySelector = vi.fn().mockReturnValue(null);
+
+      const result = store.parseGlobalIntroData();
+
+      expect(result).toEqual({
+        topic: 'Initial Topic',
+        sub_topic: 'Initial Sub Topic',
+      });
+    });
+
+    it('parses global intro data from DOM element when found', () => {
+      const globalIntroElement = document.createElement('template');
+      globalIntroElement.className = 'js-program-global';
+      const globalIntroData = {
+        topic: 'Global Topic',
+        sub_topic: 'Global Sub Topic',
+      };
+      const textNode = document.createTextNode(JSON.stringify(globalIntroData));
+      globalIntroElement.content.appendChild(textNode);
+
+      document.querySelector = vi.fn().mockReturnValue(globalIntroElement);
+
+      const result = store.parseGlobalIntroData();
+
+      expect(result).toEqual({
+        topic: 'Global Topic',
+        sub_topic: 'Global Sub Topic',
+      });
+    });
+
+    it('handles global intro element with empty content', () => {
+      const globalIntroElement = document.createElement('template');
+      globalIntroElement.className = 'js-program-global';
+      Object.defineProperty(globalIntroElement.content, 'textContent', {
+        value: '',
+        writable: true,
+      });
+
+      document.querySelector = vi.fn().mockReturnValue(globalIntroElement);
+
+      expect(() => store.parseGlobalIntroData()).toThrow();
+    });
+
+    it('handles global intro element with invalid JSON', () => {
+      const globalIntroElement = document.createElement('template');
+      globalIntroElement.className = 'js-program-global';
+      const textNode = document.createTextNode('invalid json');
+      globalIntroElement.content.appendChild(textNode);
+
+      document.querySelector = vi.fn().mockReturnValue(globalIntroElement);
+
+      expect(() => store.parseGlobalIntroData()).toThrow();
+    });
+
+    it('overrides store values with global intro data when available', () => {
+      store.activityInfo.title = 'Store Title';
+      store.activityInfo.topic = 'Store Topic';
+      store.activityInfo.sub_topic = 'Store Sub Topic';
+
+      const globalIntroElement = document.createElement('template');
+      globalIntroElement.className = 'js-program-global';
+      const globalIntroData = {
+        topic: 'Global Topic Override',
+        sub_topic: 'Global Sub Topic Override',
+      };
+      const textNode = document.createTextNode(JSON.stringify(globalIntroData));
+      globalIntroElement.content.appendChild(textNode);
+
+      document.querySelector = vi.fn().mockReturnValue(globalIntroElement);
+
+      const result = store.parseGlobalIntroData();
+
+      expect(result).toEqual({
+        topic: 'Global Topic Override',
+        sub_topic: 'Global Sub Topic Override',
+      });
+    });
+  });
+
   describe('initialize', () => {
     it('initializes store with activity info', async () => {
       const mockElement = document.createElement('div');
@@ -136,22 +232,27 @@ describe('main_store', () => {
         topic: 'Spanish Grammar',
         sub_topic: 'Present Tense',
         title: 'Basic Conjugation',
-        reference: [],
-        quick_checks: [],
+        direction_line_audio: '',
+        dl: 'Learn the present tense',
         diagnostic: {
-          dl: '',
           direction_line_audio: '',
+          dl: '',
           failure_message: '',
           items: [],
           language: '',
           number_of_questions: '',
           threshold: '',
         },
+        mixed_entries: [],
       };
       mockElement.innerHTML = JSON.stringify([activityData]);
 
       vi.spyOn(store, 'getActivityInfo').mockResolvedValue(mockElement);
       vi.spyOn(store, 'parseActivityInfo').mockResolvedValue(activityData);
+      vi.spyOn(store, 'parseGlobalIntroData').mockReturnValue({
+        topic: 'Default Topic',
+        sub_topic: 'Default Sub Topic',
+      });
 
       await store.initialize();
 
@@ -164,22 +265,27 @@ describe('main_store', () => {
         topic: 'Spanish Grammar',
         sub_topic: 'Present Tense',
         title: 'Basic Conjugation',
-        reference: [],
-        quick_checks: [],
+        direction_line_audio: '',
+        dl: 'Learn the present tense',
         diagnostic: {
-          dl: '',
           direction_line_audio: '',
+          dl: '',
           failure_message: '',
           items: [],
           language: '',
           number_of_questions: '',
           threshold: '',
         },
+        mixed_entries: [],
       };
       mockElement.innerHTML = JSON.stringify([activityData]);
 
       vi.spyOn(store, 'getActivityInfo').mockResolvedValue(mockElement);
       vi.spyOn(store, 'parseActivityInfo').mockResolvedValue(activityData);
+      vi.spyOn(store, 'parseGlobalIntroData').mockReturnValue({
+        topic: 'Default Topic',
+        sub_topic: 'Default Sub Topic',
+      });
 
       await store.initialize();
 
@@ -192,22 +298,27 @@ describe('main_store', () => {
         topic: 'Spanish Grammar',
         sub_topic: 'Present Tense',
         title: 'Basic Conjugation',
-        reference: [],
-        quick_checks: [],
+        direction_line_audio: '',
+        dl: 'Learn the present tense',
         diagnostic: {
-          dl: '',
           direction_line_audio: '',
+          dl: '',
           failure_message: '',
           items: [],
           language: '',
           number_of_questions: '',
           threshold: '',
         },
+        mixed_entries: [],
       };
       mockElement.innerHTML = JSON.stringify([activityData]);
 
       vi.spyOn(store, 'getActivityInfo').mockResolvedValue(mockElement);
       vi.spyOn(store, 'parseActivityInfo').mockResolvedValue(activityData);
+      vi.spyOn(store, 'parseGlobalIntroData').mockReturnValue({
+        topic: 'Default Topic',
+        sub_topic: 'Default Sub Topic',
+      });
 
       await store.initialize();
 
@@ -261,6 +372,7 @@ describe('main_store', () => {
         {
           id: '1',
           title: 'Video 1',
+          type: 'video',
           url: '/video1.mp4',
         },
       ];
@@ -285,8 +397,8 @@ describe('main_store', () => {
 
     it('returns diagnostic from activityInfo', () => {
       const diagnostic = {
-        dl: 'Test your knowledge',
         direction_line_audio: '',
+        dl: 'Test your knowledge',
         failure_message: 'You need more practice',
         items: [],
         language: 'en',
@@ -306,11 +418,14 @@ describe('main_store', () => {
         topic: 'Test',
         sub_topic: 'Test',
         title: 'Test',
+        direction_line_audio: '',
+        dl: 'Test',
         reference: [],
         quick_checks: [],
+        mixedEntries: [],
         diagnostic: {
-          dl: '',
           direction_line_audio: '',
+          dl: '',
           failure_message: '',
           items: [],
           language: '',
@@ -330,11 +445,14 @@ describe('main_store', () => {
         topic: 'Test',
         sub_topic: 'Test',
         title: 'Test',
+        direction_line_audio: '',
+        dl: 'Test',
         reference: [],
         quick_checks: [],
+        mixedEntries: [],
         diagnostic: {
-          dl: '',
           direction_line_audio: '',
+          dl: '',
           failure_message: '',
           items: [],
           language: '',
@@ -354,11 +472,14 @@ describe('main_store', () => {
         topic: 'Test',
         sub_topic: 'Test',
         title: 'Test',
+        direction_line_audio: '',
+        dl: 'Test',
         reference: [],
         quick_checks: [],
+        mixedEntries: [],
         diagnostic: {
-          dl: '',
           direction_line_audio: '',
+          dl: '',
           failure_message: '',
           items: [],
           language: '',
@@ -378,11 +499,14 @@ describe('main_store', () => {
         topic: 'Test',
         sub_topic: 'Test',
         title: 'Test',
+        direction_line_audio: '',
+        dl: 'Test',
         reference: [],
         quick_checks: [],
+        mixedEntries: [],
         diagnostic: {
-          dl: '',
           direction_line_audio: '',
+          dl: '',
           failure_message: '',
           items: [],
           language: '',
@@ -394,6 +518,33 @@ describe('main_store', () => {
       store.reset();
 
       expect(store.activityInfo.title).toBe('');
+    });
+
+    it('resets activityInfo dl to default', () => {
+      store.isInitialized = true;
+      store.activityInfo = {
+        topic: 'Test',
+        sub_topic: 'Test',
+        title: 'Test',
+        direction_line_audio: '',
+        dl: 'Test',
+        reference: [],
+        quick_checks: [],
+        mixedEntries: [],
+        diagnostic: {
+          direction_line_audio: '',
+          dl: '',
+          failure_message: '',
+          items: [],
+          language: '',
+          number_of_questions: '',
+          threshold: '',
+        },
+      };
+
+      store.reset();
+
+      expect(store.activityInfo.dl).toBe('');
     });
   });
 });
