@@ -11,18 +11,11 @@
 
       <div :class="$style['quick-check-content']">
         <div v-if="currentQuickCheckActionData">
-          <h3>{{ currentQuckCheckType }} placeholder</h3>
+          <h3>{{ currentQuckCheckType }}</h3>
           <div v-if="currentQuckCheckType === 'quick_check_drag_and_drop'">
             <DragAndDrop
               :question="currentQuickCheckActionData"
               @answer-submitted="handleAnswerSubmitted" />
-          </div>
-          <div>
-            <button
-              :class="$style['quick-check-complete-btn']"
-              @click="handleComplete">
-              Continue
-            </button>
           </div>
         </div>
       </div>
@@ -76,7 +69,7 @@
   });
 
   const currentQuckCheckType = computed(() => {
-    return currentQuickCheckActionData.value?.type;
+    return /** @type {{ type: string } | null} */ (currentQuickCheckActionData.value)?.type;
   });
 
   /**
